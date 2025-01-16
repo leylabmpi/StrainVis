@@ -190,12 +190,12 @@ def cretae_network_plot(network, is_metadata, nodes_feature, is_continuous, cmap
             norm = Normalize(vmin=min_value, vmax=max_value)
 
             if is_edge_colorby:
-                network_plot = hvnx.draw(network, pos, node_size=350, node_color=nodes_feature, cmap=cmap, norm=norm, node_alpha=0.95,
+                network_plot = hvnx.draw(network, pos, node_size=300, node_color=nodes_feature, cmap=cmap, norm=norm, node_alpha=0.95,
                                          edge_color=hv.dim('edge_color'), edge_width=hv.dim('weight') / 5,
                                          vmin=min_value, vmax=max_value)
 
             else:
-                network_plot = hvnx.draw(network, pos, node_size=350, node_color=nodes_feature, cmap=cmap, norm=norm, node_alpha=0.95,
+                network_plot = hvnx.draw(network, pos, node_size=300, node_color=nodes_feature, cmap=cmap, norm=norm, node_alpha=0.95,
                                          edge_color=edge_color, edge_width=hv.dim('weight')/5,
                                          vmin=min_value, vmax=max_value)
 
@@ -204,10 +204,10 @@ def cretae_network_plot(network, is_metadata, nodes_feature, is_continuous, cmap
         # Feature is categorical
         else:
             if is_edge_colorby:
-                network_plot = hvnx.draw(network, pos, node_size=350, node_color=nodes_feature, cmap=cmap, node_alpha=0.95,
+                network_plot = hvnx.draw(network, pos, node_size=300, node_color=nodes_feature, cmap=cmap, node_alpha=0.95,
                                          edge_color=hv.dim('edge_color'), edge_width=hv.dim('weight') / 5)
             else:
-                network_plot = hvnx.draw(network, pos, node_size=350, node_color=nodes_feature, cmap=cmap, node_alpha=0.95,
+                network_plot = hvnx.draw(network, pos, node_size=300, node_color=nodes_feature, cmap=cmap, node_alpha=0.95,
                                          edge_color=edge_color, edge_width=hv.dim('weight')/5)
 
         hover = HoverTool(tooltips=tooltips)
@@ -219,7 +219,7 @@ def cretae_network_plot(network, is_metadata, nodes_feature, is_continuous, cmap
         ]
         hover = HoverTool(tooltips=tooltips)
 
-        network_plot = hvnx.draw(network, pos, node_size=350, node_color=node_color, node_alpha=0.95, edge_color=edge_color,
+        network_plot = hvnx.draw(network, pos, node_size=300, node_color=node_color, node_alpha=0.95, edge_color=edge_color,
                                  edge_width=hv.dim('weight')/5)
         network_plot.opts(tools=[hover])
 

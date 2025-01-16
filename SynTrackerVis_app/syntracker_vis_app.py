@@ -788,8 +788,6 @@ class SynTrackerVisApp:
         no_metadata_colors_row = pn.Row(self.network_node_color, pn.Spacer(width=10), self.network_edge_color)
         continuous_col = pn.Column(pn.Spacer(height=20), self.is_continuous)
         nodes_color_by_row = pn.Row(self.nodes_color_by, continuous_col)
-        #colormap_row = pn.Row(self.nodes_colormap)
-        #color_edges_by_feature_row = pn.Row(self.color_edges_by_feature)
         edges_color_by_row = pn.Row(self.edges_color_by, self.network_within_color, pn.Spacer(width=3),
                                     self.network_between_color)
         metadata_coloring_col = pn.Column(nodes_color_by_row,
@@ -883,7 +881,7 @@ class SynTrackerVisApp:
 
         init_button.on_click(partial(self.init_positions, network))
 
-        network_row = pn.Row(controls_col, pn.Spacer(width=35), self.network_pane, styles={'padding': "15px"})
+        network_row = pn.Row(controls_col, pn.Spacer(width=10), self.network_pane, styles={'padding': "15px"})
         self.network_card.append(network_row)
 
     def download_network(self, event):
