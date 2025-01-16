@@ -1,0 +1,17 @@
+name: SynTracker_Vis_1_0
+
+
+channels:
+  - conda-forge
+
+dependencies:
+  - python
+  - panel
+  - hvplot
+  - seaborn
+  - scipy
+  - networkx
+  - fastcluster
+  - selenium
+  - firefox
+  - geckodriver
