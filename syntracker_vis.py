@@ -1,6 +1,6 @@
 import panel as pn
 import asyncio
-from SynTracker_app.syntracker_vis_app import SynTrackerVisApp
+from SynTrackerVis_app.syntracker_vis_app import SynTrackerVisApp
 
 MAX_SIZE_MB = 500
 

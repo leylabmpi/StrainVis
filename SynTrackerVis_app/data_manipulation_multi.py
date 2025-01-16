@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-import SynTracker_app.config as config
+import SynTrackerVis_app.config as config
 
 
 def create_avg_scores_table(score_per_region_df):

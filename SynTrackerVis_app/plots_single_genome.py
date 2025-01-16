@@ -11,7 +11,7 @@ import seaborn as sns
 from bokeh.plotting import figure
 from bokeh.transform import jitter
 from bokeh.models import HoverTool
-import SynTracker_app.config as config
+import SynTrackerVis_app.config as config
 hv.extension('bokeh')
 
 

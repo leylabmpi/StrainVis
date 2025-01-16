@@ -10,12 +10,12 @@ import holoviews as hv
 import networkx as nx
 import random
 from bokeh.io import export_svgs, export_png
-import SynTracker_app.config as config
-import SynTracker_app.data_manipulation_single as ds
-import SynTracker_app.data_manipulation_multi as dm
-import SynTracker_app.plots_single_genome as ps
-import SynTracker_app.plots_multi_genomes as pm
-import SynTracker_app.widgets as widgets
+import SynTrackerVis_app.config as config
+import SynTrackerVis_app.data_manipulation_single as ds
+import SynTrackerVis_app.data_manipulation_multi as dm
+import SynTrackerVis_app.plots_single_genome as ps
+import SynTrackerVis_app.plots_multi_genomes as pm
+import SynTrackerVis_app.widgets as widgets
 pn.extension('floatpanel')
 #pn.extension(disconnect_notification='Connection lost, try reloading the page!')
 
@@ -162,7 +162,7 @@ class SynTrackerVisApp:
         # Network plot elements
         self.network_plot = ""
         self.use_metadata = pn.widgets.Checkbox(name='Use metadata for coloring', value=False)
-        self.color_edges_by_feature = pn.widgets.Checkbox(name='Color edges by different feature', value=False)
+        self.color_edges_by_feature = pn.widgets.Checkbox(name='Color edges by feature (same/different)', value=False)
         self.metadata_colorby_card = pn.Card(title='Set the coloring by metadata', header_background="#ffffff",
                                              styles={'background': "#ffffff", 'margin': "10px", 'width': "315px"},
                                              hide_header=True, collapsed=pn.bind(change_disabled_state_inverse,
@@ -193,11 +193,11 @@ class SynTrackerVisApp:
                                                                  chkbox_state=self.color_edges_by_feature,
                                                                  watch=True)
                                                 )
-        self.network_within_color = pn.widgets.ColorPicker(name='Within color:', value='#000000',
+        self.network_within_color = pn.widgets.ColorPicker(name='Same color:', value='#000000',
                                                            disabled=pn.bind(change_disabled_state_inverse,
                                                                             chkbox_state=self.color_edges_by_feature,
                                                                             watch=True))
-        self.network_between_color = pn.widgets.ColorPicker(name='Between color:', value='#000000',
+        self.network_between_color = pn.widgets.ColorPicker(name='Different color:', value='#000000',
                                                             disabled=pn.bind(change_disabled_state_inverse,
                                                                              chkbox_state=self.color_edges_by_feature,
                                                                              watch=True)

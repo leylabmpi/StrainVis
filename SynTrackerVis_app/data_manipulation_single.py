@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import re
-import SynTracker_app.config as config
+import SynTrackerVis_app.config as config
 
 
 def return_selected_genome_table(score_per_region_df, selected_genome):
