@@ -113,6 +113,11 @@ class SynTrackerVisApp:
         self.new_file_button = pn.widgets.Button(name='Process a new input file', button_type='primary')
         self.new_file_button.on_click(self.create_new_session)
 
+        self.all_or_dataset_radio = pn.widgets.RadioBoxGroup(name='all_or_dataset',
+                                                             options=['All genomes', 'Select a dataset of genomes'],
+                                                             inline=True)
+
+
         self.sample_sizes_slider = pn.widgets.DiscreteSlider(name='Subsampled regions', options=config.sampling_sizes,
                                                              bar_color='white')
 
@@ -702,7 +707,7 @@ class SynTrackerVisApp:
         controls_col = pn.Column(styling_col, pn.Spacer(height=30), self.download_jiter_column)
 
         # Use metadata in plot
-        if self.use_metadata_jitter:
+        if self.use_metadata_jitter.value:
             # Update the color nodes by- drop-down menu with the available metadata features
             self.jitter_feature_select.options = self.metadata_features_list
             self.jitter_feature_select.value = self.metadata_features_list[0]

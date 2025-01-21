@@ -1,6 +1,5 @@
 name: SynTracker_Vis_1_0
 
-
 channels:
   - conda-forge
 
