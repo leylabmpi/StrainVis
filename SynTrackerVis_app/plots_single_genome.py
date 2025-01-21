@@ -64,37 +64,41 @@ def jitter_dots(dots):
     offsets = dots.get_offsets()
     jittered_offsets = offsets
     # only jitter in the x-direction
-    jittered_offsets[:, 0] += np.random.uniform(-0.2, 0.2, offsets.shape[0])
+    jittered_offsets[:, 0] += np.random.uniform(-0.1, 0.1, offsets.shape[0])
     dots.set_offsets(jittered_offsets)
 
 
-def create_jitter_plot(avg_df, color):
-    df_for_jitter = avg_df[['Avg_synteny_score']]
-    df_for_jitter.insert(1, 'Category', 'Comparisons')
-    #print("\nDF for jitter plot:")
-    #print(df_for_jitter)
+def category_by_feature(row, feature, metadata_dict):
+    if metadata_dict[feature][row['Sample1']] == metadata_dict[feature][row['Sample2']]:
+        return 'Same ' + feature
+    else:
+        return 'Different ' + feature
 
-    fig, ax1 = plt.subplots(figsize=(2.5, 6))
 
-    dots = plt.scatter(df_for_jitter['Category'], df_for_jitter['Avg_synteny_score'], c=color, alpha=0.5)
-    jitter_dots(dots)
+def create_jitter_plot(avg_df, color, use_metadata, metadata_dict, feature, same_color, different_color):
+    df_for_jitter = avg_df.loc[:, ['Sample1', 'Sample2', 'Avg_synteny_score']].copy().\
+        rename(columns={"Avg_synteny_score": "APSS"})
 
-    # Set padding to the figure
-    xmin, xmax = plt.xlim()
-    plt.xlim(xmin - 0.25, xmax + 0.25)  # make some room to show the jittered dots
+    # Use metadata to separate plot to same/different feature
+    if use_metadata:
+        df_for_jitter['Category'] = df_for_jitter.apply(lambda row: category_by_feature(row, feature, metadata_dict),
+                                                        axis=1)
+        same_feature = 'Same ' + feature
+        diff_feature = 'Different ' + feature
+        jitter_plot = sns.catplot(data=df_for_jitter, x="Category", y="APSS", order=[same_feature, diff_feature],
+                                  hue="Category", hue_order=[same_feature, diff_feature],
+                                  palette=[same_color, different_color], edgecolor="gray", linewidth=0.1)
 
-    plt.tick_params(
-        axis='x',  # changes apply to the x-axis
-        which='both',  # both major and minor ticks are affected
-        bottom=False,  # ticks along the bottom edge are off
-        )
+    # Do not use metadata in plot - show all the comparisons together
+    else:
+        df_for_jitter['Category'] = 'All Comparisons'
+        jitter_plot = sns.catplot(data=df_for_jitter, x="Category", y="APSS", color=color, edgecolor="gray",
+                                  linewidth=0.1)
 
-    # Add Y-axis label
-    plt.ylabel('Average Synteny Score')
+    print("\nDF for jitter plot:")
+    print(df_for_jitter)
 
-    plt.close(fig)
-
-    return fig
+    return jitter_plot.figure
 
 
 def create_clustermap(matrix, cmap):

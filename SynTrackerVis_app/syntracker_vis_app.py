@@ -133,7 +133,7 @@ class SynTrackerVisApp:
         # Plots cards
         self.clustermap_card = pn.Card(title='Clustermap', styles=config.plot_card_style, header_background="#2e86c1",
                                        header_color="#ffffff")
-        self.jitter_card = pn.Card(title='Average synteny scores distribution', styles=config.plot_card_style,
+        self.jitter_card = pn.Card(title='APSS distribution', styles=config.plot_card_style,
                                    header_background="#2e86c1", header_color="#ffffff")
         self.network_card = pn.Card(title='Network', styles=config.plot_card_style, header_background="#2e86c1",
                                     header_color="#ffffff")
@@ -153,7 +153,28 @@ class SynTrackerVisApp:
 
         # Jitter plot elements
         self.jitter_plot = ""
-        self.jitter_color = pn.widgets.ColorPicker(name='Select color', value='#3b89be')
+        self.use_metadata_jitter = pn.widgets.Checkbox(name='Use metadata in plot', value=False)
+        self.jitter_color = pn.widgets.ColorPicker(name='Select color', value='#3b89be',
+                                                   disabled=pn.bind(change_disabled_state_straight,
+                                                                    chkbox_state=self.use_metadata_jitter,
+                                                                    watch=True))
+        self.metadata_jitter_card = pn.Card(styles={'background': "#ffffff", 'margin': "10px", 'width': "300px"},
+                                            hide_header=True, collapsed=pn.bind(change_disabled_state_inverse,
+                                                                                chkbox_state=self.use_metadata_jitter,
+                                                                                watch=True))
+        self.jitter_feature_select = pn.widgets.Select(options=['Select feature'], width=150,
+                                                       name="Separate plot by following feature:",
+                                                       disabled=pn.bind(change_disabled_state_inverse,
+                                                                        chkbox_state=self.use_metadata_jitter,
+                                                                        watch=True))
+        self.jitter_same_color = pn.widgets.ColorPicker(name='Same color:', value='#000000',
+                                                        disabled=pn.bind(change_disabled_state_inverse,
+                                                                         chkbox_state=self.use_metadata_jitter,
+                                                                         watch=True))
+        self.jitter_different_color = pn.widgets.ColorPicker(name='Different color:', value='#000000',
+                                                             disabled=pn.bind(change_disabled_state_inverse,
+                                                                              chkbox_state=self.use_metadata_jitter,
+                                                                              watch=True))
         self.jitter_image_format = pn.widgets.Select(value=config.matplotlib_file_formats[0],
                                                      options=config.matplotlib_file_formats, name="Select image format:")
         self.save_jitter_file_path = pn.widgets.TextInput(name=download_text)
@@ -161,23 +182,22 @@ class SynTrackerVisApp:
 
         # Network plot elements
         self.network_plot = ""
-        self.use_metadata = pn.widgets.Checkbox(name='Use metadata for coloring', value=False)
+        self.use_metadata_network = pn.widgets.Checkbox(name='Use metadata for coloring', value=False)
         self.color_edges_by_feature = pn.widgets.Checkbox(name='Color edges by feature (same/different)', value=False)
         self.metadata_colorby_card = pn.Card(title='Set the coloring by metadata', header_background="#ffffff",
-                                             styles={'background': "#ffffff", 'margin': "10px", 'width': "315px"},
+                                             styles={'background': "#ffffff", 'margin': "10px", 'width': "300px"},
                                              hide_header=True, collapsed=pn.bind(change_disabled_state_inverse,
-                                                                                 chkbox_state=self.use_metadata,
+                                                                                 chkbox_state=self.use_metadata_network,
                                                                                  watch=True))
         self.network_node_color = pn.widgets.ColorPicker(name='Nodes color:', value='#459ED9',
                                                          disabled=pn.bind(change_disabled_state_straight,
-                                                                          chkbox_state=self.use_metadata,
+                                                                          chkbox_state=self.use_metadata_network,
                                                                           watch=True))
         self.network_edge_color = pn.widgets.ColorPicker(name='Edges color:', value='#000000',
                                                          disabled=pn.bind(change_disabled_state_straight,
                                                                           chkbox_state=self.color_edges_by_feature,
                                                                           watch=True))
-        self.nodes_color_by = pn.widgets.Select(options=['Select feature'], name="Color nodes by:",
-                                                width=120)
+        self.nodes_color_by = pn.widgets.Select(options=['Select feature'], name="Color nodes by:", width=100)
         self.is_continuous = pn.widgets.Checkbox(name='Continuous feature', value=False)
         self.nodes_colormap = pn.widgets.ColorMap(name="Select colormap for nodes:",
                                                   options=pn.bind(change_continuous_state,
@@ -187,8 +207,7 @@ class SynTrackerVisApp:
                                                                 chkbox_state=self.is_continuous,
                                                                 watch=True))
         self.edges_color_by = pn.widgets.Select(options=['Select feature'],
-                                                name="Color edges by:",
-                                                width=120,
+                                                name="Color edges by:", width=100,
                                                 disabled=pn.bind(change_disabled_state_inverse,
                                                                  chkbox_state=self.color_edges_by_feature,
                                                                  watch=True)
@@ -601,6 +620,7 @@ class SynTrackerVisApp:
         self.clustermap_card.clear()
         self.network_card.clear()
         self.metadata_colorby_card.clear()
+        self.metadata_jitter_card.clear()
         self.network_iterations.value = config.network_iterations_options[0]
 
         # Check if the requested genome and size have already been calculated. If so, fetch the specific dataframe
@@ -651,10 +671,19 @@ class SynTrackerVisApp:
 
     def create_jitter_pane(self, selected_genome_and_size_avg_df):
         styling_title = "Plot styling options:"
+        metadata_colors_row = pn.Row(self.jitter_same_color, pn.Spacer(width=3), self.jitter_different_color)
+        metadata_col = pn.Column(self.jitter_feature_select,
+                                 metadata_colors_row,
+                                 styles={'padding': "10x"})
+        self.metadata_jitter_card.append(metadata_col)
         styling_col = pn.Column(pn.pane.Markdown(styling_title, styles={'font-size': "15px", 'font-weight': "bold",
                                                                         'color': config.title_blue_color,
                                                                         'margin': "0"}),
-                                self.jitter_color)
+                                self.jitter_color,
+                                pn.Spacer(height=5),
+                                self.use_metadata_jitter,
+                                self.metadata_jitter_card
+        )
 
         save_file_title = "Download image options:"
         download_button = pn.widgets.Button(name='Download high-resolution image', button_type='primary')
@@ -672,13 +701,24 @@ class SynTrackerVisApp:
 
         controls_col = pn.Column(styling_col, pn.Spacer(height=30), self.download_jiter_column)
 
+        # Use metadata in plot
+        if self.use_metadata_jitter:
+            # Update the color nodes by- drop-down menu with the available metadata features
+            self.jitter_feature_select.options = self.metadata_features_list
+            self.jitter_feature_select.value = self.metadata_features_list[0]
+        # No metadata
+        else:
+            self.use_metadata_jitter.disabled = True
+
         self.jitter_plot = pn.bind(ps.create_jitter_plot, avg_df=selected_genome_and_size_avg_df,
-                                   color=self.jitter_color)
+                                   color=self.jitter_color, use_metadata=self.use_metadata_jitter,
+                                   metadata_dict=self.metadata_dict, feature=self.jitter_feature_select,
+                                   same_color=self.jitter_same_color, different_color=self.jitter_different_color)
 
         #jitter_pane = pn.pane.Bokeh(self.jitter_plot)
-        jitter_pane = pn.pane.Matplotlib(self.jitter_plot, height=500, dpi=300, tight=True, format='png')
+        jitter_pane = pn.pane.Matplotlib(self.jitter_plot, height=550, dpi=300, tight=True, format='png')
 
-        jitter_row = pn.Row(controls_col, pn.Spacer(width=250), jitter_pane, styles={'padding': "15px"})
+        jitter_row = pn.Row(controls_col, pn.Spacer(width=150), jitter_pane, styles={'padding': "15px"})
         self.jitter_card.append(jitter_row)
 
     def download_jitter(self, event):
@@ -802,7 +842,7 @@ class SynTrackerVisApp:
                                                                         'margin': "0"}),
                                 no_metadata_colors_row,
                                 pn.Spacer(height=5),
-                                self.use_metadata,
+                                self.use_metadata_network,
                                 self.metadata_colorby_card,
                                 self.show_labels_chkbox,
                                 self.network_iterations,
@@ -865,10 +905,10 @@ class SynTrackerVisApp:
 
         # No metadata
         else:
-            self.use_metadata.disabled = True
+            self.use_metadata_network.disabled = True
 
         # Create the network plot using the selected parameters
-        self.network_plot = pn.bind(ps.cretae_network_plot, network=network, is_metadata=self.use_metadata,
+        self.network_plot = pn.bind(ps.cretae_network_plot, network=network, is_metadata=self.use_metadata_network,
                                     nodes_feature=self.nodes_color_by, is_continuous=self.is_continuous,
                                     cmap=self.nodes_colormap,
                                     node_color=self.network_node_color, edge_color=self.network_edge_color,
@@ -881,7 +921,7 @@ class SynTrackerVisApp:
 
         init_button.on_click(partial(self.init_positions, network))
 
-        network_row = pn.Row(controls_col, pn.Spacer(width=10), self.network_pane, styles={'padding': "15px"})
+        network_row = pn.Row(controls_col, pn.Spacer(width=15), self.network_pane, styles={'padding': "15px"})
         self.network_card.append(network_row)
 
     def download_network(self, event):
@@ -938,7 +978,7 @@ class SynTrackerVisApp:
 
     # Update the network plot using the selected parameters and the new positions dict
     def update_network_plot(self, network):
-        self.network_plot = pn.bind(ps.cretae_network_plot, network=network, is_metadata=self.use_metadata,
+        self.network_plot = pn.bind(ps.cretae_network_plot, network=network, is_metadata=self.use_metadata_network,
                                     nodes_feature=self.nodes_color_by, is_continuous=self.is_continuous,
                                     cmap=self.nodes_colormap,
                                     node_color=self.network_node_color, edge_color=self.network_edge_color,
