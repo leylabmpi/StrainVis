@@ -28,9 +28,15 @@ def plot_pairs_vs_sampling_size_bar(df, sampling_size, is_all_regions):
     #print("plot_pairs_vs_sampling_size_bar:")
     #print(df)
 
-    df['color'] = np.where(df['Subsampled regions'] == value, highlight_bar_color, normal_bar_color)
+    df['color'] = np.where(df['Subsampled_regions'] == value, highlight_bar_color, normal_bar_color)
 
-    bar_plot = df.hvplot.bar(x='Subsampled regions', y='Number of pairs', color='color')
+    tooltips = [
+        ('Number of pairs', '@Number_of_pairs'),
+    ]
+    hover = HoverTool(tooltips=tooltips)
+
+    bar_plot = df.hvplot.bar(x='Subsampled_regions', y='Number_of_pairs', color='color', xlabel='Subsampled regions',
+                             ylabel='Number of pairs').opts(shared_axes=False, tools=[hover])
 
     return bar_plot
 
@@ -152,13 +158,9 @@ def cretae_network_plot(network, is_metadata, nodes_feature, is_continuous, cmap
                         show_labels, metadata_dict):
     iter_num = int(iterations)
 
-    weights = nx.get_edge_attributes(network, 'weight').values()
-    pos = nx.layout.fruchterman_reingold_layout(network, iterations=iter_num, k=1, weight=weights, pos=pos_dict)
+    pos = nx.layout.fruchterman_reingold_layout(network, iterations=iter_num, pos=pos_dict, k=2)
 
     if is_metadata:
-        print("\ncretae_network_plot:")
-        print("Feature: " + nodes_feature)
-
         tooltips = [
             ('SampleID', '@SampleID'),
             (nodes_feature, '@' + nodes_feature)
@@ -194,13 +196,13 @@ def cretae_network_plot(network, is_metadata, nodes_feature, is_continuous, cmap
             norm = Normalize(vmin=min_value, vmax=max_value)
 
             if is_edge_colorby:
-                network_plot = hvnx.draw(network, pos, node_size=300, node_color=nodes_feature, cmap=cmap, norm=norm, node_alpha=0.95,
-                                         edge_color=hv.dim('edge_color'), edge_width=hv.dim('weight') / 5,
-                                         vmin=min_value, vmax=max_value)
+                network_plot = hvnx.draw(network, pos, node_size=300, node_color=nodes_feature, cmap=cmap, norm=norm,
+                                         node_alpha=0.95, edge_color=hv.dim('edge_color'),
+                                         edge_width=hv.dim('weight') / 5, vmin=min_value, vmax=max_value)
 
             else:
-                network_plot = hvnx.draw(network, pos, node_size=300, node_color=nodes_feature, cmap=cmap, norm=norm, node_alpha=0.95,
-                                         edge_color=edge_color, edge_width=hv.dim('weight')/5,
+                network_plot = hvnx.draw(network, pos, node_size=300, node_color=nodes_feature, cmap=cmap, norm=norm,
+                                         node_alpha=0.95, edge_color=edge_color, edge_width=hv.dim('weight')/5,
                                          vmin=min_value, vmax=max_value)
 
             network_plot.opts(colorbar=True)
@@ -218,14 +220,8 @@ def cretae_network_plot(network, is_metadata, nodes_feature, is_continuous, cmap
         network_plot.opts(tools=[hover])
 
     else:
-        tooltips = [
-            ('SampleID', '@SampleID'),
-        ]
-        hover = HoverTool(tooltips=tooltips)
-
-        network_plot = hvnx.draw(network, pos, node_size=300, node_color=node_color, node_alpha=0.95, edge_color=edge_color,
-                                 edge_width=hv.dim('weight')/5)
-        network_plot.opts(tools=[hover])
+        network_plot = hvnx.draw(network, pos, node_size=300, node_color=node_color, node_alpha=0.95,
+                                 edge_color=edge_color, edge_width=hv.dim('weight')/5)
 
     if show_labels:
         labels = hv.Labels(network_plot.nodes, ['x', 'y'], 'index').opts(text_font_size='8pt', text_color='black')

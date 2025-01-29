@@ -96,3 +96,59 @@ def complete_metadata(score_per_region_df, metadata_df):
         metadata_dict[feature] = metadata_df.set_index(sample_ids_column_name)[feature].to_dict()
 
     return metadata_dict, metadata_features_list, sample_ids_column_name
+
+
+def return_genomes_subset_table(score_per_region_df, genomes_list):
+    genomes_subset_df = score_per_region_df[score_per_region_df['Ref_genome'].isin(genomes_list)]
+    genomes_subset_df = genomes_subset_df[['Ref_genome', 'Sample1', 'Sample2', 'Synteny_score']]
+
+    #print("\nreturn_genomes_subset_table:")
+    #print(genomes_subset_df)
+    return genomes_subset_df
+
+
+def count_species_num(row, df):
+    condition = df[row['Subsampled_regions']] > 0
+    species_num = condition.sum()
+    return species_num
+
+
+def create_pairs_num_per_sampling_size(score_per_region_selected_genomes_df):
+
+    regions_num_per_pair_df = score_per_region_selected_genomes_df[['Ref_genome', 'Sample1', 'Sample2', 'Synteny_score']].\
+        groupby(['Ref_genome', 'Sample1', 'Sample2']).count().reset_index(). \
+        rename(columns={"Synteny_score": "Num_of_compared_regions"})
+    #print(regions_num_per_pair_df)
+
+    # Add a column for each subsampling size (to calculate how many pairs have results for at least this size)
+    for size in config.sampling_sizes:
+        if size == 'All_regions':
+            regions_num_per_pair_df[size] = np.where(regions_num_per_pair_df['Num_of_compared_regions'] >= 1,
+                                                     1, 0)
+        else:
+            regions_num_per_pair_df[size] = np.where(regions_num_per_pair_df['Num_of_compared_regions'] >= int(size),
+                                                     1, 0)
+    #print(regions_num_per_pair_df)
+
+    pairs_num_per_sampling_size_df = regions_num_per_pair_df[['All_regions', '40', '60', '80', '100',
+                                                              '125', '150', '175', '200', '250', '300', '350',
+                                                              '400']].sum().reset_index()
+    pairs_num_per_sampling_size_df.columns.values[0] = "Subsampled_regions"
+    pairs_num_per_sampling_size_df.columns.values[1] = "Number_of_pairs"
+    pairs_num_per_sampling_size_df['Pairs_lost_percent'] = (1 - pairs_num_per_sampling_size_df['Number_of_pairs'] / \
+                                                            pairs_num_per_sampling_size_df.at[0, 'Number_of_pairs']) * \
+                                                            100
+    pairs_num_per_sampling_size_df['Pairs_lost_percent'] = \
+        pairs_num_per_sampling_size_df['Pairs_lost_percent'].apply(lambda x: round(x, 2))
+
+    species_num_per_sampling_size_df = regions_num_per_pair_df[['Ref_genome', 'All_regions', '40', '60', '80', '100',
+                                                                '125', '150', '175', '200', '250', '300', '350',
+                                                                '400']].groupby(['Ref_genome']).sum().reset_index()
+    #print(species_num_per_sampling_size_df)
+
+    pairs_num_per_sampling_size_df['Number_of_species'] = \
+        pairs_num_per_sampling_size_df.apply(lambda row: count_species_num(row, species_num_per_sampling_size_df),
+                                             axis=1)
+    #print(pairs_num_per_sampling_size_df)
+
+    return pairs_num_per_sampling_size_df

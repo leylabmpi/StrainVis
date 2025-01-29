@@ -34,6 +34,20 @@ def change_disabled_state_straight(chkbox_state):
         return False
 
 
+def change_collapse_state(selection_val):
+    if selection_val == 'All genomes':
+        return True
+    else:
+        return False
+
+
+def change_collapsible_state(selection_val):
+    if selection_val == 'All genomes':
+        return False
+    else:
+        return True
+
+
 def change_continuous_state(chkbox_state):
     if chkbox_state:
         return config.Bokeh_continuous_colormap_dict
@@ -46,6 +60,13 @@ def change_continuous_state_for_value(chkbox_state):
         return config.Bokeh_continuous_colormap_dict['Turbo256']
     else:
         return config.Bokeh_categorical_colormap_dict['Category20']
+
+
+def change_disabled_state_threshold(value):
+    if value == 'Define another threshold':
+        return False
+    else:
+        return True
 
 
 def enable_submit(file_input, text_input):
@@ -72,7 +93,6 @@ class SynTrackerVisApp:
         self.metadata_dict = dict()
         self.metadata_features_list = []
         self.sample_ids_column_name = ""
-        self.genomes_select = ""
         self.number_of_genomes = 0
         self.ref_genomes_list = []
         self.ref_genome = ""
@@ -80,6 +100,7 @@ class SynTrackerVisApp:
         self.score_per_region_all_genomes_df = pd.DataFrame()
         self.score_per_region_selected_genome_df = pd.DataFrame()
         self.avg_score_per_region_selected_genome_df = pd.DataFrame()
+        self.avg_score_per_region_genomes_subset_df = pd.DataFrame()
         self.df_for_network = pd.DataFrame()
         self.avg_scores_all_genomes_all_sizes_dict = dict()
         self.calculated_avg_genome_size_dict = dict()
@@ -90,6 +111,8 @@ class SynTrackerVisApp:
         self.contigs_list_by_length = []
         self.avg_score_genome = 0
         self.std_score_genome = 0
+        self.threshold_select_watcher = ""
+        self.threshold_input_watcher = ""
 
         # Bootstrap template
         self.template = pn.template.VanillaTemplate(
@@ -113,13 +136,32 @@ class SynTrackerVisApp:
         self.new_file_button = pn.widgets.Button(name='Process a new input file', button_type='primary')
         self.new_file_button.on_click(self.create_new_session)
 
-        self.all_or_dataset_radio = pn.widgets.RadioBoxGroup(name='all_or_dataset',
-                                                             options=['All genomes', 'Select a dataset of genomes'],
-                                                             inline=True)
+        self.genomes_select = pn.widgets.Select(name='Select a reference genome to process:', value=None,
+                                                options=[], styles={'margin': "0"})
 
+        self.all_or_subset_radio = pn.widgets.RadioBoxGroup(name='all_or_subset',
+                                                            options=['All genomes', 'Select a subset of genomes'],
+                                                            inline=False, styles={'font-size': "16px"})
+        self.genomes_select_card = pn.Card(title='Genomes subset selection',
+                                           collapsed=pn.bind(change_collapse_state,
+                                                             selection_val=self.all_or_subset_radio, watch=True),
+                                           #collapsible=pn.bind(change_collapsible_state,
+                                           #                    selection_val=self.all_or_subset_radio, watch=True),
+                                           styles={'margin': "5px 0 5px 10px", 'width': "500px"}
+                                           )
+        self.genomes_subset_select = pn.widgets.MultiSelect(options=[],
+                                                            disabled=pn.bind(change_collapse_state,
+                                                                             selection_val=self.all_or_subset_radio,
+                                                                             watch=True))
+        self.display_multi_genomes_plot_button = pn.widgets.Button(name='Update genomes selection',
+                                                                   button_type='primary',
+                                                                   styles={'margin': "12px 0 12px 10px"})
+        self.display_multi_genomes_plot_button.on_click(self.update_genomes_selection)
 
         self.sample_sizes_slider = pn.widgets.DiscreteSlider(name='Subsampled regions', options=config.sampling_sizes,
                                                              bar_color='white')
+        self.sample_sizes_slider_multi = pn.widgets.DiscreteSlider(name='Subsampled regions',
+                                                                   options=config.sampling_sizes, bar_color='white')
 
         self.show_single_plots_button = pn.widgets.Button(name='Display analysis using the selected number of regions',
                                                           button_type='primary', margin=(25, 0))
@@ -131,6 +173,7 @@ class SynTrackerVisApp:
         self.single_tabs = pn.Tabs(dynamic=True, styles=config.single_tabs_style)
         self.activated_coverage_tab = 0
         self.plots_by_size_single_column = pn.Column()
+        self.plots_by_size_multi_column = pn.Column()
         self.main_multi_column = pn.Column(styles=config.main_column_style)
         self.plots_by_ref_column = pn.Column(styles=config.main_column_style)
         self.selected_contig_column = pn.Column(styles={'padding': "10px 0 0 0"})
@@ -227,10 +270,19 @@ class SynTrackerVisApp:
                                                                              watch=True)
                                                             )
         self.show_labels_chkbox = pn.widgets.Checkbox(name='Show sample names', value=False)
+        self.network_threshold_select = pn.widgets.Select(name="Threshold for network connections:", width=200,
+                                                          options=[])
+        self.network_threshold_input = pn.widgets.FloatInput(name='Define threshold:',
+                                                             value=config.APSS_connections_threshold_default, step=0.01,
+                                                             start=0.5, end=1.0, width=100,
+                                                             disabled=pn.bind(change_disabled_state_threshold,
+                                                                              value=self.network_threshold_select,
+                                                                              watch=True)
+                                                             )
         self.network_iterations = pn.widgets.DiscreteSlider(name='Number of iterations',
                                                             options=config.network_iterations_options,
                                                             bar_color='white')
-        self.network_image_format = pn.widgets.Select(value=config.matplotlib_file_formats[0],
+        self.network_image_format = pn.widgets.Select(value=config.bokeh_file_formats[0],
                                                       options=config.bokeh_file_formats,
                                                       name="Select image format:")
         self.save_network_file_path = pn.widgets.TextInput(name=download_text)
@@ -325,13 +377,17 @@ class SynTrackerVisApp:
         del self.score_per_region_all_genomes_df
         del self.score_per_region_selected_genome_df
         del self.avg_score_per_region_selected_genome_df
+        self.use_metadata_jitter.disabled = False
+        self.network_threshold_select.param.unwatch(self.threshold_select_watcher)
+        self.network_threshold_input.param.unwatch(self.threshold_input_watcher)
+        self.network_threshold_select.options = []
 
         gc.collect()
 
     def create_new_session(self, event):
         if self.input_file_loaded:
             pn.state.location.unsync(self.input_file)
-        if self.genomes_select is not None and self.genomes_select != "":
+        if self.genomes_select.value is not None and self.genomes_select.value != "":
             pn.state.location.unsync(self.genomes_select)
         self.init_parameters()
         pn.state.location.reload = True
@@ -452,8 +508,10 @@ class SynTrackerVisApp:
         self.ref_genomes_list = []
         self.single_multi_genome_tabs.clear()
         self.main_single_column.clear()
+        self.main_multi_column.clear()
         self.single_tabs.clear()
         self.plots_by_size_single_column.clear()
+        self.plots_by_size_multi_column.clear()
 
         # Read the file directly from the path
         col_set = ['Ref_genome', 'Sample1', 'Sample2', 'Region', 'Synteny_score']
@@ -520,10 +578,10 @@ class SynTrackerVisApp:
             pn.state.location.sync(self.genomes_select, {'value': 'ref_genome'})
 
             # Create the multiple-genome visualization layout
-            multi_genome_layout = self.create_multi_genome_layout()
+            self.main_multi_column = self.create_multi_genome_column()
 
             self.single_multi_genome_tabs.append(('Single genome visualization', self.main_single_column))
-            self.single_multi_genome_tabs.append(('Multiple genomes visualization', multi_genome_layout))
+            self.single_multi_genome_tabs.append(('Multiple genomes visualization', self.main_multi_column))
 
             self.main_area.clear()
 
@@ -538,7 +596,6 @@ class SynTrackerVisApp:
         self.contigs_dict = {}
         self.contigs_list_by_length = []
         self.contigs_list_by_name = []
-
 
         # Get the selected reference genome
         self.select_ref_genome(ref_genome)
@@ -565,7 +622,7 @@ class SynTrackerVisApp:
 
         # If the number of pairs with 40 sampled regions is smaller than 100, present also the 'All regions' bar
         # If not, do not present this bar (and remove this option from the slider)
-        pairs_at_40 = pairs_num_per_sampling_size_selected_genome_df['Number of pairs'].iloc[1]
+        pairs_at_40 = pairs_num_per_sampling_size_selected_genome_df['Number_of_pairs'].iloc[1]
         if pairs_at_40 >= config.min_pairs_for_all_regions:
             self.sample_sizes_slider.options = config.sampling_sizes_wo_all
             self.sample_sizes_slider.value = config.sampling_sizes_wo_all[0]
@@ -582,7 +639,8 @@ class SynTrackerVisApp:
         binded_text = pn.bind(widgets.create_pairs_lost_text, pairs_num_per_sampling_size_selected_genome_df,
                               self.sample_sizes_slider)
 
-        pairs_plot_column = pn.Column(pn.pane.Markdown(refs=binded_text), pairs_vs_sampling_size_bar_plot)
+        pairs_plot_column = pn.Column(pn.pane.Markdown(refs=binded_text, align='center'),
+                                      pairs_vs_sampling_size_bar_plot, styles={'background-color': "white"})
 
         initial_plots_column = pn.Column(
             pairs_plot_column,
@@ -591,7 +649,7 @@ class SynTrackerVisApp:
             self.show_single_plots_button,
             self.plots_by_size_single_column,
             styles={'padding': "20px"}
-            )
+        )
 
         self.single_tabs.clear()
         self.single_tabs.append(('Sample-pairs comparisons', initial_plots_column))
@@ -627,6 +685,9 @@ class SynTrackerVisApp:
         self.metadata_colorby_card.clear()
         self.metadata_jitter_card.clear()
         self.network_iterations.value = config.network_iterations_options[0]
+        self.network_threshold_select.param.unwatch(self.threshold_select_watcher)
+        self.network_threshold_input.param.unwatch(self.threshold_input_watcher)
+        self.network_threshold_input.value = config.APSS_connections_threshold_default
 
         # Check if the requested genome and size have already been calculated. If so, fetch the specific dataframe
         if self.calculated_avg_genome_size_dict[self.ref_genome][self.sampling_size]:
@@ -707,7 +768,7 @@ class SynTrackerVisApp:
         controls_col = pn.Column(styling_col, pn.Spacer(height=30), self.download_jiter_column)
 
         # Use metadata in plot
-        if self.use_metadata_jitter.value:
+        if self.is_metadata:
             # Update the color nodes by- drop-down menu with the available metadata features
             self.jitter_feature_select.options = self.metadata_features_list
             self.jitter_feature_select.value = self.metadata_features_list[0]
@@ -826,6 +887,7 @@ class SynTrackerVisApp:
         self.download_clustermap_column.append(download_floatpanel)
 
     def create_network_pane(self, selected_genome_and_size_avg_df):
+        mean_std_only = 0
         init_button = pn.widgets.Button(name='Initialize nodes positions', button_type='primary',
                                         button_style='outline')
 
@@ -842,6 +904,7 @@ class SynTrackerVisApp:
                                           edges_color_by_row,
                                           styles={'padding': "10x"})
         self.metadata_colorby_card.append(metadata_coloring_col)
+        network_threshold_row = pn.Row(self.network_threshold_select, self.network_threshold_input)
         styling_col = pn.Column(pn.pane.Markdown(styling_title, styles={'font-size': "15px", 'font-weight': "bold",
                                                                         'color': config.title_blue_color,
                                                                         'margin': "0"}),
@@ -850,6 +913,8 @@ class SynTrackerVisApp:
                                 self.use_metadata_network,
                                 self.metadata_colorby_card,
                                 self.show_labels_chkbox,
+                                pn.Spacer(height=10),
+                                network_threshold_row,
                                 self.network_iterations,
                                 init_button)
 
@@ -858,7 +923,7 @@ class SynTrackerVisApp:
         download_button.on_click(self.download_network)
 
         network_file = "Network_" + self.ref_genome + "_" + self.sampling_size + "_regions_" + \
-                            self.network_iterations.value + "_iterations"
+                       self.network_iterations.value + "_iterations"
         self.save_network_file_path.placeholder = network_file
 
         self.download_network_column = pn.Column(pn.pane.Markdown(save_file_title,
@@ -880,17 +945,54 @@ class SynTrackerVisApp:
 
         # Set a score threshold for the connections (below it zero the weight).
         # Currently the threshold is the mean APSS
-        APSS_connections_threshold = df_for_network.loc[:, 'Avg_synteny_score'].mean()
-        # df_for_network['weight'] = np.negative(np.log(1 - df_for_network['Avg_synteny_score']))
+        mean_APSS = df_for_network.loc[:, 'Avg_synteny_score'].mean().round(2)
+        std_APSS = df_for_network.loc[:, 'Avg_synteny_score'].std().round(2)
+        APSS_connections_threshold = mean_APSS
         df_for_network['weight'] = np.where(df_for_network['Avg_synteny_score'] >= APSS_connections_threshold,
                                             np.negative(np.log(1 - df_for_network['Avg_synteny_score'])), 0)
+        print("\nDF for network:")
         print(df_for_network)
-        print("\nMean avg score: " + str(APSS_connections_threshold) + "\n")
+        print("\nMean APSS: " + str(mean_APSS))
+        print("Standard deviation APSS: " + str(std_APSS) + "\n")
 
         # Create a network using networkx
         network = nx.from_pandas_edgelist(df_for_network, source='Sample1', target='Sample2', edge_attr='weight')
         self.nodes_list = list(network.nodes)
         self.generate_rand_positions()
+
+        # Add the actual threshold value to the network_threshold_select widget
+        self.network_threshold_select.options = []
+
+        str_mean = config.network_thresholds_options[0] + " (APSS=" + str(mean_APSS) + ")"
+        self.network_threshold_select.options.append(str_mean)
+
+        mean_std = round((mean_APSS + std_APSS), 2)
+        if mean_std >= 0.99:
+            mean_std = 0.99
+            mean_std_only = 1
+        str_mean_std = config.network_thresholds_options[1] + " (APSS=" + str(mean_std) + ")"
+        self.network_threshold_select.options.append(str_mean_std)
+
+        if not mean_std_only:
+            mean_2_std = round((mean_APSS + 2 * std_APSS), 2)
+            if mean_2_std >= 1:
+                mean_2_std = 0.99
+            str_mean_2_std = config.network_thresholds_options[2] + " (APSS=" + str(mean_2_std) + ")"
+            self.network_threshold_select.options.append(str_mean_2_std)
+
+        self.network_threshold_select.options.append(config.network_thresholds_options[3])
+        self.network_threshold_select.value = self.network_threshold_select.options[0]
+
+        # Set watchers for the threshold widgets
+        self.threshold_select_watcher = self.network_threshold_select.param.watch(partial(self.change_weight_attribute,
+                                                                                  df_for_network, network,
+                                                                                  mean_APSS, std_APSS, mean_std_only),
+                                                                                  'value', onlychanged=True)
+        self.threshold_input_watcher = self.network_threshold_input.param.watch(partial(self.change_weight_attribute,
+                                                                                        df_for_network, network,
+                                                                                        mean_APSS, std_APSS,
+                                                                                        mean_std_only), 'value',
+                                                                                onlychanged=True)
 
         # There is metadata
         if self.is_metadata:
@@ -980,6 +1082,51 @@ class SynTrackerVisApp:
             pos_y = generate_rand_pos()
             pos_tuple = (pos_x, pos_y)
             self.pos_dict[node] = pos_tuple
+
+    def change_weight_attribute(self, df, network, mean, std, mean_std_only, event):
+
+        print("\nchange_weight_attribute:")
+        print("Current mean: " + str(mean))
+
+        if self.network_threshold_select.value == self.network_threshold_select.options[0]:
+            APSS_connections_threshold = mean
+
+        elif self.network_threshold_select.value == self.network_threshold_select.options[1]:
+            mean_std = mean + std
+            if mean_std < 1:
+                APSS_connections_threshold = mean_std
+            else:
+                APSS_connections_threshold = 0.99
+
+        elif self.network_threshold_select.value == self.network_threshold_select.options[2]:
+            if mean_std_only:
+                APSS_connections_threshold = self.network_threshold_input.value
+            else:
+                mean_2_std = mean + 2 * std
+                if mean_2_std < 1:
+                    APSS_connections_threshold = mean_2_std
+                else:
+                    APSS_connections_threshold = 0.99
+        else:
+            APSS_connections_threshold = self.network_threshold_input.value
+
+        print("APSS_connections_threshold = " + str(APSS_connections_threshold))
+
+        # Recalculate the weights
+        df['weight'] = np.where(df['Avg_synteny_score'] >= APSS_connections_threshold,
+                                np.negative(np.log(1 - df['Avg_synteny_score'])), 0)
+        print(df)
+
+        # Reset the weight edge attributes
+        edges = network.edges()
+        for u, v in edges:
+            condition = ((df['Sample1'] == u) & (df['Sample2'] == v)) | ((df['Sample1'] == v) & (df['Sample2'] == u))
+            index = df[condition].index[0]
+            network.edges[u, v]['weight'] = df.at[index, 'weight']
+
+        #self.generate_rand_positions()
+        self.network_iterations.value = config.network_iterations_options[0]
+        self.update_network_plot(network)
 
     # Update the network plot using the selected parameters and the new positions dict
     def update_network_plot(self, network):
@@ -1226,11 +1373,104 @@ class SynTrackerVisApp:
         self.download_coverage_column.pop(5)
         self.download_coverage_column.append(download_floatpanel)
 
-    def create_multi_genome_layout(self):
+    def create_multi_genome_column(self):
+        self.sample_sizes_slider_multi.value = config.sampling_sizes[0]
 
-        multi_genome_layout = pn.Column()
+        self.genomes_subset_select.options = self.ref_genomes_list
+        if self.number_of_genomes > 20:
+            self.genomes_subset_select.size = 20
+        else:
+            self.genomes_subset_select.size = self.number_of_genomes
+        genomes_select_row = pn.Row(self.genomes_subset_select, styles={'padding': "10px"})
+        self.genomes_select_card.append(genomes_select_row)
 
-        return multi_genome_layout
+        # Build the two bar-plots for subsampled regions based on the selected list of genomes
+        if self.all_or_subset_radio.value == 'All genomes':
+            genomes_list = self.ref_genomes_list
+        else:
+            genomes_list = self.genomes_subset_select.value
+        self.create_plots_per_regions_multi_genomes_column(genomes_list)
+
+        multi_genome_col = pn.Column(
+            self.all_or_subset_radio,
+            self.genomes_select_card,
+            self.display_multi_genomes_plot_button,
+            self.plots_by_size_multi_column,
+            styles={'padding': "15px"}
+        )
+
+        return multi_genome_col
+
+    def update_genomes_selection(self, event):
+        # Build the two bar-plots for subsampled regions based on the selected list of genomes
+        if self.all_or_subset_radio.value == 'All genomes':
+            genomes_list = self.ref_genomes_list
+        else:
+            genomes_list = self.genomes_subset_select.value
+        self.create_plots_per_regions_multi_genomes_column(genomes_list)
+
+    def create_plots_per_regions_multi_genomes_column(self, genomes_list):
+        self.plots_by_size_multi_column.clear()
+
+        # Get the score-per-region table for the selected genomes only
+        score_per_region_genomes_subset_df = dm.return_genomes_subset_table(self.score_per_region_all_genomes_df,
+                                                                                 genomes_list)
+
+        # Create the df for plot presenting the number of pairs vs. subsampled regions
+        pairs_num_per_sampling_size_multi_genomes_df = \
+            dm.create_pairs_num_per_sampling_size(score_per_region_genomes_subset_df)
+
+        #total_species_num = pairs_num_per_sampling_size_multi_genomes_df.at[0, 'Number_of_species']
+
+        # If the number of pairs with 40 sampled regions is smaller than 100, present also the 'All regions' bar
+        # If not, do not present this bar (and remove this option from the slider)
+        pairs_at_40 = pairs_num_per_sampling_size_multi_genomes_df['Number_of_pairs'].iloc[1]
+        if pairs_at_40 >= config.min_pairs_for_all_regions:
+            self.sample_sizes_slider_multi.options = config.sampling_sizes_wo_all
+            self.sample_sizes_slider_multi.value = config.sampling_sizes_wo_all[0]
+            is_all_regions = 0
+        else:
+            is_all_regions = 1
+
+        # Create the number of pairs vs. subsampled regions bar plot
+        pairs_vs_sampling_size_bar_plot = pn.bind(pm.plot_pairs_vs_sampling_size_bar,
+                                                  df=pairs_num_per_sampling_size_multi_genomes_df,
+                                                  sampling_size=self.sample_sizes_slider_multi,
+                                                  is_all_regions=is_all_regions)
+        pairs_bar_plot_pane = pn.pane.HoloViews(pairs_vs_sampling_size_bar_plot, width=520, sizing_mode="fixed")
+
+        # Create a markdown for the pairs lost percent (binded to the slider)
+        binded_text = pn.bind(widgets.create_pairs_lost_text, pairs_num_per_sampling_size_multi_genomes_df,
+                              self.sample_sizes_slider_multi)
+
+        pairs_plot_column = pn.Column(pn.pane.Markdown(refs=binded_text, align='center'), pairs_bar_plot_pane,
+                                      styles={'background-color': "white"})
+
+        # Create the number of species vs. subsampled regions bar plot
+        species_vs_sampling_size_bar_plot = pn.bind(pm.plot_species_vs_sampling_size_bar,
+                                                    df=pairs_num_per_sampling_size_multi_genomes_df,
+                                                    sampling_size=self.sample_sizes_slider_multi,
+                                                    is_all_regions=is_all_regions)
+        species_bar_plot_pane = pn.pane.HoloViews(species_vs_sampling_size_bar_plot, width=520, sizing_mode="fixed")
+
+        # Create a markdown for the pairs lost percent (binded to the slider)
+        binded_text = pn.bind(widgets.create_species_num_text, pairs_num_per_sampling_size_multi_genomes_df,
+                              self.sample_sizes_slider_multi)
+
+        species_plot_column = pn.Column(pn.pane.Markdown(refs=binded_text, align='center'), species_bar_plot_pane,
+                                        styles={'background-color': "white"})
+
+        plots_row = pn.Row(pairs_plot_column, pn.Spacer(width=25), species_plot_column)
+        slider_row = pn.Row(self.sample_sizes_slider_multi, align='center')
+
+        plots_column = pn.Column(
+            plots_row,
+            pn.Spacer(height=20),
+            slider_row,
+            styles={'padding': "10px"}
+        )
+
+        self.plots_by_size_multi_column.append(plots_column)
 
 
 

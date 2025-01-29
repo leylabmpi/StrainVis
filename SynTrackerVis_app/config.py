@@ -4,9 +4,9 @@ sampling_sizes = ['All_regions', '40', '60', '80', '100', '125', '150', '175', '
 sampling_sizes_wo_all = ['40', '60', '80', '100', '125', '150', '175', '200', '250', '300', '350', '400']
 min_pairs_for_all_regions = 100
 max_clustermap_cols = 120
-#network_iterations_options = ['100', '200', '300', '400', '500', '600', '700', '800', '900', '1000']
 network_iterations_options = ['50', '100', '150', '200', '250', '300', '350', '400', '450', '500']
-APSS_connections_threshold = 0.85
+network_thresholds_options = ['Mean APSS', 'Mean APSS+1 STD', 'Mean APSS+2 STD', 'Define another threshold']
+APSS_connections_threshold_default = 0.9
 region_length = 5000
 
 file_upload_timeout = 20
@@ -77,6 +77,10 @@ Bokeh_continuous_colormap_dict = {
     'Greens': bp.Greens256,
 }
 bokeh_file_formats = ['png', 'svg']
+
+normal_bar_color = "#B048B5"
+highlight_bar_color = "#43BFC7"
+
 
 
 

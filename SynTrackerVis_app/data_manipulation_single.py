@@ -52,7 +52,6 @@ def calculate_avg_scores_selected_genome_size(score_per_region_selected_genome_d
 
     return avg_scores_one_size_df
 
-
 def create_pairs_num_per_sampling_size(score_per_region_df):
 
     regions_num_per_pair_df = score_per_region_df[['Sample1', 'Sample2', 'Synteny_score']].\
@@ -75,16 +74,17 @@ def create_pairs_num_per_sampling_size(score_per_region_df):
     pairs_num_per_sampling_size_df = regions_num_per_pair_df[['All_regions', '40', '60', '80', '100',
                                                               '125', '150', '175', '200', '250', '300', '350',
                                                               '400']].sum().reset_index()
-    pairs_num_per_sampling_size_df.columns.values[0] = "Subsampled regions"
-    pairs_num_per_sampling_size_df.columns.values[1] = "Number of pairs"
-    pairs_num_per_sampling_size_df['Pairs lost percent'] = (1 - pairs_num_per_sampling_size_df['Number of pairs'] / \
-                                                            pairs_num_per_sampling_size_df.at[0, 'Number of pairs']) * \
+    pairs_num_per_sampling_size_df.columns.values[0] = "Subsampled_regions"
+    pairs_num_per_sampling_size_df.columns.values[1] = "Number_of_pairs"
+    pairs_num_per_sampling_size_df['Pairs_lost_percent'] = (1 - pairs_num_per_sampling_size_df['Number_of_pairs'] / \
+                                                            pairs_num_per_sampling_size_df.at[0, 'Number_of_pairs']) * \
                                                             100
-    pairs_num_per_sampling_size_df['Pairs lost percent'] = \
-        pairs_num_per_sampling_size_df['Pairs lost percent'].apply(lambda x: round(x, 2))
+    pairs_num_per_sampling_size_df['Pairs_lost_percent'] = \
+        pairs_num_per_sampling_size_df['Pairs_lost_percent'].apply(lambda x: round(x, 2))
 
     #print(pairs_num_per_sampling_size_df)
     return pairs_num_per_sampling_size_df
+
 
 
 def create_score_per_region_sorted_contigs_table(score_per_region_df):
