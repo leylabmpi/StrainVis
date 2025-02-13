@@ -5,11 +5,14 @@ import numpy as np
 import io
 import os
 import re
+import time
 from functools import partial
 import holoviews as hv
 import networkx as nx
 import random
 from bokeh.io import export_svgs, export_png
+from scipy.stats import mannwhitneyu, ranksums
+from statsmodels.stats.multitest import multipletests
 import SynTrackerVis_app.config as config
 import SynTrackerVis_app.data_manipulation_single as ds
 import SynTrackerVis_app.data_manipulation_multi as dm
@@ -39,13 +42,6 @@ def change_collapse_state(selection_val):
         return True
     else:
         return False
-
-
-def change_collapsible_state(selection_val):
-    if selection_val == 'All genomes':
-        return False
-    else:
-        return True
 
 
 def change_continuous_state(chkbox_state):
@@ -81,6 +77,33 @@ def generate_rand_pos():
     return rand
 
 
+def category_by_feature(row, feature, metadata_dict):
+    if metadata_dict[feature][row['Sample1']] == metadata_dict[feature][row['Sample2']]:
+        return 'Same ' + feature
+    else:
+        return 'Different ' + feature
+
+
+def return_p_value(data1, data2):
+    stat, p_val = ranksums(data1, data2)
+    return p_val
+
+
+def return_significance(row):
+    if str(row['P_value']) != "nan":
+        if row['P_value'] < 0.000005:
+            return "***"
+        elif row['P_value'] < 0.0005:
+            return "**"
+        elif row['P_value'] < 0.05:
+            return "*"
+        else:
+            return "NS"
+    else:
+        return ""
+
+
+
 class SynTrackerVisApp:
 
     def __init__(self):
@@ -95,15 +118,19 @@ class SynTrackerVisApp:
         self.sample_ids_column_name = ""
         self.number_of_genomes = 0
         self.ref_genomes_list = []
+        self.selected_genomes_subset = []
         self.ref_genome = ""
         self.sampling_size = ""
+        self.sampling_size_multi = ""
         self.score_per_region_all_genomes_df = pd.DataFrame()
+        self.score_per_region_genomes_subset_df = pd.DataFrame()
         self.score_per_region_selected_genome_df = pd.DataFrame()
-        self.avg_score_per_region_selected_genome_df = pd.DataFrame()
-        self.avg_score_per_region_genomes_subset_df = pd.DataFrame()
-        self.df_for_network = pd.DataFrame()
-        self.avg_scores_all_genomes_all_sizes_dict = dict()
-        self.calculated_avg_genome_size_dict = dict()
+        self.genomes_subset_selected_size_APSS_df = pd.DataFrame()
+        self.boxplot_p_values_df = pd.DataFrame()
+        self.APSS_by_genome_all_sizes_dict = dict()
+        self.APSS_all_genomes_all_sizes_dict = dict()
+        self.calculated_APSS_genome_size_dict = dict()
+        self.calculated_APSS_all_genomes_size_dict = dict()
         self.working_directory = os.getcwd()
         self.downloads_dir_path = self.working_directory + config.downloads_dir
         self.contigs_dict = dict()
@@ -113,6 +140,8 @@ class SynTrackerVisApp:
         self.std_score_genome = 0
         self.threshold_select_watcher = ""
         self.threshold_input_watcher = ""
+        self.feature_select_watcher = ""
+        #self.use_metadata_boxplot_watcher = ""
 
         # Bootstrap template
         self.template = pn.template.VanillaTemplate(
@@ -138,6 +167,11 @@ class SynTrackerVisApp:
 
         self.genomes_select = pn.widgets.Select(name='Select a reference genome to process:', value=None,
                                                 options=[], styles={'margin': "0"})
+        self.sample_sizes_slider = pn.widgets.DiscreteSlider(name='Subsampled regions', options=config.sampling_sizes,
+                                                             bar_color='white')
+        self.show_single_plots_button = pn.widgets.Button(name='Display plots using the selected number of regions',
+                                                          button_type='primary', margin=(25, 0))
+        self.show_single_plots_button.on_click(self.create_single_genome_plots_by_APSS)
 
         self.all_or_subset_radio = pn.widgets.RadioBoxGroup(name='all_or_subset',
                                                             options=['All genomes', 'Select a subset of genomes'],
@@ -145,27 +179,24 @@ class SynTrackerVisApp:
         self.genomes_select_card = pn.Card(title='Genomes subset selection',
                                            collapsed=pn.bind(change_collapse_state,
                                                              selection_val=self.all_or_subset_radio, watch=True),
-                                           #collapsible=pn.bind(change_collapsible_state,
-                                           #                    selection_val=self.all_or_subset_radio, watch=True),
                                            styles={'margin': "5px 0 5px 10px", 'width': "500px"}
                                            )
         self.genomes_subset_select = pn.widgets.MultiSelect(options=[],
                                                             disabled=pn.bind(change_collapse_state,
                                                                              selection_val=self.all_or_subset_radio,
                                                                              watch=True))
-        self.display_multi_genomes_plot_button = pn.widgets.Button(name='Update genomes selection',
-                                                                   button_type='primary',
-                                                                   styles={'margin': "12px 0 12px 10px"})
-        self.display_multi_genomes_plot_button.on_click(self.update_genomes_selection)
-
-        self.sample_sizes_slider = pn.widgets.DiscreteSlider(name='Subsampled regions', options=config.sampling_sizes,
-                                                             bar_color='white')
+        self.update_genomes_selection_button = pn.widgets.Button(name='Update genomes selection',
+                                                                 button_type='primary',
+                                                                 styles={'margin': "12px 0 12px 10px"})
+        self.update_genomes_selection_button.on_click(self.update_genomes_selection)
         self.sample_sizes_slider_multi = pn.widgets.DiscreteSlider(name='Subsampled regions',
-                                                                   options=config.sampling_sizes, bar_color='white')
+                                                                   options=config.sampling_sizes, bar_color='white',
+                                                                   styles={'font-size': "16px", 'width': "450px",
+                                                                           'text-align': "center"})
+        self.show_box_plot_multi_button = pn.widgets.Button(name='Display plot using the selected number of regions',
+                                                            button_type='primary', margin=(25, 0))
+        self.show_box_plot_multi_button.on_click(self.create_multi_genomes_plots_by_APSS)
 
-        self.show_single_plots_button = pn.widgets.Button(name='Display analysis using the selected number of regions',
-                                                          button_type='primary', margin=(25, 0))
-        self.show_single_plots_button.on_click(self.create_single_genome_plots_by_avg)
 
         # Panel layouts
         self.single_multi_genome_tabs = pn.Tabs(dynamic=True, styles=config.single_multi_tabs_style)
@@ -173,6 +204,7 @@ class SynTrackerVisApp:
         self.single_tabs = pn.Tabs(dynamic=True, styles=config.single_tabs_style)
         self.activated_coverage_tab = 0
         self.plots_by_size_single_column = pn.Column()
+        self.main_plots_multi_column = pn.Column()
         self.plots_by_size_multi_column = pn.Column()
         self.main_multi_column = pn.Column(styles=config.main_column_style)
         self.plots_by_ref_column = pn.Column(styles=config.main_column_style)
@@ -185,6 +217,8 @@ class SynTrackerVisApp:
                                    header_background="#2e86c1", header_color="#ffffff")
         self.network_card = pn.Card(title='Network', styles=config.plot_card_style, header_background="#2e86c1",
                                     header_color="#ffffff")
+        self.box_plot_card = pn.Card(title='APSS distribution among species', styles=config.plot_card_style,
+                                     header_background="#2e86c1", header_color="#ffffff")
 
         download_text = 'Save file as: (if no full path, the file is saved under \'Downloads/\')'
 
@@ -226,7 +260,7 @@ class SynTrackerVisApp:
         self.jitter_image_format = pn.widgets.Select(value=config.matplotlib_file_formats[0],
                                                      options=config.matplotlib_file_formats, name="Select image format:")
         self.save_jitter_file_path = pn.widgets.TextInput(name=download_text)
-        self.download_jiter_column = pn.Column()
+        self.download_jitter_column = pn.Column()
 
         # Network plot elements
         self.network_plot = ""
@@ -291,6 +325,37 @@ class SynTrackerVisApp:
         self.pos_dict = dict()
         self.nodes_list = []
         self.network = ""
+
+        # Box-plot elements
+        self.box_plot = ""
+        self.box_plot_pane = ""
+        self.use_metadata_box_plot = pn.widgets.Checkbox(name='Use metadata in plot', value=False)
+        self.box_plot_color = pn.widgets.ColorPicker(name='Select color', value='#3b89be',
+                                                     disabled=pn.bind(change_disabled_state_straight,
+                                                                      chkbox_state=self.use_metadata_box_plot,
+                                                                      watch=True))
+        self.metadata_box_plot_card = pn.Card(styles={'background': "#ffffff", 'margin': "10px", 'width': "300px"},
+                                              hide_header=True, collapsed=pn.bind(change_disabled_state_inverse,
+                                                                                  chkbox_state=self.use_metadata_box_plot,
+                                                                                  watch=True))
+        self.box_plot_feature_select = pn.widgets.Select(options=['Select feature'], width=150,
+                                                         name="Separate plot by following feature:",
+                                                         disabled=pn.bind(change_disabled_state_inverse,
+                                                                          chkbox_state=self.use_metadata_box_plot,
+                                                                          watch=True))
+        self.box_plot_same_color = pn.widgets.ColorPicker(name='Same color:', value='#000000',
+                                                          disabled=pn.bind(change_disabled_state_inverse,
+                                                                           chkbox_state=self.use_metadata_box_plot,
+                                                                           watch=True))
+        self.box_plot_different_color = pn.widgets.ColorPicker(name='Different color:', value='#000000',
+                                                               disabled=pn.bind(change_disabled_state_inverse,
+                                                                                chkbox_state=self.use_metadata_box_plot,
+                                                                                watch=True))
+        self.box_plot_image_format = pn.widgets.Select(value=config.matplotlib_file_formats[0],
+                                                       options=config.matplotlib_file_formats,
+                                                       name="Select image format:")
+        self.save_box_plot_file_path = pn.widgets.TextInput(name=download_text)
+        self.download_box_plot_column = pn.Column()
 
         # Coverage plots elements
         self.coverage_plot = ""
@@ -363,7 +428,7 @@ class SynTrackerVisApp:
                         "SynTracker's output file)."
         self.main_area.append(pn.pane.Markdown(metadata_note, styles={'font-size': "15px", 'margin-bottom': "0",
                                                                       'margin-top': "0",
-                                                                              'color': config.title_red_color}))
+                                                                      'color': config.title_red_color}))
 
         self.main_area.append(pn.Spacer(height=30))
 
@@ -375,11 +440,14 @@ class SynTrackerVisApp:
 
     def init_parameters(self):
         del self.score_per_region_all_genomes_df
+        del self.score_per_region_genomes_subset_df
         del self.score_per_region_selected_genome_df
-        del self.avg_score_per_region_selected_genome_df
+        del self.genomes_subset_selected_size_APSS_df
+        del self.boxplot_p_values_df
         self.use_metadata_jitter.disabled = False
         self.network_threshold_select.param.unwatch(self.threshold_select_watcher)
         self.network_threshold_input.param.unwatch(self.threshold_input_watcher)
+        self.box_plot_feature_select.param.unwatch(self.feature_select_watcher)
         self.network_threshold_select.options = []
 
         gc.collect()
@@ -412,11 +480,7 @@ class SynTrackerVisApp:
 
     def select_ref_genome(self, ref_genome):
         self.ref_genome = ref_genome
-        print("Selected ref genome = " + self.ref_genome)
-
-    def select_sampling_size(self, size):
-        self.sampling_size = size
-        print("Selected subsampling size = " + self.sampling_size)
+        print("\nSelected ref genome = " + self.ref_genome)
 
     def load_input_file(self, event):
         print("\nIn load_input_file")
@@ -504,16 +568,22 @@ class SynTrackerVisApp:
         title = "Loading input file: " + self.filename
         self.main_area.append(pn.pane.Markdown(title, styles={'font-size': "20px"}))
 
+    def read_metadata_file(self):
+        pass
+
     def start_process(self):
         self.ref_genomes_list = []
+        self.selected_genomes_subset = []
         self.single_multi_genome_tabs.clear()
         self.main_single_column.clear()
         self.main_multi_column.clear()
         self.single_tabs.clear()
         self.plots_by_size_single_column.clear()
+        self.main_plots_multi_column.clear()
         self.plots_by_size_multi_column.clear()
 
         # Read the file directly from the path
+        before = time.time()
         col_set = ['Ref_genome', 'Sample1', 'Sample2', 'Region', 'Synteny_score']
         if self.is_file_path == 1:
             self.score_per_region_all_genomes_df = pd.read_csv(self.text_input.value,
@@ -523,6 +593,9 @@ class SynTrackerVisApp:
         else:
             self.score_per_region_all_genomes_df = pd.read_csv(io.BytesIO(self.input_file.value),
                                                                usecols=lambda c: c in set(col_set))
+        after = time.time()
+        duration = after - before
+        print("\nReading input file took " + str(duration) + " seconds.\n")
 
         # Extract the number of genomes from the input file
         self.get_number_of_genomes()
@@ -531,25 +604,35 @@ class SynTrackerVisApp:
         
         # If a metadata file was uploaded - read the file into a DF
         if self.is_metadata:
+            before = time.time()
             metadata_df = pd.read_table(io.BytesIO(self.metadata_file.value))
+            after = time.time()
+            duration = after - before
+            print("\nReading metadata file took " + str(duration) + " seconds.\n")
             print("\nMetadata before validation:")
             print(metadata_df)
 
             # If some samples are missing from the metadata - fill them with np.nan values
+            before = time.time()
             self.metadata_dict, self.metadata_features_list, self.sample_ids_column_name = \
                 dm.complete_metadata(self.score_per_region_all_genomes_df, metadata_df)
+            after = time.time()
+            duration = after - before
+            print("\nFilling missing metadata took " + str(duration) + " seconds.\n")
 
         # Initialize the dict that saves the dataframes for all the combinations of ref_genomes and sizes
         for genome in self.ref_genomes_list:
-            self.avg_scores_all_genomes_all_sizes_dict[genome] = dict()
+            self.APSS_by_genome_all_sizes_dict[genome] = dict()
             for size in config.sampling_sizes:
-                self.avg_scores_all_genomes_all_sizes_dict[genome][size] = pd.DataFrame()
+                self.APSS_by_genome_all_sizes_dict[genome][size] = pd.DataFrame()
+                self.APSS_all_genomes_all_sizes_dict[size] = pd.DataFrame()
 
         # Initialize the dict that saves the combinations of ref_genomes and sizes that have already been calculated
         for genome in self.ref_genomes_list:
-            self.calculated_avg_genome_size_dict[genome] = dict()
+            self.calculated_APSS_genome_size_dict[genome] = dict()
             for size in config.sampling_sizes:
-                self.calculated_avg_genome_size_dict[genome][size] = 0
+                self.calculated_APSS_genome_size_dict[genome][size] = 0
+                self.calculated_APSS_all_genomes_size_dict[size] = 0
 
         # Input file contains only one ref-genome -> present only single genome visualization
         if self.number_of_genomes == 1:
@@ -572,13 +655,21 @@ class SynTrackerVisApp:
             self.main_single_column.append(self.genomes_select)
 
             # Create the single-genome visualization layout for the selected ref-genome
+            before = time.time()
             single_genome_column = pn.bind(self.create_single_genome_column, self.genomes_select)
             self.main_single_column.append(single_genome_column)
+            after = time.time()
+            duration = after - before
+            print("\ncreate_single_genome_column took " + str(duration) + " seconds.\n")
 
             pn.state.location.sync(self.genomes_select, {'value': 'ref_genome'})
 
             # Create the multiple-genome visualization layout
+            before = time.time()
             self.main_multi_column = self.create_multi_genome_column()
+            after = time.time()
+            duration = after - before
+            print("\ncreate_multi_genome_column took " + str(duration) + " seconds.\n")
 
             self.single_multi_genome_tabs.append(('Single genome visualization', self.main_single_column))
             self.single_multi_genome_tabs.append(('Multiple genomes visualization', self.main_multi_column))
@@ -607,8 +698,12 @@ class SynTrackerVisApp:
                                                                                    self.ref_genome)
 
         # Get the dictionary of score-per-region tables, for each contig and the sorted contigs list
+        before = time.time()
         self.contigs_dict, self.contigs_list_by_name, self.contigs_list_by_length = \
             ds.create_score_per_region_sorted_contigs_table(self.score_per_region_selected_genome_df)
+        after = time.time()
+        duration = after - before
+        print("\nCalculating score per region for all contigs took " + str(duration) + " seconds.\n")
 
         # Calculate the average score and std for the whole genome (all contigs)
         self.avg_score_genome = self.score_per_region_selected_genome_df['Synteny_score'].mean()
@@ -673,10 +768,10 @@ class SynTrackerVisApp:
             self.activated_coverage_tab = 1
             self.create_coverage_plots_tab()
 
-    def create_single_genome_plots_by_avg(self, event):
+    def create_single_genome_plots_by_APSS(self, event):
 
         self.sampling_size = self.sample_sizes_slider.value
-        print("Selected subsampling size = " + self.sampling_size)
+        print("\nSingle genome visualization. Selected subsampling size = " + self.sampling_size)
 
         self.plots_by_size_single_column.clear()
         self.jitter_card.clear()
@@ -690,10 +785,10 @@ class SynTrackerVisApp:
         self.network_threshold_input.value = config.APSS_connections_threshold_default
 
         # Check if the requested genome and size have already been calculated. If so, fetch the specific dataframe
-        if self.calculated_avg_genome_size_dict[self.ref_genome][self.sampling_size]:
+        if self.calculated_APSS_genome_size_dict[self.ref_genome][self.sampling_size]:
             print("\nThe selected size (" + self.sampling_size + ") has already been calculated - retrieve it.")
             selected_genome_and_size_avg_df = \
-                self.avg_scores_all_genomes_all_sizes_dict[self.ref_genome][self.sampling_size]
+                self.APSS_by_genome_all_sizes_dict[self.ref_genome][self.sampling_size]
 
         else:
             # Calculate and return the dataframe with average scores for the selected genome and sampling size
@@ -702,9 +797,9 @@ class SynTrackerVisApp:
                 ds.calculate_avg_scores_selected_genome_size(self.score_per_region_selected_genome_df, self.ref_genome,
                                                              self.sampling_size)
             # Save the dataframe in the main dictionary
-            self.avg_scores_all_genomes_all_sizes_dict[self.ref_genome][self.sampling_size] = \
+            self.APSS_by_genome_all_sizes_dict[self.ref_genome][self.sampling_size] = \
                 selected_genome_and_size_avg_df
-            self.calculated_avg_genome_size_dict[self.ref_genome][self.sampling_size] = 1
+            self.calculated_APSS_genome_size_dict[self.ref_genome][self.sampling_size] = 1
 
         # No data at the selected sampling size
         if selected_genome_and_size_avg_df.empty:
@@ -758,14 +853,14 @@ class SynTrackerVisApp:
         jitter_file = "Jitterplot_" + self.ref_genome + "_" + self.sampling_size + "_regions"
         self.save_jitter_file_path.placeholder = jitter_file
 
-        self.download_jiter_column = pn.Column(pn.pane.Markdown(save_file_title, styles={'font-size': "15px",
+        self.download_jitter_column = pn.Column(pn.pane.Markdown(save_file_title, styles={'font-size': "15px",
                                                                                          'font-weight': "bold",
                                                                                          'color': config.title_blue_color,
                                                                                          'margin': "0"}),
                                                self.jitter_image_format, self.save_jitter_file_path,
                                                download_button, pn.pane.Markdown())
 
-        controls_col = pn.Column(styling_col, pn.Spacer(height=30), self.download_jiter_column)
+        controls_col = pn.Column(styling_col, pn.Spacer(height=30), self.download_jitter_column)
 
         # Use metadata in plot
         if self.is_metadata:
@@ -781,7 +876,6 @@ class SynTrackerVisApp:
                                    metadata_dict=self.metadata_dict, feature=self.jitter_feature_select,
                                    same_color=self.jitter_same_color, different_color=self.jitter_different_color)
 
-        #jitter_pane = pn.pane.Bokeh(self.jitter_plot)
         jitter_pane = pn.pane.Matplotlib(self.jitter_plot, height=550, dpi=300, tight=True, format='png')
 
         jitter_row = pn.Row(controls_col, pn.Spacer(width=150), jitter_pane, styles={'padding': "15px"})
@@ -810,8 +904,8 @@ class SynTrackerVisApp:
         download_message = "The image was downloaded successfully under:\n" + jitter_file_path
         markdown = pn.pane.Markdown(download_message, styles={'font-size': "12px", 'color': config.title_red_color})
         download_floatpanel = pn.layout.FloatPanel(markdown, name='Download message', margin=20)
-        self.download_jiter_column.pop(4)
-        self.download_jiter_column.append(download_floatpanel)
+        self.download_jitter_column.pop(4)
+        self.download_jitter_column.append(download_floatpanel)
 
     def create_clustermap_pane(self, selected_genome_and_size_avg_df):
 
@@ -838,7 +932,7 @@ class SynTrackerVisApp:
         controls_col = pn.Column(styling_col, pn.Spacer(height=30), self.download_clustermap_column)
 
         # Transform the data into a scoring matrix
-        pivoted_df = selected_genome_and_size_avg_df.pivot(columns='Sample1', index='Sample2', values='Avg_synteny_score')
+        pivoted_df = selected_genome_and_size_avg_df.pivot(columns='Sample1', index='Sample2', values='APSS')
         scores_matrix = pivoted_df.combine_first(pivoted_df.T)
 
         # Check the number of columns in the matrix
@@ -938,18 +1032,18 @@ class SynTrackerVisApp:
 
         ########################################################
         # Create a table for the network
-        df_for_network = selected_genome_and_size_avg_df.loc[:, ['Sample1', 'Sample2', 'Avg_synteny_score']].copy()
+        df_for_network = selected_genome_and_size_avg_df.loc[:, ['Sample1', 'Sample2', 'APSS']].copy()
 
-        df_for_network.loc[(df_for_network['Avg_synteny_score'] < 0), 'Avg_synteny_score'] = 0
-        df_for_network.loc[(df_for_network['Avg_synteny_score'] == 1), 'Avg_synteny_score'] = 0.999999
+        df_for_network.loc[(df_for_network['APSS'] < 0), 'APSS'] = 0
+        df_for_network.loc[(df_for_network['APSS'] == 1), 'APSS'] = 0.999999
 
         # Set a score threshold for the connections (below it zero the weight).
         # Currently the threshold is the mean APSS
-        mean_APSS = df_for_network.loc[:, 'Avg_synteny_score'].mean().round(2)
-        std_APSS = df_for_network.loc[:, 'Avg_synteny_score'].std().round(2)
+        mean_APSS = df_for_network.loc[:, 'APSS'].mean().round(2)
+        std_APSS = df_for_network.loc[:, 'APSS'].std().round(2)
         APSS_connections_threshold = mean_APSS
-        df_for_network['weight'] = np.where(df_for_network['Avg_synteny_score'] >= APSS_connections_threshold,
-                                            np.negative(np.log(1 - df_for_network['Avg_synteny_score'])), 0)
+        df_for_network['weight'] = np.where(df_for_network['APSS'] >= APSS_connections_threshold,
+                                            np.negative(np.log(1 - df_for_network['APSS'])), 0)
         print("\nDF for network:")
         print(df_for_network)
         print("\nMean APSS: " + str(mean_APSS))
@@ -1113,8 +1207,8 @@ class SynTrackerVisApp:
         print("APSS_connections_threshold = " + str(APSS_connections_threshold))
 
         # Recalculate the weights
-        df['weight'] = np.where(df['Avg_synteny_score'] >= APSS_connections_threshold,
-                                np.negative(np.log(1 - df['Avg_synteny_score'])), 0)
+        df['weight'] = np.where(df['APSS'] >= APSS_connections_threshold,
+                                np.negative(np.log(1 - df['APSS'])), 0)
         print(df)
 
         # Reset the weight edge attributes
@@ -1284,8 +1378,8 @@ class SynTrackerVisApp:
         # Calculate the average synteny scores for each position
         avg_score_per_pos_contig = \
             score_per_pos_contig[['Contig_name', 'Position', 'Synteny_score']]. \
-                sort_values(['Position']).groupby(['Position']).mean(numeric_only=True).reset_index(). \
-                rename(columns={"Synteny_score": "Avg_synteny_score"})
+            sort_values(['Position']).groupby(['Position']).mean(numeric_only=True).reset_index(). \
+            rename(columns={"Synteny_score": "Avg_synteny_score"})
         #print("\nAverage df:")
         #print(avg_score_per_pos_contig)
 
@@ -1374,6 +1468,7 @@ class SynTrackerVisApp:
         self.download_coverage_column.append(download_floatpanel)
 
     def create_multi_genome_column(self):
+
         self.sample_sizes_slider_multi.value = config.sampling_sizes[0]
 
         self.genomes_subset_select.options = self.ref_genomes_list
@@ -1386,16 +1481,16 @@ class SynTrackerVisApp:
 
         # Build the two bar-plots for subsampled regions based on the selected list of genomes
         if self.all_or_subset_radio.value == 'All genomes':
-            genomes_list = self.ref_genomes_list
+            self.selected_genomes_subset = self.ref_genomes_list
         else:
-            genomes_list = self.genomes_subset_select.value
-        self.create_plots_per_regions_multi_genomes_column(genomes_list)
+            self.selected_genomes_subset = self.genomes_subset_select.value
+        self.create_multi_genomes_plots_initial_column()
 
         multi_genome_col = pn.Column(
             self.all_or_subset_radio,
             self.genomes_select_card,
-            self.display_multi_genomes_plot_button,
-            self.plots_by_size_multi_column,
+            self.update_genomes_selection_button,
+            self.main_plots_multi_column,
             styles={'padding': "15px"}
         )
 
@@ -1404,28 +1499,36 @@ class SynTrackerVisApp:
     def update_genomes_selection(self, event):
         # Build the two bar-plots for subsampled regions based on the selected list of genomes
         if self.all_or_subset_radio.value == 'All genomes':
-            genomes_list = self.ref_genomes_list
+            self.selected_genomes_subset = self.ref_genomes_list
         else:
-            genomes_list = self.genomes_subset_select.value
-        self.create_plots_per_regions_multi_genomes_column(genomes_list)
+            self.selected_genomes_subset = self.genomes_subset_select.value
 
-    def create_plots_per_regions_multi_genomes_column(self, genomes_list):
+        print("\nupdate_genomes_selection:")
+        print(self.selected_genomes_subset)
+
+        self.create_multi_genomes_plots_initial_column()
+
+    def create_multi_genomes_plots_initial_column(self):
+        self.main_plots_multi_column.clear()
         self.plots_by_size_multi_column.clear()
+        #self.box_plot_feature_select.param.unwatch(self.feature_select_watcher)
+
+        # Initialize the dictionaries that hold the APSS for all the genomes in different sampling sizes
+        for size in config.sampling_sizes:
+            self.calculated_APSS_all_genomes_size_dict[size] = 0
 
         # Get the score-per-region table for the selected genomes only
-        score_per_region_genomes_subset_df = dm.return_genomes_subset_table(self.score_per_region_all_genomes_df,
-                                                                                 genomes_list)
+        self.score_per_region_genomes_subset_df = dm.return_genomes_subset_table(self.score_per_region_all_genomes_df,
+                                                                                 self.selected_genomes_subset)
 
         # Create the df for plot presenting the number of pairs vs. subsampled regions
         pairs_num_per_sampling_size_multi_genomes_df = \
-            dm.create_pairs_num_per_sampling_size(score_per_region_genomes_subset_df)
+            dm.create_pairs_num_per_sampling_size(self.score_per_region_genomes_subset_df)
 
-        #total_species_num = pairs_num_per_sampling_size_multi_genomes_df.at[0, 'Number_of_species']
-
-        # If the number of pairs with 40 sampled regions is smaller than 100, present also the 'All regions' bar
+        # If the number of genomes with 40 sampled regions is smaller than the maximum, present also the 'All regions' bar
         # If not, do not present this bar (and remove this option from the slider)
-        pairs_at_40 = pairs_num_per_sampling_size_multi_genomes_df['Number_of_pairs'].iloc[1]
-        if pairs_at_40 >= config.min_pairs_for_all_regions:
+        species_at_40 = pairs_num_per_sampling_size_multi_genomes_df['Number_of_species'].iloc[1]
+        if species_at_40 == self.number_of_genomes:
             self.sample_sizes_slider_multi.options = config.sampling_sizes_wo_all
             self.sample_sizes_slider_multi.value = config.sampling_sizes_wo_all[0]
             is_all_regions = 0
@@ -1462,15 +1565,231 @@ class SynTrackerVisApp:
 
         plots_row = pn.Row(pairs_plot_column, pn.Spacer(width=25), species_plot_column)
         slider_row = pn.Row(self.sample_sizes_slider_multi, align='center')
+        button_row = pn.Row(self.show_box_plot_multi_button,  align='center')
 
         plots_column = pn.Column(
             plots_row,
             pn.Spacer(height=20),
             slider_row,
+            button_row,
+            self.plots_by_size_multi_column,
             styles={'padding': "10px"}
         )
 
-        self.plots_by_size_multi_column.append(plots_column)
+        self.main_plots_multi_column.append(plots_column)
+
+    def create_multi_genomes_plots_by_APSS(self, event):
+
+        self.sampling_size_multi = self.sample_sizes_slider_multi.value
+        print("\nMulti genomes visualization. Selected subsampling size = " + self.sampling_size_multi)
+
+        self.box_plot_feature_select.param.unwatch(self.feature_select_watcher)
+        self.plots_by_size_multi_column.clear()
+        self.box_plot_card.clear()
+        self.metadata_box_plot_card.clear()
+
+        if self.sampling_size_multi == 'All_regions':
+            size_title = "Presenting plots using average synteny scores from all available regions:"
+        else:
+            size_title = "Presenting plots using average synteny scores from " + self.sampling_size_multi + \
+                         " subsampled regions:"
+
+        self.plots_by_size_multi_column.append(pn.pane.Markdown(size_title, styles={'font-size': "18px",
+                                                                                    'margin': "0 0 10px 0",
+                                                                                    'padding': "0"}))
+
+        # Check if the requested genome and size have already been calculated. If so, fetch the specific dataframe
+        if self.calculated_APSS_all_genomes_size_dict[self.sampling_size_multi]:
+            print("\nThe selected size (" + self.sampling_size_multi + ") has already been calculated - retrieve it.")
+            all_genomes_selected_size_APSS_df = self.APSS_all_genomes_all_sizes_dict[self.sampling_size_multi]
+
+        else:
+            # Calculate and return the dataframe with average scores for the selected genome and sampling size
+            print("\nThe selected size (" + self.sampling_size_multi + ") has not been calculated yet - calculate it...")
+            before = time.time()
+            all_genomes_selected_size_APSS_df = dm.calculate_APSS_all_genomes_sampling_size(
+                self.score_per_region_all_genomes_df, self.sampling_size_multi)
+            after = time.time()
+            duration = after - before
+            print("Calculating APSS with " + str(self.sampling_size_multi ) + " regions for " +
+                  str(self.number_of_genomes) + " genomes took " + str(duration) + " seconds.\n")
+            # Save the dataframe in the main dictionary
+            self.APSS_all_genomes_all_sizes_dict[self.sampling_size_multi] = all_genomes_selected_size_APSS_df
+            self.calculated_APSS_all_genomes_size_dict[self.sampling_size_multi] = 1
+
+        self.genomes_subset_selected_size_APSS_df = dm.return_genomes_subset_APSS_selected_size_table(
+            all_genomes_selected_size_APSS_df, self.selected_genomes_subset)
+
+        # No data at the selected sampling size
+        if self.genomes_subset_selected_size_APSS_df.empty:
+            text = "The data obtained using " + self.sampling_size + " subsampled regions is not sufficient for " \
+                                                                     "further processing"
+            self.plots_by_size_multi_column.append(pn.pane.Markdown(text, styles={'font-size': "18px",
+                                                                                  'color': config.title_red_color,
+                                                                                   'margin': "0"}))
+
+        # Enough data -> creating plots
+        else:
+            # Add the plots to the layout
+            self.create_box_plot_multi_pane()
+            self.plots_by_size_multi_column.append(self.box_plot_card)
+
+    def create_box_plot_multi_pane(self):
+        styling_title = "Plot styling options:"
+        metadata_colors_row = pn.Row(self.box_plot_same_color, pn.Spacer(width=3), self.box_plot_different_color)
+        metadata_col = pn.Column(self.box_plot_feature_select, metadata_colors_row, styles={'padding': "10x"})
+        self.metadata_box_plot_card.append(metadata_col)
+        styling_col = pn.Column(pn.pane.Markdown(styling_title, styles={'font-size': "15px", 'font-weight': "bold",
+                                                                        'color': config.title_blue_color,
+                                                                        'margin': "0"}),
+                                self.box_plot_color,
+                                pn.Spacer(height=5),
+                                self.use_metadata_box_plot,
+                                self.metadata_box_plot_card
+                                )
+
+        save_file_title = "Download image options:"
+        download_button = pn.widgets.Button(name='Download high-resolution image', button_type='primary')
+        download_button.on_click(self.download_box_plot)
+
+        genomes_num = len(self.selected_genomes_subset)
+        if genomes_num == self.number_of_genomes:
+            box_plot_file = "Boxplot_all_genomes_" + self.sampling_size_multi + "_regions"
+        else:
+            box_plot_file = "Boxplot_" + str(genomes_num) + "_genomes_" + self.sampling_size_multi + "_regions"
+        self.save_box_plot_file_path.placeholder = box_plot_file
+
+        self.download_box_plot_column = pn.Column(pn.pane.Markdown(save_file_title,
+                                                                   styles={'font-size': "15px",
+                                                                           'font-weight': "bold",
+                                                                           'color': config.title_blue_color,
+                                                                           'margin': "0"}),
+                                                  self.box_plot_image_format, self.save_box_plot_file_path,
+                                                  download_button, pn.pane.Markdown())
+
+        controls_col = pn.Column(styling_col, pn.Spacer(height=30), self.download_box_plot_column)
+
+        # There is metadata
+        if self.is_metadata:
+
+            # Fill the features drop-down menu
+            self.box_plot_feature_select.options = self.metadata_features_list
+            self.box_plot_feature_select.value = self.metadata_features_list[0]
+
+            # Prepare the APSS dataframe including the current feature and the p-values dataframe
+            self.calculate_metadata_for_box_plot()
+
+            # Set watcher for the feature-select widget
+            self.feature_select_watcher = self.box_plot_feature_select.param.watch(self.update_feature_in_boxplot,
+                                                                                   'value', onlychanged=True)
+
+        # No metadata
+        else:
+            self.use_metadata_box_plot.disabled = True
+
+        self.box_plot = pn.bind(pm.create_box_plot, avg_df=self.genomes_subset_selected_size_APSS_df,
+                                pvalues_df=self.boxplot_p_values_df, color=self.box_plot_color,
+                                use_metadata=self.use_metadata_box_plot, feature=self.box_plot_feature_select.value,
+                                same_color=self.box_plot_same_color, different_color=self.box_plot_different_color)
+
+        self.box_plot_pane = pn.pane.Matplotlib(self.box_plot, width=700, dpi=300, tight=True, format='png')
+
+        box_plot_row = pn.Row(controls_col, pn.Spacer(width=30), self.box_plot_pane, styles={'padding': "15px"})
+        self.box_plot_card.append(box_plot_row)
+
+    def calculate_metadata_for_box_plot(self):
+
+        presented_genomes_list = self.genomes_subset_selected_size_APSS_df['Ref_genome'].unique()
+        genomes_num = len(presented_genomes_list)
+        print("\ncalculate_metadata_for_box_plot: Number of genomes to present = " + str(genomes_num))
+
+        feature = self.box_plot_feature_select.value
+
+        self.genomes_subset_selected_size_APSS_df['Category'] = self.genomes_subset_selected_size_APSS_df.apply(
+            lambda row: category_by_feature(row, feature, self.metadata_dict), axis=1)
+        print("\nDF for box_plot with category:")
+        print(self.genomes_subset_selected_size_APSS_df)
+
+        same_feature = 'Same ' + feature
+        diff_feature = 'Different ' + feature
+
+        # Calculate P-values for each genome
+        valid_pval_list = []
+        genome_pval_dict = {}
+        pval_corrected = []
+        for genome in presented_genomes_list:
+            print("\nGenome: " + genome + ", Feature: " + feature)
+            same_array = self.genomes_subset_selected_size_APSS_df[
+                (self.genomes_subset_selected_size_APSS_df['Ref_genome'] == genome) &
+                (self.genomes_subset_selected_size_APSS_df['Category'] == same_feature)]['APSS']
+            diff_array = self.genomes_subset_selected_size_APSS_df[
+                (self.genomes_subset_selected_size_APSS_df['Ref_genome'] == genome) &
+                (self.genomes_subset_selected_size_APSS_df['Category'] == diff_feature)]['APSS']
+            p_val = return_p_value(same_array, diff_array)
+            if str(p_val) != "nan":
+                valid_pval_list.append(p_val)
+            genome_pval_dict[genome] = p_val
+            print("P-value = " + str(p_val))
+
+        #print("\nOriginal p-values:")
+        #print(valid_pval_list)
+
+        if len(valid_pval_list) >= 2:
+            reject, pval_corrected, _, q_values = multipletests(valid_pval_list, method='fdr_bh')
+            print("Corrected p-values:")
+            print(pval_corrected)
+
+        valid_counter = 0
+        if len(pval_corrected) > 0:
+            for genome in presented_genomes_list:
+                if str(genome_pval_dict[genome]) != "nan":
+                    genome_pval_dict[genome] = pval_corrected[valid_counter]
+                    valid_counter += 1
+
+        updated_pval_list = genome_pval_dict.values()
+        genomes_pvalues_dict = {'Ref_genome': presented_genomes_list, 'P_value': updated_pval_list}
+        self.boxplot_p_values_df = pd.DataFrame(genomes_pvalues_dict)
+        # print(pvalues_df)
+
+        self.boxplot_p_values_df['Significance'] = self.boxplot_p_values_df.apply(lambda row: return_significance(row),
+                                                                                  axis=1)
+        print(self.boxplot_p_values_df)
+
+    def update_feature_in_boxplot(self, event):
+        print("\nIn update_feature_in_boxplot callback")
+        self.calculate_metadata_for_box_plot()
+
+        self.box_plot = pn.bind(pm.create_box_plot, avg_df=self.genomes_subset_selected_size_APSS_df,
+                                pvalues_df=self.boxplot_p_values_df, color=self.box_plot_color,
+                                use_metadata=self.use_metadata_box_plot, feature=self.box_plot_feature_select.value,
+                                same_color=self.box_plot_same_color, different_color=self.box_plot_different_color)
+        self.box_plot_pane.object = self.box_plot
+
+    def download_box_plot(self, event):
+        fformat = self.box_plot_image_format.value
+
+        # Set the directory for saving
+        if self.save_box_plot_file_path.value == "":
+            box_plot_file_path = self.downloads_dir_path + self.save_box_plot_file_path.placeholder + "." + fformat
+        else:
+            box_plot_file_path = self.save_box_plot_file_path.value
+
+            # Add a file-format suffix if there is none
+            regex = r"^\S+\." + re.escape(fformat) + r"$"
+            if not re.search(regex, box_plot_file_path, re.IGNORECASE):
+                box_plot_file_path += "." + fformat
+
+            # If path is not absolute - save file basename under the downloads dir
+            if not os.path.isabs(box_plot_file_path):
+                box_plot_file_path = self.downloads_dir_path + box_plot_file_path
+
+        self.box_plot().savefig(box_plot_file_path, format=fformat, dpi=300.0, bbox_inches='tight')
+
+        download_message = "The image was downloaded successfully under:\n" + box_plot_file_path
+        markdown = pn.pane.Markdown(download_message, styles={'font-size': "12px", 'color': config.title_red_color})
+        download_floatpanel = pn.layout.FloatPanel(markdown, name='Download message', margin=20)
+        self.download_box_plot_column.pop(4)
+        self.download_box_plot_column.append(download_floatpanel)
 
 
 

@@ -14,7 +14,7 @@ def return_selected_genome_table(score_per_region_df, selected_genome):
 
 def return_selected_genome_avg_table(avg_big_df, selected_genome):
     selected_genome_avg_df = avg_big_df[avg_big_df['Ref_genome'] == selected_genome]
-    selected_genome_avg_df = selected_genome_avg_df[['Sample1', 'Sample2', 'Avg_synteny_score', 'Compared_regions']]
+    selected_genome_avg_df = selected_genome_avg_df[['Sample1', 'Sample2', 'APSS', 'Compared_regions']]
 
     #print(selected_genome_avg_df)
     return selected_genome_avg_df
@@ -25,7 +25,7 @@ def calculate_avg_scores_selected_genome_size(score_per_region_selected_genome_d
     # Taking all available regions - no subsampling
     if size == 'All_regions':
         avg_scores_one_size_df = score_per_region_selected_genome_df.groupby(['Sample1', 'Sample2'])['Synteny_score'].\
-            mean().reset_index().rename(columns={"Synteny_score": "Avg_synteny_score"})
+            mean().reset_index().rename(columns={"Synteny_score": "APSS"})
 
     # All the other optional sizes -
     # need to include only the sample pairs that have a result for at least the requested number of regions
@@ -41,7 +41,7 @@ def calculate_avg_scores_selected_genome_size(score_per_region_selected_genome_d
 
         avg_scores_one_size_df = sampled_regions_df[['Sample1', 'Sample2', 'Synteny_score']]. \
             groupby(['Sample1', 'Sample2']).mean().reset_index().\
-            rename(columns={"Synteny_score": "Avg_synteny_score"})
+            rename(columns={"Synteny_score": "APSS"})
 
     if not avg_scores_one_size_df.empty:
         avg_scores_one_size_df['Compared_regions'] = size
@@ -84,7 +84,6 @@ def create_pairs_num_per_sampling_size(score_per_region_df):
 
     #print(pairs_num_per_sampling_size_df)
     return pairs_num_per_sampling_size_df
-
 
 
 def create_score_per_region_sorted_contigs_table(score_per_region_df):

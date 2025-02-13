@@ -42,13 +42,13 @@ def plot_pairs_vs_sampling_size_bar(df, sampling_size, is_all_regions):
 
 
 def create_jitter_plot_bokeh(avg_df, color):
-    df_for_jitter = avg_df[['Avg_synteny_score']]
+    df_for_jitter = avg_df[['APSS']]
     df_for_jitter.insert(1, 'Category', 'Comparisons')
     #print("\nDF for jitter plot:")
     #print(df_for_jitter)
 
     plot = figure(width=300, height=600, x_range=['Comparisons'])
-    plot.scatter(x=jitter('Category', width=0.5, range=plot.x_range), y='Avg_synteny_score', size=9, color=color,
+    plot.scatter(x=jitter('Category', width=0.5, range=plot.x_range), y='APSS', size=9, color=color,
                  alpha=0.4, source=df_for_jitter)
     plot.xgrid.grid_line_color = None
     plot.xaxis.major_tick_line_color = None  # turn off x-axis major ticks
@@ -82,8 +82,7 @@ def category_by_feature(row, feature, metadata_dict):
 
 
 def create_jitter_plot(avg_df, color, use_metadata, metadata_dict, feature, same_color, different_color):
-    df_for_jitter = avg_df.loc[:, ['Sample1', 'Sample2', 'Avg_synteny_score']].copy().\
-        rename(columns={"Avg_synteny_score": "APSS"})
+    df_for_jitter = avg_df.loc[:, ['Sample1', 'Sample2', 'APSS']].copy()
 
     # Use metadata to separate plot to same/different feature
     if use_metadata:

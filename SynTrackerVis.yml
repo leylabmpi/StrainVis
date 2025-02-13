@@ -1,4 +1,4 @@
-name: SynTracker_Vis_1_0
+name: SynTracker_Vis
 
 channels:
   - conda-forge
