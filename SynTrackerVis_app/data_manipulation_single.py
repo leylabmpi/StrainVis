@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import re
+import time
 import SynTrackerVis_app.config as config
 
 
@@ -23,7 +24,7 @@ def return_selected_genome_avg_table(avg_big_df, selected_genome):
 def calculate_avg_scores_selected_genome_size(score_per_region_selected_genome_df, genome, size):
 
     # Taking all available regions - no subsampling
-    if size == 'All_regions':
+    if size == 'All':
         avg_scores_one_size_df = score_per_region_selected_genome_df.groupby(['Sample1', 'Sample2'])['Synteny_score'].\
             mean().reset_index().rename(columns={"Synteny_score": "APSS"})
 
@@ -52,7 +53,18 @@ def calculate_avg_scores_selected_genome_size(score_per_region_selected_genome_d
 
     return avg_scores_one_size_df
 
+
+def count_samples_num(row, df):
+    condition_df = df[df[row['Subsampled_regions']] > 0]
+
+    unique_samples = pd.concat([condition_df['Sample1'], condition_df['Sample2']]).unique()
+    samples_num = len(unique_samples)
+
+    return samples_num
+
+
 def create_pairs_num_per_sampling_size(score_per_region_df):
+    print("\ncreate_pairs_num_per_sampling_size:")
 
     regions_num_per_pair_df = score_per_region_df[['Sample1', 'Sample2', 'Synteny_score']].\
         groupby(['Sample1', 'Sample2']).count().reset_index(). \
@@ -62,7 +74,7 @@ def create_pairs_num_per_sampling_size(score_per_region_df):
 
     # Add a column for each subsampling size (to calculate how many pairs have results for at least this size)
     for size in config.sampling_sizes:
-        if size == 'All_regions':
+        if size == 'All':
             regions_num_per_pair_df[size] = np.where(regions_num_per_pair_df['Num_of_compared_regions'] >= 1,
                                                      1, 0)
         else:
@@ -71,7 +83,7 @@ def create_pairs_num_per_sampling_size(score_per_region_df):
 
     #print(regions_num_per_pair_df)
 
-    pairs_num_per_sampling_size_df = regions_num_per_pair_df[['All_regions', '40', '60', '80', '100',
+    pairs_num_per_sampling_size_df = regions_num_per_pair_df[['All', '40', '60', '80', '100',
                                                               '125', '150', '175', '200', '250', '300', '350',
                                                               '400']].sum().reset_index()
     pairs_num_per_sampling_size_df.columns.values[0] = "Subsampled_regions"
@@ -82,51 +94,75 @@ def create_pairs_num_per_sampling_size(score_per_region_df):
     pairs_num_per_sampling_size_df['Pairs_lost_percent'] = \
         pairs_num_per_sampling_size_df['Pairs_lost_percent'].apply(lambda x: round(x, 2))
 
-    #print(pairs_num_per_sampling_size_df)
+    # Calculate the number of samples in each sampling size
+    pairs_num_per_sampling_size_df['Number_of_samples'] = \
+        pairs_num_per_sampling_size_df.apply(lambda row: count_samples_num(row, regions_num_per_pair_df), axis=1)
+
+    print(pairs_num_per_sampling_size_df)
+
     return pairs_num_per_sampling_size_df
 
 
-def create_score_per_region_sorted_contigs_table(score_per_region_df):
-    contigs_dict = dict()
-    contig_length_dict = dict()
+def return_sorted_contigs_lists(score_per_region_df):
+    '''
+    contigs_dict = {}
 
-    # Split the 'Region' column into
-    score_per_region_df[['Contig_name', 'Position']] = score_per_region_df['Region'].str.extract(r'(\S+)_(\d+)_\d+')
+    region_list = list(score_per_region_df['Region'])
+    for region in region_list:
+        regex = r'(\S+)_(\d+)_\d+'
+        m = re.search(regex, region)
+        if m:
+            contig_name = m.group(1)
+            pos = m.group(2)
+            contigs_dict[contig_name] = int(pos)
+
+    # Sort the contigs dict by name
+    contigs_list_by_name = sorted(contigs_dict)
+
+    # Sort the contigs dict by length
+    contigs_list_by_length = sorted(contigs_dict, key=lambda k: contigs_dict[k], reverse=True)
+    '''
+
+    before = time.time()
+    # Split the 'Region' column into Contig_name and Position
+    pattern = re.compile(r'(\S+)_(\d+)_\d+')
+    score_per_region_df[['Contig_name', 'Position']] = score_per_region_df['Region'].str.extract(pattern)
+    #score_per_region_df[['Contig_name', 'Position']] = score_per_region_df['Region'].str.extract(r'(\S+)_(\d+)_\d+')
     score_per_region_df['Position'] = score_per_region_df['Position'].astype(int)
 
+    after = time.time()
+    duration = after - before
+    print("Extract position from region took " + str(duration) + " seconds.\n")
+
+    # Get a list of contigs, sorted by name
     # If the contig names contain numbers, sort them numerically
-    if re.search(r"^\S+_\d+$", score_per_region_df.iloc[0]['Contig_name']):
+    #if re.search(r"^\S+_\d+$", score_per_region_df.iloc[0]['Contig_name']):
 
         # Create a temporary column 'contigs_sort' to sort the contig names numericlly
-        score_per_region_df['Contig_number'] = score_per_region_df['Contig_name'].str.extract(r'\S+_(\d+)')\
-            .astype(int)
+    #    score_per_region_df['Contig_number'] = score_per_region_df['Contig_name'].str.extract(r'\S+_(\d+)')\
+    #        .astype(int)
 
-        contigs_list_by_name = list(score_per_region_df.sort_values('Contig_number').groupby(['Contig_name'],
-                                                                                             sort=False).groups)
+    #    contigs_list_by_name = list(score_per_region_df.sort_values('Contig_number').groupby(['Contig_name'],
+    #                                                                                         sort=False).groups)
 
-    else:
-        contigs_list_by_name = list(score_per_region_df.groupby(['Contig_name']).groups)
+    #else:
+    #    contigs_list_by_name = list(score_per_region_df.groupby(['Contig_name']).groups)
 
-    #print("\ncreate_score_per_region_sorted_contigs_table:")
-    #print(score_per_region_df)
-    #print("\nContigs list sorted by name:")
-    #print(contigs_list_by_name)
+    before = time.time()
+    contigs_list_by_name = list(score_per_region_df.groupby(['Contig_name']).groups)
+    after = time.time()
+    duration = after - before
+    print("Sort by name took " + str(duration) + " seconds.\n")
 
-    # Create a dictionary for the contigs, sorted by their names.
-    for contig in contigs_list_by_name:
-
-        score_per_region_contig_df = score_per_region_df[score_per_region_df['Contig_name'] == contig]
-        contigs_dict[contig] = score_per_region_contig_df[['Contig_name', 'Position', 'Synteny_score']]
-
-        # Find contig length by the last position
-        score_per_region_contig_df = score_per_region_contig_df.sort_values('Position')
-        contig_length = score_per_region_contig_df.iloc[-1]['Position'] + config.region_length
-        contig_length_dict[contig] = contig_length
-
-    # Sort the contig lengths dict by the lengths and return a sorted list of names
-    #sorted_dict = dict(sorted(contig_length_dict.items(), key=lambda item: item[1], reverse=True))
-    sorted_by_length_list = sorted(contig_length_dict, key=contig_length_dict.get, reverse=True)
-
-    return contigs_dict, contigs_list_by_name, sorted_by_length_list
+    # Get a list of contigs, sorted by length
+    before = time.time()
+    contigs_list_by_length = list(score_per_region_df.sort_values('Position', ascending=False).groupby(['Contig_name'],
+                                                                                                       sort=False).
+                                  groups)
+    after = time.time()
+    duration = after - before
+    print("Sort by length took " + str(duration) + " seconds.\n")
+  
+    return contigs_list_by_name, contigs_list_by_length
 
 

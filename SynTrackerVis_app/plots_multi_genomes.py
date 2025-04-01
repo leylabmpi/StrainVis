@@ -51,7 +51,7 @@ def plot_species_vs_sampling_size_bar(df, sampling_size, is_all_regions):
 
 def create_box_plot(avg_df, pvalues_df, color, use_metadata, feature, same_color, different_color):
 
-    print("\ncreate_box_plot: Feature is " + feature)
+    #print("\ncreate_box_plot: Feature is " + feature)
     #print("\nAPSS dataframe:")
     #print(avg_df)
 

@@ -1,4 +1,6 @@
 import gc
+
+import matplotlib.pyplot as plt
 import panel as pn
 import pandas as pd
 import numpy as np
@@ -6,6 +8,7 @@ import io
 import os
 import re
 import time
+import threading
 from functools import partial
 import holoviews as hv
 import networkx as nx
@@ -13,14 +16,15 @@ import random
 from bokeh.io import export_svgs, export_png
 from scipy.stats import mannwhitneyu, ranksums
 from statsmodels.stats.multitest import multipletests
+import seaborn as sns
 import SynTrackerVis_app.config as config
 import SynTrackerVis_app.data_manipulation_single as ds
 import SynTrackerVis_app.data_manipulation_multi as dm
 import SynTrackerVis_app.plots_single_genome as ps
 import SynTrackerVis_app.plots_multi_genomes as pm
 import SynTrackerVis_app.widgets as widgets
+pn.extension(disconnect_notification='Connection lost, try reloading the page!')
 pn.extension('floatpanel')
-#pn.extension(disconnect_notification='Connection lost, try reloading the page!')
 
 
 def change_disabled_state_inverse(chkbox_state):
@@ -46,16 +50,16 @@ def change_collapse_state(selection_val):
 
 def change_continuous_state(chkbox_state):
     if chkbox_state:
-        return config.Bokeh_continuous_colormap_dict
+        return config.continuous_colormap_dict
     else:
-        return config.Bokeh_categorical_colormap_dict
+        return config.categorical_colormap_dict
 
 
 def change_continuous_state_for_value(chkbox_state):
     if chkbox_state:
-        return config.Bokeh_continuous_colormap_dict['Turbo256']
+        return config.continuous_colormap_dict['cet_rainbow4']
     else:
-        return config.Bokeh_categorical_colormap_dict['Category20']
+        return config.categorical_colormap_dict['cet_glasbey']
 
 
 def change_disabled_state_threshold(value):
@@ -103,7 +107,6 @@ def return_significance(row):
         return ""
 
 
-
 class SynTrackerVisApp:
 
     def __init__(self):
@@ -118,6 +121,7 @@ class SynTrackerVisApp:
         self.sample_ids_column_name = ""
         self.number_of_genomes = 0
         self.ref_genomes_list = []
+        self.ref_genomes_list_by_pairs_num = []
         self.selected_genomes_subset = []
         self.ref_genome = ""
         self.sampling_size = ""
@@ -133,15 +137,19 @@ class SynTrackerVisApp:
         self.calculated_APSS_all_genomes_size_dict = dict()
         self.working_directory = os.getcwd()
         self.downloads_dir_path = self.working_directory + config.downloads_dir
-        self.contigs_dict = dict()
         self.contigs_list_by_name = []
         self.contigs_list_by_length = []
         self.avg_score_genome = 0
         self.std_score_genome = 0
+        self.genomes_select_watcher = ""
+        self.genomes_sort_select_watcher = ""
         self.threshold_select_watcher = ""
         self.threshold_input_watcher = ""
         self.feature_select_watcher = ""
-        #self.use_metadata_boxplot_watcher = ""
+        self.continuous_watcher = ""
+        self.colormap_watcher = ""
+        self.nodes_colorby_watcher = ""
+        self.visited_multi_genome_tab = 0
 
         # Bootstrap template
         self.template = pn.template.VanillaTemplate(
@@ -167,6 +175,8 @@ class SynTrackerVisApp:
 
         self.genomes_select = pn.widgets.Select(name='Select a reference genome to process:', value=None,
                                                 options=[], styles={'margin': "0"})
+        self.genomes_sort_select = pn.widgets.Select(name='Sort by:', value=config.genomes_sorting_options[0],
+                                                     options=config.genomes_sorting_options, styles={'margin': "0"})
         self.sample_sizes_slider = pn.widgets.DiscreteSlider(name='Subsampled regions', options=config.sampling_sizes,
                                                              bar_color='white')
         self.show_single_plots_button = pn.widgets.Button(name='Display plots using the selected number of regions',
@@ -197,22 +207,23 @@ class SynTrackerVisApp:
                                                             button_type='primary', margin=(25, 0))
         self.show_box_plot_multi_button.on_click(self.create_multi_genomes_plots_by_APSS)
 
-
         # Panel layouts
         self.single_multi_genome_tabs = pn.Tabs(dynamic=True, styles=config.single_multi_tabs_style)
         self.main_single_column = pn.Column(styles=config.main_column_style)
+        self.ref_genome_column = pn.Column()
         self.single_tabs = pn.Tabs(dynamic=True, styles=config.single_tabs_style)
+        self.coverage_plot_column = pn.Column(styles={'padding': "20px"})
         self.activated_coverage_tab = 0
         self.plots_by_size_single_column = pn.Column()
         self.main_plots_multi_column = pn.Column()
         self.plots_by_size_multi_column = pn.Column()
         self.main_multi_column = pn.Column(styles=config.main_column_style)
-        self.plots_by_ref_column = pn.Column(styles=config.main_column_style)
+        self.plots_by_ref_column = pn.Column(styles={'padding': "20px"})
         self.selected_contig_column = pn.Column(styles={'padding': "10px 0 0 0"})
 
         # Plots cards
-        self.clustermap_card = pn.Card(title='Clustermap', styles=config.plot_card_style, header_background="#2e86c1",
-                                       header_color="#ffffff")
+        self.clustermap_card = pn.Card(title='Clustered heatmap', styles=config.plot_card_style,
+                                       header_background="#2e86c1", header_color="#ffffff")
         self.jitter_card = pn.Card(title='APSS distribution', styles=config.plot_card_style,
                                    header_background="#2e86c1", header_color="#ffffff")
         self.network_card = pn.Card(title='Network', styles=config.plot_card_style, header_background="#2e86c1",
@@ -220,26 +231,34 @@ class SynTrackerVisApp:
         self.box_plot_card = pn.Card(title='APSS distribution among species', styles=config.plot_card_style,
                                      header_background="#2e86c1", header_color="#ffffff")
 
-        download_text = 'Save file as: (if no full path, the file is saved under \'Downloads/\')'
+        download_image_text = 'Save image as: (if no full path, the file is saved under \'Downloads/\')'
+        download_table_text = 'Save data table as: (if no full path, the file is saved under \'Downloads/\')'
 
         # Clustermap elements
         self.clustermap_plot = ""
+        self.scores_matrix = pd.DataFrame()
         self.clustermap_cmap = pn.widgets.Select(value=config.clustermap_colormaps_list[0],
                                                  options=config.clustermap_colormaps_list,
                                                  name="Select colormap from the following list:")
         self.clustermap_image_format = pn.widgets.Select(value=config.matplotlib_file_formats[0],
                                                          options=config.matplotlib_file_formats,
                                                          name="Select image format:")
-        self.save_clustermap_file_path = pn.widgets.TextInput(name=download_text)
+        self.save_clustermap_file_path = pn.widgets.TextInput(name=download_image_text)
         self.download_clustermap_column = pn.Column()
+        download_matrix_text = 'Save matrix as: (if no full path, the file is saved under \'Downloads/\')'
+        self.save_matrix_file_path = pn.widgets.TextInput(name=download_matrix_text)
+        self.download_matrix_column = pn.Column()
 
         # Jitter plot elements
         self.jitter_plot = ""
+        self.df_for_jitter = pd.DataFrame()
         self.use_metadata_jitter = pn.widgets.Checkbox(name='Use metadata in plot', value=False)
         self.jitter_color = pn.widgets.ColorPicker(name='Select color', value='#3b89be',
                                                    disabled=pn.bind(change_disabled_state_straight,
                                                                     chkbox_state=self.use_metadata_jitter,
                                                                     watch=True))
+        self.jitter_type_select = pn.widgets.Select(options=config.catplot_types, width=150,
+                                                    name="Select plot type:")
         self.metadata_jitter_card = pn.Card(styles={'background': "#ffffff", 'margin': "10px", 'width': "300px"},
                                             hide_header=True, collapsed=pn.bind(change_disabled_state_inverse,
                                                                                 chkbox_state=self.use_metadata_jitter,
@@ -249,21 +268,27 @@ class SynTrackerVisApp:
                                                        disabled=pn.bind(change_disabled_state_inverse,
                                                                         chkbox_state=self.use_metadata_jitter,
                                                                         watch=True))
-        self.jitter_same_color = pn.widgets.ColorPicker(name='Same color:', value='#000000',
+        self.jitter_same_color = pn.widgets.ColorPicker(name='Same color:', value=config.same_color,
                                                         disabled=pn.bind(change_disabled_state_inverse,
                                                                          chkbox_state=self.use_metadata_jitter,
                                                                          watch=True))
-        self.jitter_different_color = pn.widgets.ColorPicker(name='Different color:', value='#000000',
+        self.jitter_different_color = pn.widgets.ColorPicker(name='Different color:', value=config.diff_color,
                                                              disabled=pn.bind(change_disabled_state_inverse,
                                                                               chkbox_state=self.use_metadata_jitter,
                                                                               watch=True))
         self.jitter_image_format = pn.widgets.Select(value=config.matplotlib_file_formats[0],
                                                      options=config.matplotlib_file_formats, name="Select image format:")
-        self.save_jitter_file_path = pn.widgets.TextInput(name=download_text)
+        self.save_jitter_file_path = pn.widgets.TextInput(name=download_image_text)
         self.download_jitter_column = pn.Column()
+        self.save_jitter_table_path = pn.widgets.TextInput(name=download_table_text)
+        self.download_jitter_table_column = pn.Column()
 
         # Network plot elements
-        self.network_plot = ""
+        self.network = ""
+        self.network_bound_func = ""
+        self.network_plot_hv = ""
+        self.network_plot_matplotlib = ""
+        self.df_for_network = pd.DataFrame()
         self.use_metadata_network = pn.widgets.Checkbox(name='Use metadata for coloring', value=False)
         self.color_edges_by_feature = pn.widgets.Checkbox(name='Color edges by feature (same/different)', value=False)
         self.metadata_colorby_card = pn.Card(title='Set the coloring by metadata', header_background="#ffffff",
@@ -282,12 +307,8 @@ class SynTrackerVisApp:
         self.nodes_color_by = pn.widgets.Select(options=['Select feature'], name="Color nodes by:", width=100)
         self.is_continuous = pn.widgets.Checkbox(name='Continuous feature', value=False)
         self.nodes_colormap = pn.widgets.ColorMap(name="Select colormap for nodes:",
-                                                  options=pn.bind(change_continuous_state,
-                                                                  chkbox_state=self.is_continuous,
-                                                                  watch=True),
-                                                  value=pn.bind(change_continuous_state_for_value,
-                                                                chkbox_state=self.is_continuous,
-                                                                watch=True))
+                                                  options=config.categorical_colormap_dict,
+                                                  value=config.categorical_colormap_dict['cet_glasbey'])
         self.edges_color_by = pn.widgets.Select(options=['Select feature'],
                                                 name="Color edges by:", width=100,
                                                 disabled=pn.bind(change_disabled_state_inverse,
@@ -316,21 +337,24 @@ class SynTrackerVisApp:
         self.network_iterations = pn.widgets.DiscreteSlider(name='Number of iterations',
                                                             options=config.network_iterations_options,
                                                             bar_color='white')
-        self.network_image_format = pn.widgets.Select(value=config.bokeh_file_formats[0],
-                                                      options=config.bokeh_file_formats,
+        self.network_image_format = pn.widgets.Select(value=config.matplotlib_file_formats[0],
+                                                      options=config.matplotlib_file_formats,
                                                       name="Select image format:")
-        self.save_network_file_path = pn.widgets.TextInput(name=download_text)
+        self.save_network_plot_path = pn.widgets.TextInput(name=download_image_text)
         self.download_network_column = pn.Column()
+        self.save_network_table_path = pn.widgets.TextInput(name=download_table_text)
+        self.download_network_table_column = pn.Column()
         self.network_pane = ""
         self.pos_dict = dict()
         self.nodes_list = []
         self.network = ""
+        self.APSS_connections_threshold = config.APSS_connections_threshold_default
 
         # Box-plot elements
         self.box_plot = ""
         self.box_plot_pane = ""
         self.use_metadata_box_plot = pn.widgets.Checkbox(name='Use metadata in plot', value=False)
-        self.box_plot_color = pn.widgets.ColorPicker(name='Select color', value='#3b89be',
+        self.box_plot_color = pn.widgets.ColorPicker(name='Select color', value=config.diff_color,
                                                      disabled=pn.bind(change_disabled_state_straight,
                                                                       chkbox_state=self.use_metadata_box_plot,
                                                                       watch=True))
@@ -343,59 +367,54 @@ class SynTrackerVisApp:
                                                          disabled=pn.bind(change_disabled_state_inverse,
                                                                           chkbox_state=self.use_metadata_box_plot,
                                                                           watch=True))
-        self.box_plot_same_color = pn.widgets.ColorPicker(name='Same color:', value='#000000',
+        self.box_plot_same_color = pn.widgets.ColorPicker(name='Same color:', value=config.same_color,
                                                           disabled=pn.bind(change_disabled_state_inverse,
                                                                            chkbox_state=self.use_metadata_box_plot,
                                                                            watch=True))
-        self.box_plot_different_color = pn.widgets.ColorPicker(name='Different color:', value='#000000',
+        self.box_plot_different_color = pn.widgets.ColorPicker(name='Different color:', value=config.diff_color,
                                                                disabled=pn.bind(change_disabled_state_inverse,
                                                                                 chkbox_state=self.use_metadata_box_plot,
                                                                                 watch=True))
         self.box_plot_image_format = pn.widgets.Select(value=config.matplotlib_file_formats[0],
                                                        options=config.matplotlib_file_formats,
                                                        name="Select image format:")
-        self.save_box_plot_file_path = pn.widgets.TextInput(name=download_text)
+        self.save_box_plot_file_path = pn.widgets.TextInput(name=download_image_text)
         self.download_box_plot_column = pn.Column()
+        self.save_boxplot_table_path = pn.widgets.TextInput(name=download_table_text)
+        self.download_boxplot_table_column = pn.Column()
+        self.save_pvalues_table_path = pn.widgets.TextInput(
+            name='Save P-values table as: (if no full path, the file is saved under \'Downloads/\')')
+        self.download_pvalues_table_column = pn.Column()
 
         # Coverage plots elements
+        self.visited_coverage_tab = 0
+        self.finished_initial_coverage_plot = 0
         self.coverage_plot = ""
-        self.start_pos_input = pn.widgets.TextInput(name='Start position')
-        self.end_pos_input = pn.widgets.TextInput(name='End position')
-        self.avg_plot_chkbox = pn.widgets.Checkbox(name='Show avg. scores', value=True)
-        self.avg_plot_color = pn.widgets.ColorPicker(name='Color:', value='#000080',
-                                                     disabled=pn.bind(change_disabled_state_inverse,
-                                                                      chkbox_state=self.avg_plot_chkbox,
-                                                                      watch=True))
-        self.coverage_plot_chkbox = pn.widgets.Checkbox(name='Show all synteny scores', value=True)
-        self.coverage_plot_color = pn.widgets.ColorPicker(name='Color:', value='#ba55d3',
-                                                          disabled=pn.bind(change_disabled_state_inverse,
-                                                                           chkbox_state=self.coverage_plot_chkbox,
-                                                                           watch=True))
-        self.hypervar_chkbox = pn.widgets.Checkbox(name='Highlight hypervariable regions', value=True)
-        self.hypervar_color = pn.widgets.ColorPicker(name='Color:', value='#00ffff',
-                                                     disabled=pn.bind(change_disabled_state_inverse,
-                                                                      chkbox_state=self.hypervar_chkbox,
-                                                                      watch=True))
-        self.hypervar_alpha_slider = pn.widgets.FloatSlider(name='Alpha transparency', start=0, end=1, step=0.1,
-                                                            value=0.2,
-                                                            disabled=pn.bind(change_disabled_state_inverse,
-                                                                             chkbox_state=self.hypervar_chkbox,
-                                                                             watch=True))
-        self.hypercons_chkbox = pn.widgets.Checkbox(name='Highlight hyperconserved regions', value=True)
-        self.hypercons_color = pn.widgets.ColorPicker(name='Color:', value='#fa8072',
-                                                      disabled=pn.bind(change_disabled_state_inverse,
-                                                                       chkbox_state=self.hypercons_chkbox,
-                                                                       watch=True))
-        self.hypercons_alpha_slider = pn.widgets.FloatSlider(name='Alpha transparency', start=0, end=1, step=0.1,
-                                                             value=0.2,
-                                                             disabled=pn.bind(change_disabled_state_inverse,
-                                                                              chkbox_state=self.hypercons_chkbox,
-                                                                              watch=True))
+        self.avg_score_per_pos_contig = pd.DataFrame()
+        self.contig_select = pn.widgets.Select(name='Select a contig:', options=[], styles={'margin': "0"})
+        self.contig_select_watcher = ""
+        self.sorting_select = pn.widgets.Select(name='Sort by:', options=config.contig_sorting_options,
+                                                styles={'margin': "0"})
+        self.sorting_select_watcher = ""
+        self.start_pos_input = ""
+        self.end_pos_input = ""
+        self.avg_plot_chkbox = ""
+        self.avg_plot_color = ""
+        self.coverage_plot_chkbox = ""
+        self.coverage_plot_color = ""
+        self.hypervar_chkbox = ""
+        self.hypervar_color = ""
+        self.hypervar_alpha_slider = ""
+        self.hypercons_chkbox = ""
+        self.hypercons_color = ""
+        self.hypercons_alpha_slider = ""
         self.coverage_image_format = pn.widgets.Select(value=config.matplotlib_file_formats[0],
                                                        options=config.matplotlib_file_formats,
                                                        name="Select image format:")
-        self.save_coverage_file_path = pn.widgets.TextInput(name=download_text)
-        self.download_coverage_column = pn.Column()
+        self.save_coverage_plot_path = pn.widgets.TextInput(name=download_image_text)
+        self.download_coverage_plot_column = pn.Column()
+        self.save_coverage_table_path = pn.widgets.TextInput(name=download_table_text)
+        self.download_coverage_table_column = pn.Column()
 
         # Build the initial layout
         mandatory_input_title = "Mandatory input"
@@ -444,11 +463,29 @@ class SynTrackerVisApp:
         del self.score_per_region_selected_genome_df
         del self.genomes_subset_selected_size_APSS_df
         del self.boxplot_p_values_df
+        del self.df_for_jitter
+        del self.scores_matrix
+        del self.df_for_network
+        del self.avg_score_per_pos_contig
+        del self.metadata_dict
+        del self.APSS_by_genome_all_sizes_dict
+        del self.APSS_all_genomes_all_sizes_dict
         self.use_metadata_jitter.disabled = False
         self.network_threshold_select.param.unwatch(self.threshold_select_watcher)
         self.network_threshold_input.param.unwatch(self.threshold_input_watcher)
+        self.nodes_color_by.param.unwatch(self.nodes_colorby_watcher)
+        self.is_continuous.param.unwatch(self.continuous_watcher)
+        self.nodes_colormap.param.unwatch(self.colormap_watcher)
         self.box_plot_feature_select.param.unwatch(self.feature_select_watcher)
+        self.genomes_select.param.unwatch(self.genomes_select_watcher)
+        self.genomes_sort_select.param.unwatch(self.genomes_sort_select_watcher)
+        self.contig_select.param.unwatch(self.contig_select_watcher)
+        self.sorting_select.param.unwatch(self.sorting_select_watcher)
         self.network_threshold_select.options = []
+        self.visited_coverage_tab = 0
+        self.finished_initial_coverage_plot = 0
+        self.visited_multi_genome_tab = 0
+        self.network = ""
 
         gc.collect()
 
@@ -477,10 +514,6 @@ class SynTrackerVisApp:
 
         self.number_of_genomes = self.score_per_region_all_genomes_df.groupby(['Ref_genome']).ngroups
         self.ref_genomes_list = list(self.score_per_region_all_genomes_df.groupby(['Ref_genome']).groups)
-
-    def select_ref_genome(self, ref_genome):
-        self.ref_genome = ref_genome
-        print("\nSelected ref genome = " + self.ref_genome)
 
     def load_input_file(self, event):
         print("\nIn load_input_file")
@@ -573,26 +606,28 @@ class SynTrackerVisApp:
 
     def start_process(self):
         self.ref_genomes_list = []
+        self.ref_genomes_list_by_pairs_num = []
         self.selected_genomes_subset = []
         self.single_multi_genome_tabs.clear()
         self.main_single_column.clear()
+        self.ref_genome_column.clear()
         self.main_multi_column.clear()
         self.single_tabs.clear()
+        self.coverage_plot_column.clear()
         self.plots_by_size_single_column.clear()
         self.main_plots_multi_column.clear()
         self.plots_by_size_multi_column.clear()
 
         # Read the file directly from the path
         before = time.time()
-        col_set = ['Ref_genome', 'Sample1', 'Sample2', 'Region', 'Synteny_score']
         if self.is_file_path == 1:
             self.score_per_region_all_genomes_df = pd.read_csv(self.text_input.value,
-                                                               usecols=lambda c: c in set(col_set))
+                                                               usecols=lambda c: c in set(config.col_set))
 
         # Read the content of the uploaded file
         else:
             self.score_per_region_all_genomes_df = pd.read_csv(io.BytesIO(self.input_file.value),
-                                                               usecols=lambda c: c in set(col_set))
+                                                               usecols=lambda c: c in set(config.col_set))
         after = time.time()
         duration = after - before
         print("\nReading input file took " + str(duration) + " seconds.\n")
@@ -600,7 +635,7 @@ class SynTrackerVisApp:
         # Extract the number of genomes from the input file
         self.get_number_of_genomes()
         print("\nNumber of genomes: " + str(self.number_of_genomes))
-        print("\nGenomes list: " + str(self.ref_genomes_list))
+        #print("\nGenomes list: " + str(self.ref_genomes_list))
         
         # If a metadata file was uploaded - read the file into a DF
         if self.is_metadata:
@@ -620,59 +655,60 @@ class SynTrackerVisApp:
             duration = after - before
             print("\nFilling missing metadata took " + str(duration) + " seconds.\n")
 
-        # Initialize the dict that saves the dataframes for all the combinations of ref_genomes and sizes
-        for genome in self.ref_genomes_list:
-            self.APSS_by_genome_all_sizes_dict[genome] = dict()
-            for size in config.sampling_sizes:
-                self.APSS_by_genome_all_sizes_dict[genome][size] = pd.DataFrame()
-                self.APSS_all_genomes_all_sizes_dict[size] = pd.DataFrame()
-
-        # Initialize the dict that saves the combinations of ref_genomes and sizes that have already been calculated
+        # Initialize the dictionaries that save the dataframes for all the combinations of ref_genomes and sizes
+        # and whether they have already been calculated
         for genome in self.ref_genomes_list:
             self.calculated_APSS_genome_size_dict[genome] = dict()
             for size in config.sampling_sizes:
-                self.calculated_APSS_genome_size_dict[genome][size] = 0
+                self.APSS_all_genomes_all_sizes_dict[size] = pd.DataFrame()
                 self.calculated_APSS_all_genomes_size_dict[size] = 0
 
         # Input file contains only one ref-genome -> present only single genome visualization
         if self.number_of_genomes == 1:
             self.ref_genome = self.ref_genomes_list[0]
+            print("\nReference genome = " + self.ref_genome)
 
             # Create the single-genome visualization layout
-            self.main_single_column = self.create_single_genome_column(self.ref_genome)
+            self.create_single_genome_column()
+            self.main_single_column.append(self.ref_genome_column)
 
             self.main_area.clear()
             self.main_area.append(self.main_single_column)
 
         # Input file contains more than one ref-genome -> display two tabs, for single- and multi-genome visualizations
         else:
-            # Initially, the ref-genome is the first on the list
-            self.ref_genome = self.ref_genomes_list[0]
+            # Calculate the number of pairs at 40 regions for all the genomes and create a sorted list of genomes
+            self.ref_genomes_list_by_pairs_num = \
+                dm.create_sorted_by_pairs_genomes_list(self.score_per_region_all_genomes_df)
 
-            # Display a select widget to select the reference genome to visualize
-            self.genomes_select = pn.widgets.Select(name='Select a reference genome to process:',
-                                                    options=self.ref_genomes_list, styles={'margin': "0"})
-            self.main_single_column.append(self.genomes_select)
-
-            # Create the single-genome visualization layout for the selected ref-genome
-            before = time.time()
-            single_genome_column = pn.bind(self.create_single_genome_column, self.genomes_select)
-            self.main_single_column.append(single_genome_column)
-            after = time.time()
-            duration = after - before
-            print("\ncreate_single_genome_column took " + str(duration) + " seconds.\n")
-
+            self.genomes_select.options = self.ref_genomes_list_by_pairs_num
+            self.genomes_select.value = self.ref_genomes_list_by_pairs_num[0]
+            self.ref_genome = self.ref_genomes_list_by_pairs_num[0]
             pn.state.location.sync(self.genomes_select, {'value': 'ref_genome'})
 
-            # Create the multiple-genome visualization layout
-            before = time.time()
-            self.main_multi_column = self.create_multi_genome_column()
-            after = time.time()
-            duration = after - before
-            print("\ncreate_multi_genome_column took " + str(duration) + " seconds.\n")
+            genome_select_row = pn.Row(self.genomes_select, pn.Spacer(width=20), self.genomes_sort_select)
+            self.main_single_column.append(genome_select_row)
+
+            # Create the single-genome visualization layout for the selected ref-genome
+            self.create_single_genome_column()
+            self.main_single_column.append(self.ref_genome_column)
+
+            # Define watchers for the ref_genome_select and the genome_sorting_select widgets
+            # This will create the single genome column with the selected reference genome
+            self.genomes_select_watcher = self.genomes_select.param.watch(partial(self.select_ref_genome,
+                                                                          self.genomes_select), 'value',
+                                                                          onlychanged=True)
+            self.genomes_sort_select_watcher = self.genomes_sort_select.param.watch(self.changed_genomes_sorting,
+                                                                                    'value', onlychanged=True)
 
             self.single_multi_genome_tabs.append(('Single genome visualization', self.main_single_column))
+
+            multi_message = "Preparing the multiple genomes visualization - please wait..."
+            self.main_multi_column.append(pn.pane.Markdown(multi_message, styles={'font-size': "20px",
+                                                                                  'margin': "0"}))
             self.single_multi_genome_tabs.append(('Multiple genomes visualization', self.main_multi_column))
+
+            self.single_multi_genome_tabs.param.watch(self.changed_single_multi_tabs, 'active')
 
             self.main_area.clear()
 
@@ -680,36 +716,98 @@ class SynTrackerVisApp:
 
         self.main_area.append(self.submit_new_file_button())
 
-    def create_single_genome_column(self, ref_genome):
-        # Initialize the options and clear the plots by avg area
+    def changed_single_multi_tabs(self, event):
+
+        # Create the multiple-genome visualization layout when the user selects the multi-genome tab for the first time
+        if self.single_multi_genome_tabs.active == 1 and self.visited_multi_genome_tab == 0:
+            before = time.time()
+            print("\nCalling create_multi_genome_column to create the multiple-genomes visualization")
+            self.create_multi_genome_column()
+            after = time.time()
+            duration = after - before
+            print("\ncreate_multi_genome_column took " + str(duration) + " seconds.\n")
+
+            self.visited_multi_genome_tab = 1
+
+    def changed_genomes_sorting(self, event):
+        sorting_method = self.genomes_sort_select.value
+        print("\nChanged genomes sorting method. Sort by: " + sorting_method)
+
+        # Change the order of the contigs selection and present the first one in the new order
+        if sorting_method == "Genome name":
+            self.genomes_select.options = self.ref_genomes_list
+            self.genomes_select.value = self.ref_genomes_list[0]
+        else:
+            self.genomes_select.options = self.ref_genomes_list_by_pairs_num
+            self.genomes_select.value = self.ref_genomes_list_by_pairs_num[0]
+
+    def select_ref_genome(self, ref_genome, event):
+        self.ref_genome = ref_genome.value
+        print("\n\nSelected ref genome = " + self.ref_genome)
+
+        # Stop watching the contig-related widgets
+        self.contig_select.param.unwatch(self.contig_select_watcher)
+        self.sorting_select.param.unwatch(self.sorting_select_watcher)
+
+        self.init_ref_genome()
+
+        self.create_single_genome_column()
+
+    def init_ref_genome(self):
+
+        # Clear layouts
+        self.ref_genome_column.clear()
         self.plots_by_size_single_column.clear()
         self.sample_sizes_slider.value = config.sampling_sizes[0]
-        self.contigs_dict = {}
+        self.selected_contig_column.clear()
+        self.coverage_plot_column.clear()
+
+        # Initialize variables
         self.contigs_list_by_length = []
         self.contigs_list_by_name = []
+        self.visited_coverage_tab = 0
+        self.finished_initial_coverage_plot = 0
+        self.single_tabs.active = 0
+        del self.score_per_region_selected_genome_df
+        del self.df_for_jitter
+        del self.scores_matrix
+        del self.df_for_network
+        del self.avg_score_per_pos_contig
+        del self.APSS_by_genome_all_sizes_dict
 
-        # Get the selected reference genome
-        self.select_ref_genome(ref_genome)
+        self.df_for_jitter = pd.DataFrame()
+        self.scores_matrix = pd.DataFrame()
+        self.df_for_network = pd.DataFrame()
+        self.avg_score_per_pos_contig = pd.DataFrame()
+        self.APSS_by_genome_all_sizes_dict = dict()
+
+        gc.collect()
+
+    def create_single_genome_column(self):
+        before = time.time()
 
         ref_genome_title = "Reference Genome: " + self.ref_genome
+
+        self.ref_genome_column.append(pn.pane.Markdown(ref_genome_title,
+                                                       styles={'font-size': "20px", 'color': config.title_purple_color,
+                                                               'margin': "0"}))
+
+        coverage_message = "Preparing the coverage plots - please wait..."
+        self.coverage_plot_column.append(pn.pane.Markdown(coverage_message, styles={'font-size': "20px",
+                                                                                    'margin': "0"}))
 
         # Get the score-per-region table for the selected genome only
         self.score_per_region_selected_genome_df = ds.return_selected_genome_table(self.score_per_region_all_genomes_df,
                                                                                    self.ref_genome)
 
-        # Get the dictionary of score-per-region tables, for each contig and the sorted contigs list
-        before = time.time()
-        self.contigs_dict, self.contigs_list_by_name, self.contigs_list_by_length = \
-            ds.create_score_per_region_sorted_contigs_table(self.score_per_region_selected_genome_df)
-        after = time.time()
-        duration = after - before
-        print("\nCalculating score per region for all contigs took " + str(duration) + " seconds.\n")
+        # Run the task of creating the initial coverage plots tab (without the plot itself) in another thread.
+        thread = threading.Thread(target=self.create_initial_coverage_plot_tab)
+        thread.start()  # Start the thread
 
-        # Calculate the average score and std for the whole genome (all contigs)
-        self.avg_score_genome = self.score_per_region_selected_genome_df['Synteny_score'].mean()
-        self.std_score_genome = self.score_per_region_selected_genome_df['Synteny_score'].std()
-        print("\nAverage score for the genome = " + str(self.avg_score_genome))
-        print("Std of score for the genome = " + str(self.std_score_genome))
+        # Initialize the dictionary that holds the calculated sampleing sizes
+        for size in config.sampling_sizes:
+            self.APSS_by_genome_all_sizes_dict[size] = pd.DataFrame()
+            self.calculated_APSS_genome_size_dict[size] = 0
 
         # Create the df for plot presenting the number of pairs vs. subsampled regions
         pairs_num_per_sampling_size_selected_genome_df = \
@@ -724,49 +822,150 @@ class SynTrackerVisApp:
             is_all_regions = 0
         else:
             is_all_regions = 1
+            self.sample_sizes_slider.options = config.sampling_sizes
+            self.sample_sizes_slider.value = config.sampling_sizes[0]
 
         # Create the number of pairs vs. subsampled regions bar plot
         pairs_vs_sampling_size_bar_plot = pn.bind(ps.plot_pairs_vs_sampling_size_bar,
                                                   df=pairs_num_per_sampling_size_selected_genome_df,
-                                                  sampling_size=self.sample_sizes_slider, is_all_regions=is_all_regions)
+                                                  sampling_size=self.sample_sizes_slider,
+                                                  is_all_regions=is_all_regions)
+        pairs_bar_plot_pane = pn.pane.HoloViews(pairs_vs_sampling_size_bar_plot, width=510, sizing_mode="fixed")
 
         # Create a markdown for the pairs lost percent (binded to the slider)
         binded_text = pn.bind(widgets.create_pairs_lost_text, pairs_num_per_sampling_size_selected_genome_df,
                               self.sample_sizes_slider)
 
-        pairs_plot_column = pn.Column(pn.pane.Markdown(refs=binded_text, align='center'),
-                                      pairs_vs_sampling_size_bar_plot, styles={'background-color': "white"})
+        pairs_plot_column = pn.Column(pn.pane.Markdown(refs=binded_text, align='center'), pairs_bar_plot_pane,
+                                      styles={'background-color': "white"})
+
+        # Create the number of samples vs. subsampled regions bar plot
+        samples_vs_sampling_size_bar_plot = pn.bind(ps.plot_samples_vs_sampling_size_bar,
+                                                    df=pairs_num_per_sampling_size_selected_genome_df,
+                                                    sampling_size=self.sample_sizes_slider,
+                                                    is_all_regions=is_all_regions)
+        samples_bar_plot_pane = pn.pane.HoloViews(samples_vs_sampling_size_bar_plot, width=510, sizing_mode="fixed")
+
+        # Create a markdown for the number of samples (binded to the slider)
+        binded_text = pn.bind(widgets.create_samples_num_text, pairs_num_per_sampling_size_selected_genome_df,
+                              self.sample_sizes_slider)
+
+        samples_plot_column = pn.Column(pn.pane.Markdown(refs=binded_text, align='center'), samples_bar_plot_pane,
+                                        styles={'background-color': "white"})
+
+        plots_row = pn.Row(pairs_plot_column, pn.Spacer(width=20), samples_plot_column)
+        slider_row = pn.Row(self.sample_sizes_slider, align='center')
+        button_row = pn.Row(self.show_single_plots_button, align='center')
 
         initial_plots_column = pn.Column(
-            pairs_plot_column,
+            plots_row,
             pn.Spacer(height=20),
-            self.sample_sizes_slider,
-            self.show_single_plots_button,
+            slider_row,
+            button_row,
             self.plots_by_size_single_column,
             styles={'padding': "20px"}
         )
 
         self.single_tabs.clear()
         self.single_tabs.append(('Sample-pairs comparisons', initial_plots_column))
+        self.single_tabs.append(('Coverage plots', self.coverage_plot_column))
 
-        plots_by_ref_column = self.create_coverage_plots_tab()
-        self.single_tabs.append(('Coverage plots', plots_by_ref_column))
+        self.ref_genome_column.append(self.single_tabs)
 
-        # Create the layout of the initial plots and widgets
-        single_genome_column = pn.Column(
-            pn.pane.Markdown(ref_genome_title, styles={'font-size': "20px", 'color': config.title_purple_color,
-                                                       'margin': "0"}),
-            self.single_tabs
-        )
+        self.single_tabs.param.watch(self.changed_single_tabs, 'active')
 
-        return single_genome_column
+        after = time.time()
+        duration = after - before
+        print("\ncreate_single_genome_column took " + str(duration) + " seconds.\n")
 
-    def changed_active_single_tab(self, event):
-        # Create the coverage plots column only the first time that this tab becomes active
-        if self.single_tabs.active == 1 and self.activated_coverage_tab == 0:
-            print("\nchanged_active_single_tab: calling create_coverage_plots_tab")
-            self.activated_coverage_tab = 1
-            self.create_coverage_plots_tab()
+    def create_initial_coverage_plot_tab(self):
+
+        # Get the sorted contigs lists
+        print("\nCalling return_sorted_contigs_lists to sort the contigs")
+        before = time.time()
+        self.contigs_list_by_name, self.contigs_list_by_length = \
+            ds.return_sorted_contigs_lists(self.score_per_region_selected_genome_df)
+        after = time.time()
+        duration = after - before
+        print("return_sorted_contigs_lists took " + str(duration) + " seconds.\n")
+        print(self.score_per_region_selected_genome_df)
+
+        # Calculate the average score and std for the whole genome (all contigs)
+        self.avg_score_genome = self.score_per_region_selected_genome_df['Synteny_score'].mean()
+        self.std_score_genome = self.score_per_region_selected_genome_df['Synteny_score'].std()
+        print("\nAverage score for the genome = " + str(self.avg_score_genome))
+        print("Std of score for the genome = " + str(self.std_score_genome))
+
+        contigs_num = len(self.contigs_list_by_name)
+
+        # If there is more than one contig - display a select widget to select the contig
+        if contigs_num > 1:
+
+            # Create a drop-down menu of the contigs
+            self.contig_select.options = self.contigs_list_by_length
+            self.contig_select.value = self.contigs_list_by_length[0]
+            # Initialize the sorting method
+            self.sorting_select.options = config.contig_sorting_options
+            self.sorting_select.value = config.contig_sorting_options[0]
+
+            # When the selection of contig is changed, a new column is created for the selected contig
+            self.contig_select_watcher = self.contig_select.param.watch(partial(self.changed_contig,
+                                                                                self.contig_select),
+                                                                        'value', onlychanged=True)
+
+            # When the selection of sorting method is changed, sort the contigs in the contigs-select drop-down menu
+            # accordingly
+            self.sorting_select_watcher = self.sorting_select.param.watch(partial(self.changed_contig_sorting,
+                                                                                  self.sorting_select,
+                                                                                  self.contig_select),
+                                                                          'value', onlychanged=True)
+
+            contig_select_row = pn.Row(self.contig_select, pn.Spacer(width=20), self.sorting_select)
+
+            self.coverage_plot_column.clear()
+            self.coverage_plot_column.append(contig_select_row)
+            self.coverage_plot_column.append(self.selected_contig_column)
+
+            self.finished_initial_coverage_plot = 1
+
+    def changed_single_tabs(self, event):
+
+        # The coverage plots tab is selected for the first time for the current reference genome
+        if self.single_tabs.active == 1 and self.visited_coverage_tab == 0:
+
+            # Building the initial coverage plots tab has finished
+            if self.finished_initial_coverage_plot:
+
+                contigs_num = len(self.contigs_list_by_name)
+
+                # If there is more than one contig -
+                # trigger changed_contig to create the coverage plot for the selected contig
+                if contigs_num > 1:
+                    self.contig_select.param.trigger('value')
+
+                # Create the coverage plot for the Ref-genome
+                else:
+                    self.create_selected_contig_column(self.contigs_list_by_name[0])
+
+                self.visited_coverage_tab = 1
+
+            # Wait for the building of the initial coverage plots tab to finish
+            #else:
+            #    while self.finished_initial_coverage_plot == 0:
+            #        time.sleep(1)
+
+            #    contigs_num = len(self.contigs_list_by_name)
+
+            #    # If there is more than one contig -
+            #    # trigger changed_contig to create the coverage plot for the selected contig
+            #    if contigs_num > 1:
+            #        self.contig_select.param.trigger('value')
+
+            #    # Create the coverage plot for the Ref-genome
+            #    else:
+            #        self.create_selected_contig_column(self.contigs_list_by_name[0])
+
+            #    self.visited_coverage_tab = 1
 
     def create_single_genome_plots_by_APSS(self, event):
 
@@ -782,24 +981,26 @@ class SynTrackerVisApp:
         self.network_iterations.value = config.network_iterations_options[0]
         self.network_threshold_select.param.unwatch(self.threshold_select_watcher)
         self.network_threshold_input.param.unwatch(self.threshold_input_watcher)
+        if self.is_metadata:
+            self.is_continuous.param.unwatch(self.continuous_watcher)
+            self.nodes_colormap.param.unwatch(self.colormap_watcher)
+            self.nodes_color_by.param.unwatch(self.nodes_colorby_watcher)
         self.network_threshold_input.value = config.APSS_connections_threshold_default
 
         # Check if the requested genome and size have already been calculated. If so, fetch the specific dataframe
-        if self.calculated_APSS_genome_size_dict[self.ref_genome][self.sampling_size]:
+        if self.calculated_APSS_genome_size_dict[self.sampling_size]:
             print("\nThe selected size (" + self.sampling_size + ") has already been calculated - retrieve it.")
             selected_genome_and_size_avg_df = \
-                self.APSS_by_genome_all_sizes_dict[self.ref_genome][self.sampling_size]
+                self.APSS_by_genome_all_sizes_dict[self.sampling_size]
 
         else:
             # Calculate and return the dataframe with average scores for the selected genome and sampling size
             print("\nThe selected size (" + self.sampling_size + ") has not been calculated yet - calculate it.")
-            selected_genome_and_size_avg_df = \
-                ds.calculate_avg_scores_selected_genome_size(self.score_per_region_selected_genome_df, self.ref_genome,
-                                                             self.sampling_size)
+            selected_genome_and_size_avg_df = ds.calculate_avg_scores_selected_genome_size(
+                self.score_per_region_selected_genome_df, self.ref_genome, self.sampling_size)
             # Save the dataframe in the main dictionary
-            self.APSS_by_genome_all_sizes_dict[self.ref_genome][self.sampling_size] = \
-                selected_genome_and_size_avg_df
-            self.calculated_APSS_genome_size_dict[self.ref_genome][self.sampling_size] = 1
+            self.APSS_by_genome_all_sizes_dict[self.sampling_size] = selected_genome_and_size_avg_df
+            self.calculated_APSS_genome_size_dict[self.sampling_size] = 1
 
         # No data at the selected sampling size
         if selected_genome_and_size_avg_df.empty:
@@ -811,7 +1012,7 @@ class SynTrackerVisApp:
 
         # Enough data -> creating plots
         else:
-            if self.sampling_size == 'All_regions':
+            if self.sampling_size == 'All':
                 size_title = "Presenting plots using average synteny scores from all available regions:"
             else:
                 size_title = "Presenting plots using average synteny scores from " + self.sampling_size + \
@@ -837,30 +1038,30 @@ class SynTrackerVisApp:
                                  metadata_colors_row,
                                  styles={'padding': "10x"})
         self.metadata_jitter_card.append(metadata_col)
+        options_row = pn.Row(self.jitter_type_select, self.jitter_color)
         styling_col = pn.Column(pn.pane.Markdown(styling_title, styles={'font-size': "15px", 'font-weight': "bold",
                                                                         'color': config.title_blue_color,
                                                                         'margin': "0"}),
-                                self.jitter_color,
+                                options_row,
                                 pn.Spacer(height=5),
                                 self.use_metadata_jitter,
                                 self.metadata_jitter_card
         )
 
-        save_file_title = "Download image options:"
+        save_file_title = "Plot download options:"
         download_button = pn.widgets.Button(name='Download high-resolution image', button_type='primary')
         download_button.on_click(self.download_jitter)
 
-        jitter_file = "Jitterplot_" + self.ref_genome + "_" + self.sampling_size + "_regions"
+        jitter_file = "Dist_plot_" + self.ref_genome + "_" + self.sampling_size + "_regions"
         self.save_jitter_file_path.placeholder = jitter_file
 
-        self.download_jitter_column = pn.Column(pn.pane.Markdown(save_file_title, styles={'font-size': "15px",
-                                                                                         'font-weight': "bold",
-                                                                                         'color': config.title_blue_color,
-                                                                                         'margin': "0"}),
-                                               self.jitter_image_format, self.save_jitter_file_path,
-                                               download_button, pn.pane.Markdown())
-
-        controls_col = pn.Column(styling_col, pn.Spacer(height=30), self.download_jitter_column)
+        self.download_jitter_column = pn.Column(pn.pane.Markdown(save_file_title,
+                                                                 styles={'font-size': "15px",
+                                                                         'font-weight': "bold",
+                                                                         'color': config.title_blue_color,
+                                                                         'margin': "0"}),
+                                                self.jitter_image_format, self.save_jitter_file_path,
+                                                download_button, pn.pane.Markdown())
 
         # Use metadata in plot
         if self.is_metadata:
@@ -871,15 +1072,69 @@ class SynTrackerVisApp:
         else:
             self.use_metadata_jitter.disabled = True
 
-        self.jitter_plot = pn.bind(ps.create_jitter_plot, avg_df=selected_genome_and_size_avg_df,
-                                   color=self.jitter_color, use_metadata=self.use_metadata_jitter,
-                                   metadata_dict=self.metadata_dict, feature=self.jitter_feature_select,
+        # Create the jitter plot
+        self.jitter_plot = pn.bind(self.create_jitter_plot, avg_df=selected_genome_and_size_avg_df,
+                                   type=self.jitter_type_select, color=self.jitter_color,
+                                   use_metadata=self.use_metadata_jitter, feature=self.jitter_feature_select,
                                    same_color=self.jitter_same_color, different_color=self.jitter_different_color)
 
         jitter_pane = pn.pane.Matplotlib(self.jitter_plot, height=550, dpi=300, tight=True, format='png')
 
-        jitter_row = pn.Row(controls_col, pn.Spacer(width=150), jitter_pane, styles={'padding': "15px"})
+        jitter_table_file = "Data_for_dist_plot_" + self.ref_genome + "_" + self.sampling_size + "_regions"
+        self.save_jitter_table_path.placeholder = jitter_table_file
+        download_table_button = pn.widgets.Button(name='Download data table in csv format', button_type='primary')
+        download_table_button.on_click(self.download_jitter_table)
+
+        self.download_jitter_table_column = pn.Column(self.save_jitter_table_path,
+                                                      download_table_button,
+                                                      pn.pane.Markdown())
+
+        controls_col = pn.Column(styling_col, pn.Spacer(height=25), self.download_jitter_column,
+                                 self.download_jitter_table_column)
+
+        jitter_row = pn.Row(controls_col, pn.Spacer(width=120), jitter_pane, styles={'padding': "15px"})
         self.jitter_card.append(jitter_row)
+
+    def category_by_feature(self, row, feature):
+        if self.metadata_dict[feature][row['Sample1']] == self.metadata_dict[feature][row['Sample2']]:
+            return 'Same ' + feature
+        else:
+            return 'Different ' + feature
+
+    def create_jitter_plot(self, avg_df, type, color, use_metadata, feature, same_color, different_color):
+        self.df_for_jitter = avg_df.loc[:, ['Sample1', 'Sample2', 'APSS']].copy()
+
+        # Use metadata to separate plot to same/different feature
+        if use_metadata:
+            self.df_for_jitter['Category'] = self.df_for_jitter.apply(lambda row: self.category_by_feature(row, feature),
+                                                                      axis=1)
+            same_feature = 'Same ' + feature
+            diff_feature = 'Different ' + feature
+            if type == 'Boxplot':
+                plot = sns.catplot(data=self.df_for_jitter, kind='box', x="Category", y="APSS",
+                                   order=[same_feature, diff_feature],
+                                   hue="Category", hue_order=[same_feature, diff_feature],
+                                   palette=[same_color, different_color], width=0.5)
+            else:
+                plot = sns.catplot(data=self.df_for_jitter, x="Category", y="APSS", order=[same_feature, diff_feature],
+                                          hue="Category", hue_order=[same_feature, diff_feature],
+                                          palette=[same_color, different_color], edgecolor="gray", linewidth=0.1)
+
+        # Do not use metadata in plot - show all the comparisons together
+        else:
+            self.df_for_jitter['Category'] = 'All Comparisons'
+            if type == 'Boxplot':
+                plot = sns.catplot(data=self.df_for_jitter, kind='box', x="Category", y="APSS", color=color, width=0.5)
+            else:
+                plot = sns.catplot(data=self.df_for_jitter, x="Category", y="APSS", color=color, edgecolor="dimgray",
+                                   linewidth=0.1)
+
+        print("\nDF for jitter plot:")
+        print(self.df_for_jitter)
+
+        plt.close(plot.figure)
+
+        return plot.figure
 
     def download_jitter(self, event):
         fformat = self.jitter_image_format.value
@@ -901,58 +1156,109 @@ class SynTrackerVisApp:
 
         self.jitter_plot().savefig(jitter_file_path, format=fformat, dpi=300.0, bbox_inches='tight')
 
-        download_message = "The image was downloaded successfully under:\n" + jitter_file_path
+        download_message = "The image is successfully saved under:\n" + jitter_file_path
         markdown = pn.pane.Markdown(download_message, styles={'font-size': "12px", 'color': config.title_red_color})
-        download_floatpanel = pn.layout.FloatPanel(markdown, name='Download message', margin=20)
+        download_floatpanel = pn.layout.FloatPanel(markdown, name='Download message', margin=10)
         self.download_jitter_column.pop(4)
         self.download_jitter_column.append(download_floatpanel)
 
+    def download_jitter_table(self, event):
+        fformat = "csv"
+
+        # Set the directory for saving
+        if self.save_jitter_table_path.value == "":
+            jitter_table_path = self.downloads_dir_path + self.save_jitter_table_path.placeholder + "." + fformat
+        else:
+            jitter_table_path = self.save_jitter_table_path.value
+
+            # Add a file-format suffix if there is none
+            regex = r"^\S+\." + re.escape(fformat) + r"$"
+            if not re.search(regex, jitter_table_path, re.IGNORECASE):
+                jitter_table_path += "." + fformat
+
+            # If path is not absolute - save file basename under the downloads dir
+            if not os.path.isabs(jitter_table_path):
+                jitter_table_path = self.downloads_dir_path + jitter_table_path
+
+        self.df_for_jitter.to_csv(jitter_table_path, index=False)
+
+        download_message = "The table is successfully saved under:\n" + jitter_table_path
+        markdown = pn.pane.Markdown(download_message, styles={'font-size': "12px", 'color': config.title_red_color})
+        download_floatpanel = pn.layout.FloatPanel(markdown, name='Download message', margin=10)
+        self.download_jitter_table_column.pop(2)
+        self.download_jitter_table_column.append(download_floatpanel)
+
     def create_clustermap_pane(self, selected_genome_and_size_avg_df):
 
-        styling_title = "Clustermap styling options:"
+        styling_title = "Heatmap styling options:"
         styling_col = pn.Column(pn.pane.Markdown(styling_title, styles={'font-size': "15px", 'font-weight': "bold",
                                                                         'color': config.title_blue_color,
                                                                         'margin': "0"}),
                                 self.clustermap_cmap)
 
-        save_file_title = "Download image options:"
+        save_file_title = "Plot download options:"
         download_button = pn.widgets.Button(name='Download high-resolution image', button_type='primary')
         download_button.on_click(self.download_clustermap)
 
         clustermap_file = "Clustermap_" + self.ref_genome + "_" + self.sampling_size + "_regions"
         self.save_clustermap_file_path.placeholder = clustermap_file
 
-        self.download_clustermap_column = pn.Column(pn.pane.Markdown(save_file_title, styles={'font-size': "15px",
-                                                                                              'font-weight': "bold",
-                                                                                              'color': config.title_blue_color,
-                                                                                              'margin': "0"}),
+        self.download_clustermap_column = pn.Column(pn.pane.Markdown(save_file_title,
+                                                                     styles={'font-size': "15px",
+                                                                             'font-weight': "bold",
+                                                                             'color': config.title_blue_color,
+                                                                             'margin': "0"}),
                                                     self.clustermap_image_format, self.save_clustermap_file_path,
                                                     download_button, pn.pane.Markdown())
+        matrix_file = "Matrix_for_clustermap_" + self.ref_genome + "_" + self.sampling_size + "_regions"
+        self.save_matrix_file_path.placeholder = matrix_file
+        download_table_button = pn.widgets.Button(name='Download matrix', button_type='primary')
+        download_table_button.on_click(self.download_matrix)
 
-        controls_col = pn.Column(styling_col, pn.Spacer(height=30), self.download_clustermap_column)
+        self.download_matrix_column = pn.Column(self.save_matrix_file_path,
+                                                download_table_button,
+                                                pn.pane.Markdown())
+
+        controls_col = pn.Column(styling_col, pn.Spacer(height=30), self.download_clustermap_column,
+                                 self.download_matrix_column)
 
         # Transform the data into a scoring matrix
         pivoted_df = selected_genome_and_size_avg_df.pivot(columns='Sample1', index='Sample2', values='APSS')
-        scores_matrix = pivoted_df.combine_first(pivoted_df.T)
+        self.scores_matrix = pivoted_df.combine_first(pivoted_df.T)
+        np.fill_diagonal(self.scores_matrix.values, 1.0)
+        self.scores_matrix = self.scores_matrix.fillna(100.0)
+        print("\nScores matrix:")
+        print(self.scores_matrix)
 
         # Check the number of columns in the matrix
-        col_num = len(scores_matrix.columns)
+        col_num = len(self.scores_matrix.columns)
         print("\ncreate_clustermap_pane: number of columns = " + str(col_num))
 
-        # If the num of columns exceeds the defined maximum, do not create the clustermap and display an error message
+        # If the num of columns exceeds the defined maximum, do not create the clustermap plot
+        # and display a message + a possibility to download the matrix
         if col_num > config.max_clustermap_cols:
-            error = "The number of compared pairs is too high to be well presented in a clustermap plot."
-            clustermap_row = pn.Row(pn.pane.Markdown(error, styles={'font-size': "16px",
-                                                                    'color': config.title_red_color}))
+            error = "The number of samples is too high to be well presented in a clustered heatmap plot."
+            suggestion = "It ia possible to download the scoring matrix and display the heatmap in another program."
+            clustermap_col = pn.Column(
+                                       pn.pane.Markdown(error, styles={'font-size': "16px",
+                                                                       'color': config.title_red_color,
+                                                                       'margin-bottom': "0"}),
+                                       pn.pane.Markdown(suggestion,
+                                                        styles={'font-size': "14px", 'margin-top': "0"}),
+                                       self.download_matrix_column,
+                                       styles={'padding': "15px"})
 
+            self.clustermap_card.append(clustermap_col)
+
+        # Display the full clustermap pane, including the plot
         else:
-            self.clustermap_plot = pn.bind(ps.create_clustermap, matrix=scores_matrix,
+            self.clustermap_plot = pn.bind(ps.create_clustermap, matrix=self.scores_matrix,
                                            cmap=self.clustermap_cmap)
 
             clustermap_pane = pn.pane.Matplotlib(self.clustermap_plot, height=600, dpi=300, tight=True, format='png')
             clustermap_row = pn.Row(controls_col, pn.Spacer(width=110), clustermap_pane, styles={'padding': "15px"})
 
-        self.clustermap_card.append(clustermap_row)
+            self.clustermap_card.append(clustermap_row)
 
     def download_clustermap(self, event):
         fformat = self.clustermap_image_format.value
@@ -974,11 +1280,75 @@ class SynTrackerVisApp:
 
         self.clustermap_plot().savefig(clustermap_file_path, format=fformat, dpi=300.0, bbox_inches='tight')
 
-        download_message = "The image was downloaded successfully under:\n" + clustermap_file_path
+        download_message = "The image is successfully saved under:\n" + clustermap_file_path
         markdown = pn.pane.Markdown(download_message, styles={'font-size': "12px", 'color': config.title_red_color})
-        download_floatpanel = pn.layout.FloatPanel(markdown, name='Download message', margin=20)
+        download_floatpanel = pn.layout.FloatPanel(markdown, name='Download message', margin=10)
         self.download_clustermap_column.pop(4)
         self.download_clustermap_column.append(download_floatpanel)
+
+    def download_matrix(self, event):
+        fformat = "txt"
+
+        # Set the directory for saving
+        if self.save_matrix_file_path.value == "":
+            matrix_path = self.downloads_dir_path + self.save_matrix_file_path.placeholder + "." + fformat
+        else:
+            matrix_path = self.save_matrix_file_path.value
+
+            # Add a file-format suffix if there is none
+            regex = r"^\S+\." + re.escape(fformat) + r"$"
+            if not re.search(regex, matrix_path, re.IGNORECASE):
+                matrix_path += "." + fformat
+
+            # If path is not absolute - save file basename under the downloads dir
+            if not os.path.isabs(matrix_path):
+                matrix_path = self.downloads_dir_path + matrix_path
+
+        self.scores_matrix.to_csv(matrix_path, sep='\t')
+
+        download_message = "The table is successfully saved under:\n" + matrix_path
+        markdown = pn.pane.Markdown(download_message, styles={'font-size': "12px", 'color': config.title_red_color})
+        download_floatpanel = pn.layout.FloatPanel(markdown, name='Download message', margin=10)
+        self.download_matrix_column.pop(2)
+        self.download_matrix_column.append(download_floatpanel)
+
+    def change_continuous_state(self, event):
+        # Continuous feature
+        if self.is_continuous.value:
+            print("\nIn change_continuous_state. Continuous feature")
+
+            # Verify that the feature is indeed continuous
+            nodes_feature = self.nodes_color_by.value
+            unique_groups = list(set([self.network.nodes[node][nodes_feature] for node in self.network.nodes()]))
+            str_type = 0
+            for group in unique_groups:
+                if isinstance(group, str):
+                    str_type = 1
+
+            # Feature is not really continuous, treat as categorical
+            if str_type == 1:
+                print("The feature is not really continuous - uncheck...")
+                self.is_continuous.value = False
+
+            # Feature is indeed really continuous
+            else:
+                self.nodes_colormap.options = config.continuous_colormap_dict
+                self.nodes_colormap.value = config.continuous_colormap_dict['cet_rainbow4']
+
+        # Categorical feature
+        else:
+            print("\nIn change_continuous_state. Categorical feature")
+            self.nodes_colormap.options = config.categorical_colormap_dict
+            self.nodes_colormap.value = config.categorical_colormap_dict['cet_glasbey']
+
+    def change_colormap(self, event):
+        print("\nIn change_colormap. Continuous state = " + str(self.is_continuous.value))
+        self.update_network_plot()
+
+    def set_not_continuous(self, event):
+        print("\nIn set_not_continuous")
+        self.is_continuous.value = False
+        self.update_network_plot()
 
     def create_network_pane(self, selected_genome_and_size_avg_df):
         mean_std_only = 0
@@ -1012,127 +1382,182 @@ class SynTrackerVisApp:
                                 self.network_iterations,
                                 init_button)
 
-        save_file_title = "Download image options:"
+        save_file_title = "Plot download options:"
         download_button = pn.widgets.Button(name='Download high-resolution image', button_type='primary')
         download_button.on_click(self.download_network)
-
-        network_file = "Network_" + self.ref_genome + "_" + self.sampling_size + "_regions_" + \
-                       self.network_iterations.value + "_iterations"
-        self.save_network_file_path.placeholder = network_file
 
         self.download_network_column = pn.Column(pn.pane.Markdown(save_file_title,
                                                                   styles={'font-size': "15px",
                                                                           'font-weight': "bold",
                                                                           'color': config.title_blue_color,
                                                                           'margin': "0"}),
-                                                 self.network_image_format, self.save_network_file_path,
+                                                 self.network_image_format, self.save_network_plot_path,
                                                  download_button, pn.pane.Markdown())
+        download_table_button = pn.widgets.Button(name='Download network data in tsv format', button_type='primary')
+        download_table_button.on_click(self.download_network_table)
 
-        controls_col = pn.Column(styling_col, pn.Spacer(height=30), self.download_network_column)
+        self.download_network_table_column = pn.Column(self.save_network_table_path, download_table_button,
+                                                       pn.pane.Markdown())
+
+        controls_col = pn.Column(styling_col, pn.Spacer(height=30), self.download_network_column,
+                                 self.download_network_table_column)
 
         ########################################################
         # Create a table for the network
-        df_for_network = selected_genome_and_size_avg_df.loc[:, ['Sample1', 'Sample2', 'APSS']].copy()
+        self.df_for_network = selected_genome_and_size_avg_df.loc[:, ['Sample1', 'Sample2', 'APSS']].copy()
 
-        df_for_network.loc[(df_for_network['APSS'] < 0), 'APSS'] = 0
-        df_for_network.loc[(df_for_network['APSS'] == 1), 'APSS'] = 0.999999
+        self.df_for_network.loc[(self.df_for_network['APSS'] < 0), 'APSS'] = 0
+        self.df_for_network.loc[(self.df_for_network['APSS'] == 1), 'APSS'] = 0.999999
 
         # Set a score threshold for the connections (below it zero the weight).
         # Currently the threshold is the mean APSS
-        mean_APSS = df_for_network.loc[:, 'APSS'].mean().round(2)
-        std_APSS = df_for_network.loc[:, 'APSS'].std().round(2)
-        APSS_connections_threshold = mean_APSS
-        df_for_network['weight'] = np.where(df_for_network['APSS'] >= APSS_connections_threshold,
-                                            np.negative(np.log(1 - df_for_network['APSS'])), 0)
+        mean_APSS = self.df_for_network.loc[:, 'APSS'].mean().round(2)
+        std_APSS = self.df_for_network.loc[:, 'APSS'].std().round(2)
+        self.APSS_connections_threshold = mean_APSS
+        self.df_for_network['weight'] = np.where(self.df_for_network['APSS'] >= self.APSS_connections_threshold,
+                                                 np.negative(np.log(1 - self.df_for_network['APSS'])), 0)
         print("\nDF for network:")
-        print(df_for_network)
+        print(self.df_for_network)
         print("\nMean APSS: " + str(mean_APSS))
         print("Standard deviation APSS: " + str(std_APSS) + "\n")
 
+        # Update the placeholder of the filenames for download with the default threshold.
+        network_file = "Network_plot_" + self.ref_genome + "_" + self.sampling_size + "_regions_" + \
+                       self.network_iterations.value + "_iterations_threshold_" + str(self.APSS_connections_threshold)
+        self.save_network_plot_path.placeholder = network_file
+        table_file = "Network_" + self.ref_genome + "_" + self.sampling_size + "_regions_threshold_" + \
+                     str(self.APSS_connections_threshold)
+        self.save_network_table_path.placeholder = table_file
+
         # Create a network using networkx
-        network = nx.from_pandas_edgelist(df_for_network, source='Sample1', target='Sample2', edge_attr='weight')
-        self.nodes_list = list(network.nodes)
-        self.generate_rand_positions()
+        self.network = nx.from_pandas_edgelist(self.df_for_network, source='Sample1', target='Sample2',
+                                               edge_attr='weight')
+        self.nodes_list = list(self.network.nodes)
+        nodes_num = len(self.nodes_list)
+        print("\nNumber of nodes in the network = " + str(nodes_num))
 
-        # Add the actual threshold value to the network_threshold_select widget
-        self.network_threshold_select.options = []
+        # If the number of nodes in the network exceeds the defined maximum, do not create the plot
+        # and display only a message + a possibility to download the network data in tsv format
+        if nodes_num > config.max_network_nodes:
+            error = "The number of samples is too high to present the network with all its interactive features."
+            suggestion = "It ia possible to download the network data in tsv format and visualize it using another program."
+            network_col = pn.Column(
+                pn.pane.Markdown(error, styles={'font-size': "16px",
+                                                'color': config.title_red_color,
+                                                'margin-bottom': "0"}),
+                pn.pane.Markdown(suggestion,
+                                 styles={'font-size': "14px", 'margin-top': "0"}),
+                self.download_network_table_column,
+                styles={'padding': "15px"})
 
-        str_mean = config.network_thresholds_options[0] + " (APSS=" + str(mean_APSS) + ")"
-        self.network_threshold_select.options.append(str_mean)
+            self.network_card.append(network_col)
 
-        mean_std = round((mean_APSS + std_APSS), 2)
-        if mean_std >= 0.99:
-            mean_std = 0.99
-            mean_std_only = 1
-        str_mean_std = config.network_thresholds_options[1] + " (APSS=" + str(mean_std) + ")"
-        self.network_threshold_select.options.append(str_mean_std)
-
-        if not mean_std_only:
-            mean_2_std = round((mean_APSS + 2 * std_APSS), 2)
-            if mean_2_std >= 1:
-                mean_2_std = 0.99
-            str_mean_2_std = config.network_thresholds_options[2] + " (APSS=" + str(mean_2_std) + ")"
-            self.network_threshold_select.options.append(str_mean_2_std)
-
-        self.network_threshold_select.options.append(config.network_thresholds_options[3])
-        self.network_threshold_select.value = self.network_threshold_select.options[0]
-
-        # Set watchers for the threshold widgets
-        self.threshold_select_watcher = self.network_threshold_select.param.watch(partial(self.change_weight_attribute,
-                                                                                  df_for_network, network,
-                                                                                  mean_APSS, std_APSS, mean_std_only),
-                                                                                  'value', onlychanged=True)
-        self.threshold_input_watcher = self.network_threshold_input.param.watch(partial(self.change_weight_attribute,
-                                                                                        df_for_network, network,
-                                                                                        mean_APSS, std_APSS,
-                                                                                        mean_std_only), 'value',
-                                                                                onlychanged=True)
-
-        # There is metadata
-        if self.is_metadata:
-            # Update the color nodes by- drop-down menu with the available metadata features
-            self.nodes_color_by.options = self.metadata_features_list
-            self.nodes_color_by.value = self.metadata_features_list[0]
-            self.edges_color_by.options = self.metadata_features_list
-            self.edges_color_by.value = self.metadata_features_list[0]
-
-            # Insert the features information as nodes attributes
-            for node in self.nodes_list:
-                for feature in self.metadata_features_list:
-                    network.nodes[node][feature] = self.metadata_dict[feature][node]
-
-                # Add node attribute 'SampleID' for the hover tooltip
-                network.nodes[node]['SampleID'] = node
-
-        # No metadata
+        # Display the full network pane, including the plot
         else:
-            self.use_metadata_network.disabled = True
+            # Initialize the network positions
+            self.generate_rand_positions()
 
-        # Create the network plot using the selected parameters
-        self.network_plot = pn.bind(ps.cretae_network_plot, network=network, is_metadata=self.use_metadata_network,
-                                    nodes_feature=self.nodes_color_by, is_continuous=self.is_continuous,
-                                    cmap=self.nodes_colormap,
-                                    node_color=self.network_node_color, edge_color=self.network_edge_color,
-                                    is_edge_colorby=self.color_edges_by_feature, edges_feature=self.edges_color_by,
-                                    within_edge_color=self.network_within_color,
-                                    between_edge_color=self.network_between_color,
-                                    iterations=self.network_iterations, pos_dict=self.pos_dict,
-                                    show_labels=self.show_labels_chkbox, metadata_dict=self.metadata_dict)
-        self.network_pane = pn.pane.HoloViews(self.network_plot, height=600, width=700, sizing_mode="fixed")
+            # Add the actual threshold value to the network_threshold_select widget
+            self.network_threshold_select.options = []
 
-        init_button.on_click(partial(self.init_positions, network))
+            str_mean = config.network_thresholds_options[0] + " (APSS=" + str(mean_APSS) + ")"
+            self.network_threshold_select.options.append(str_mean)
 
-        network_row = pn.Row(controls_col, pn.Spacer(width=15), self.network_pane, styles={'padding': "15px"})
-        self.network_card.append(network_row)
+            mean_std = round((mean_APSS + std_APSS), 2)
+            if mean_std >= 0.99:
+                mean_std = 0.99
+                mean_std_only = 1
+            str_mean_std = config.network_thresholds_options[1] + " (APSS=" + str(mean_std) + ")"
+            self.network_threshold_select.options.append(str_mean_std)
+
+            if not mean_std_only:
+                mean_2_std = round((mean_APSS + 2 * std_APSS), 2)
+                if mean_2_std >= 1:
+                    mean_2_std = 0.99
+                str_mean_2_std = config.network_thresholds_options[2] + " (APSS=" + str(mean_2_std) + ")"
+                self.network_threshold_select.options.append(str_mean_2_std)
+
+            self.network_threshold_select.options.append(config.network_thresholds_options[3])
+            self.network_threshold_select.value = self.network_threshold_select.options[0]
+
+            # Set watchers for the threshold widgets
+            self.threshold_select_watcher = self.network_threshold_select.param.watch(partial(self.change_weight_attribute,
+                                                                                      mean_APSS, std_APSS, mean_std_only),
+                                                                                      'value', onlychanged=True)
+            self.threshold_input_watcher = self.network_threshold_input.param.watch(partial(self.change_weight_attribute,
+                                                                                            mean_APSS, std_APSS,
+                                                                                            mean_std_only), 'value',
+                                                                                    onlychanged=True)
+
+            # There is metadata
+            if self.is_metadata:
+                # Update the color nodes by- drop-down menu with the available metadata features
+                self.nodes_color_by.options = self.metadata_features_list
+                self.nodes_color_by.value = self.metadata_features_list[0]
+                self.edges_color_by.options = self.metadata_features_list
+                self.edges_color_by.value = self.metadata_features_list[0]
+
+                self.nodes_colorby_watcher = self.nodes_color_by.param.watch(self.set_not_continuous, 'value',
+                                                                             onlychanged=True)
+                self.continuous_watcher = self.is_continuous.param.watch(self.change_continuous_state, 'value',
+                                                                         onlychanged=True)
+                self.colormap_watcher = self.nodes_colormap.param.watch(self.change_colormap, 'value',
+                                                                        onlychanged=True)
+
+                # Insert the features information as nodes attributes
+                for node in self.nodes_list:
+                    for feature in self.metadata_features_list:
+                        self.network.nodes[node][feature] = self.metadata_dict[feature][node]
+
+                    # Add node attribute 'SampleID' for the hover tooltip
+                    self.network.nodes[node]['SampleID'] = node
+
+            # No metadata
+            else:
+                self.use_metadata_network.disabled = True
+
+            # Create the network plot using the selected parameters
+            self.network_plot_hv = pn.bind(ps.cretae_network_plot, network=self.network,
+                                           is_metadata=self.use_metadata_network,
+                                           nodes_feature=self.nodes_color_by.value,
+                                           is_continuous=self.is_continuous.value,
+                                           cmap=self.nodes_colormap.value, node_color=self.network_node_color,
+                                           edge_color=self.network_edge_color,
+                                           is_edge_colorby=self.color_edges_by_feature,
+                                           edges_feature=self.edges_color_by,
+                                           within_edge_color=self.network_within_color,
+                                           between_edge_color=self.network_between_color,
+                                           iterations=self.network_iterations, pos_dict=self.pos_dict,
+                                           show_labels=self.show_labels_chkbox, metadata_dict=self.metadata_dict)
+            self.network_pane = pn.pane.HoloViews(self.network_plot_hv, height=600, width=700, sizing_mode="fixed")
+
+            init_button.on_click(self.init_positions)
+
+            network_row = pn.Row(controls_col, pn.Spacer(width=15), self.network_pane, styles={'padding': "15px"})
+            self.network_card.append(network_row)
 
     def download_network(self, event):
         fformat = self.network_image_format.value
 
-        # Set the directory for saving
-        if self.save_network_file_path.value == "":
-            network_file_path = self.downloads_dir_path + self.save_network_file_path.placeholder + "." + fformat
+        # Update the placeholder of the filenames for download with the default threshold.
+        if self.use_metadata_network.value:
+            network_file = "Network_plot_" + self.ref_genome + "_" + self.sampling_size + "_regions_" + \
+                           self.network_iterations.value + "_iterations_threshold_" + str(self.APSS_connections_threshold) \
+                           + "_colorby_" + self.nodes_color_by.value + "_" + self.nodes_colormap.value_name
         else:
-            network_file_path = self.save_network_file_path.value
+            network_file = "Network_plot_" + self.ref_genome + "_" + self.sampling_size + "_regions_" + \
+                           self.network_iterations.value + "_iterations_threshold_" + \
+                           str(self.APSS_connections_threshold)
+        self.save_network_plot_path.placeholder = network_file
+        table_file = "Network_" + self.ref_genome + "_" + self.sampling_size + "_regions_threshold_" + \
+                     str(self.APSS_connections_threshold)
+        self.save_network_table_path.placeholder = table_file
+
+        # Set the directory for saving
+        if self.save_network_plot_path.value == "":
+            network_file_path = self.downloads_dir_path + self.save_network_plot_path.placeholder + "." + fformat
+        else:
+            network_file_path = self.save_network_plot_path.value
 
             # Add a .png suffix if there is none
             regex = r"^\S+\." + re.escape(fformat) + r"$"
@@ -1143,30 +1568,58 @@ class SynTrackerVisApp:
             if not os.path.isabs(network_file_path):
                 network_file_path = self.downloads_dir_path + network_file_path
 
-        # Save the network plot in the requested format
-        hv.extension('bokeh')
-        hv.plotting.bokeh.ElementPlot.width = 1200
-        hv.plotting.bokeh.ElementPlot.height = 1000
-        fig = hv.render(self.network_plot())
+        # Get the updated matplotlib plot
+        self.network_plot_matplotlib = pn.bind(ps.cretae_network_plot_matplotlib, network=self.network,
+                                               is_metadata=self.use_metadata_network,
+                                               nodes_feature=self.nodes_color_by.value,
+                                               is_continuous=self.is_continuous.value,
+                                               cmap=self.nodes_colormap.value_name, node_color=self.network_node_color,
+                                               edge_color=self.network_edge_color,
+                                               is_edge_colorby=self.color_edges_by_feature,
+                                               edges_feature=self.edges_color_by,
+                                               within_edge_color=self.network_within_color,
+                                               between_edge_color=self.network_between_color,
+                                               iterations=self.network_iterations, pos_dict=self.pos_dict,
+                                               show_labels=self.show_labels_chkbox, metadata_dict=self.metadata_dict)
 
-        # Save the figure in png format
-        if fformat == 'png':
-            export_png(fig, filename=network_file_path)
+        # Save the network plot in the requested format using matplotlib
+        self.network_plot_matplotlib().savefig(network_file_path, format=fformat, dpi=300.0, bbox_inches='tight')
 
-        # Save the figure in svg format
-        else:
-            fig.output_backend = "svg"
-            export_svgs(fig, filename=network_file_path)
-
-        download_message = "The image was downloaded successfully under:\n" + network_file_path
+        download_message = "The image is successfully saved under:\n" + network_file_path
         markdown = pn.pane.Markdown(download_message, styles={'font-size': "12px", 'color': config.title_red_color})
-        download_floatpanel = pn.layout.FloatPanel(markdown, name='Download message', margin=20)
+        download_floatpanel = pn.layout.FloatPanel(markdown, name='Download message', margin=10)
         self.download_network_column.pop(4)
         self.download_network_column.append(download_floatpanel)
 
-    def init_positions(self, network, event):
+    def download_network_table(self, event):
+        fformat = "txt"
+
+        # Set the directory for saving
+        if self.save_network_table_path.value == "":
+            network_table_path = self.downloads_dir_path + self.save_network_table_path.placeholder + "." + fformat
+        else:
+            network_table_path = self.save_network_table_path.value
+
+            # Add a file-format suffix if there is none
+            regex = r"^\S+\." + re.escape(fformat) + r"$"
+            if not re.search(regex, network_table_path, re.IGNORECASE):
+                network_table_path += "." + fformat
+
+            # If path is not absolute - save file basename under the downloads dir
+            if not os.path.isabs(network_table_path):
+                network_table_path = self.downloads_dir_path + network_table_path
+
+        self.df_for_network.to_csv(network_table_path, index=False, sep='\t')
+
+        download_message = "The table is successfully saved under:\n" + network_table_path
+        markdown = pn.pane.Markdown(download_message, styles={'font-size': "12px", 'color': config.title_red_color})
+        download_floatpanel = pn.layout.FloatPanel(markdown, name='Download message', margin=10)
+        self.download_network_table_column.pop(2)
+        self.download_network_table_column.append(download_floatpanel)
+
+    def init_positions(self, event):
         self.generate_rand_positions()
-        self.update_network_plot(network)
+        self.update_network_plot()
 
     def generate_rand_positions(self):
         self.pos_dict = {}
@@ -1177,104 +1630,90 @@ class SynTrackerVisApp:
             pos_tuple = (pos_x, pos_y)
             self.pos_dict[node] = pos_tuple
 
-    def change_weight_attribute(self, df, network, mean, std, mean_std_only, event):
+    def change_weight_attribute(self, mean, std, mean_std_only, event):
 
         print("\nchange_weight_attribute:")
         print("Current mean: " + str(mean))
 
         if self.network_threshold_select.value == self.network_threshold_select.options[0]:
-            APSS_connections_threshold = mean
+            self.APSS_connections_threshold = mean
 
         elif self.network_threshold_select.value == self.network_threshold_select.options[1]:
             mean_std = mean + std
             if mean_std < 1:
-                APSS_connections_threshold = mean_std
+                self.APSS_connections_threshold = mean_std
             else:
-                APSS_connections_threshold = 0.99
+                self.APSS_connections_threshold = 0.99
 
         elif self.network_threshold_select.value == self.network_threshold_select.options[2]:
             if mean_std_only:
-                APSS_connections_threshold = self.network_threshold_input.value
+                self.APSS_connections_threshold = self.network_threshold_input.value
             else:
                 mean_2_std = mean + 2 * std
                 if mean_2_std < 1:
-                    APSS_connections_threshold = mean_2_std
+                    self.APSS_connections_threshold = mean_2_std
                 else:
-                    APSS_connections_threshold = 0.99
+                    self.APSS_connections_threshold = 0.99
         else:
-            APSS_connections_threshold = self.network_threshold_input.value
+            self.APSS_connections_threshold = self.network_threshold_input.value
 
-        print("APSS_connections_threshold = " + str(APSS_connections_threshold))
+        self.APSS_connections_threshold = round(self.APSS_connections_threshold, 2)
+        print("APSS_connections_threshold = " + str(self.APSS_connections_threshold))
+
+        # Update the threshold in the deafult filenames for download
+        network_file = "Network_plot_" + self.ref_genome + "_" + self.sampling_size + "_regions_" + \
+                       self.network_iterations.value + "_iterations_threshold_" + str(self.APSS_connections_threshold)
+        self.save_network_plot_path.placeholder = network_file
+        table_file = "Network_" + self.ref_genome + "_" + self.sampling_size + "_regions_threshold_" + \
+                     str(self.APSS_connections_threshold)
+        self.save_network_table_path.placeholder = table_file
 
         # Recalculate the weights
-        df['weight'] = np.where(df['APSS'] >= APSS_connections_threshold,
-                                np.negative(np.log(1 - df['APSS'])), 0)
-        print(df)
+        self.df_for_network['weight'] = np.where(self.df_for_network['APSS'] >= self.APSS_connections_threshold,
+                                                 np.negative(np.log(1 - self.df_for_network['APSS'])), 0)
+        print(self.df_for_network)
 
-        # Reset the weight edge attributes
-        edges = network.edges()
-        for u, v in edges:
-            condition = ((df['Sample1'] == u) & (df['Sample2'] == v)) | ((df['Sample1'] == v) & (df['Sample2'] == u))
-            index = df[condition].index[0]
-            network.edges[u, v]['weight'] = df.at[index, 'weight']
+        before = time.time()
+        # Create a new network from the updated df using networkx
+        self.network = nx.from_pandas_edgelist(self.df_for_network, source='Sample1', target='Sample2',
+                                               edge_attr='weight')
+        self.nodes_list = list(self.network.nodes)
 
-        #self.generate_rand_positions()
-        self.network_iterations.value = config.network_iterations_options[0]
-        self.update_network_plot(network)
+        if self.is_metadata:
+            # Insert the features information as nodes attributes to the new network
+            for node in self.nodes_list:
+                for feature in self.metadata_features_list:
+                    self.network.nodes[node][feature] = self.metadata_dict[feature][node]
+
+                # Add node attribute 'SampleID' for the hover tooltip
+                self.network.nodes[node]['SampleID'] = node
+
+        after = time.time()
+        duration = after - before
+        print("Creating a new network took " + str(duration) + " seconds.\n")
+
+        before = time.time()
+        self.update_network_plot()
+        after = time.time()
+        duration = after - before
+        print("Updating the network plot took " + str(duration) + " seconds.\n")
 
     # Update the network plot using the selected parameters and the new positions dict
-    def update_network_plot(self, network):
-        self.network_plot = pn.bind(ps.cretae_network_plot, network=network, is_metadata=self.use_metadata_network,
-                                    nodes_feature=self.nodes_color_by, is_continuous=self.is_continuous,
-                                    cmap=self.nodes_colormap,
-                                    node_color=self.network_node_color, edge_color=self.network_edge_color,
-                                    is_edge_colorby=self.color_edges_by_feature, edges_feature=self.edges_color_by,
-                                    within_edge_color=self.network_within_color,
-                                    between_edge_color=self.network_between_color,
-                                    iterations=self.network_iterations, pos_dict=self.pos_dict,
-                                    show_labels=self.show_labels_chkbox, metadata_dict=self.metadata_dict)
-        self.network_pane.object = self.network_plot
+    def update_network_plot(self):
+        print("\nIn update_network_plot")
+        self.network_plot_hv = pn.bind(ps.cretae_network_plot, network=self.network,
+                                       is_metadata=self.use_metadata_network, nodes_feature=self.nodes_color_by.value,
+                                       is_continuous=self.is_continuous.value, cmap=self.nodes_colormap.value,
+                                       node_color=self.network_node_color, edge_color=self.network_edge_color,
+                                       is_edge_colorby=self.color_edges_by_feature, edges_feature=self.edges_color_by,
+                                       within_edge_color=self.network_within_color,
+                                       between_edge_color=self.network_between_color,
+                                       iterations=self.network_iterations, pos_dict=self.pos_dict,
+                                       show_labels=self.show_labels_chkbox, metadata_dict=self.metadata_dict)
 
-    def create_coverage_plots_tab(self):
+        self.network_pane.object = self.network_plot_hv
 
-        plots_by_ref_column = pn.Column(styles=config.main_column_style)
-
-        contigs_num = len(self.contigs_list_by_name)
-
-        # If there is more than one contig - display a select widget to select the contig
-        if contigs_num > 1:
-
-            # Create a drop-down menu of the contigs
-            contig_select = pn.widgets.Select(name='Select a contig:', options=self.contigs_list_by_name,
-                                              value=self.contigs_list_by_name[0], styles={'margin': "0"})
-            # When the selection of contig is changed, a new column is created for the selected contig
-            contig_select_watcher = contig_select.param.watch(partial(self.changed_contig, contig_select),
-                                                              'value', onlychanged=False)
-
-            sorting_options = ['Contig name', 'Contig length']
-            sorting_select = pn.widgets.Select(name='Sort by:', options=sorting_options,
-                                               styles={'margin': "0"})
-            # When the selection of sorting method is changed, sort the contigs in the contigs-select drop-down menu
-            # accordingly
-            sorting_select_watcher = sorting_select.param.watch(partial(self.changed_sorting, sorting_select,
-                                                                        contig_select),
-                                                                'value', onlychanged=False)
-
-            contig_select_row = pn.Row(contig_select, pn.Spacer(width=20), sorting_select)
-
-            plots_by_ref_column.append(contig_select_row)
-
-            contig_select.param.trigger('value')
-
-        # Create the coverage plot for the Ref-genome
-        else:
-            self.create_selected_contig_column(self.contigs_list_by_name[0])
-
-        plots_by_ref_column.append(self.selected_contig_column)
-
-        return plots_by_ref_column
-
-    def changed_sorting(self, sorting_select, contig_select, event):
+    def changed_contig_sorting(self, sorting_select, contig_select, event):
         sorting_method = sorting_select.value
         print("\nChanged contigs sorting method. Sort by: " + sorting_method)
 
@@ -1293,7 +1732,8 @@ class SynTrackerVisApp:
 
     def create_selected_contig_column(self, contig_name):
 
-        score_per_pos_contig = self.contigs_dict[contig_name]
+        score_per_pos_contig = self.score_per_region_selected_genome_df[
+            self.score_per_region_selected_genome_df['Contig_name'] == contig_name].copy()
 
         self.selected_contig_column.clear()
 
@@ -1314,37 +1754,73 @@ class SynTrackerVisApp:
                                                             styles={'font-size': "16px", 'margin': "0px 3px 3px 5px",
                                                                     'padding-top': "0px"}))
 
+        ###################################
         # Create the customization column
+        # All the binded widgets have to be defined again to prevent wrong calls to create_coverage_plot
+        # with previous contigs
 
         # Set the length range
         start_pos = '0'
         end_pos = str(contig_length)
+        self.start_pos_input = pn.widgets.TextInput(name='Start position')
         self.start_pos_input.placeholder = start_pos
         self.start_pos_input.value = start_pos
+        self.end_pos_input = pn.widgets.TextInput(name='End position')
         self.end_pos_input.placeholder = end_pos
         self.end_pos_input.value = end_pos
 
         reset_range_button = pn.widgets.Button(name='Reset range', button_type='primary',
                                                styles={'margin-top': "22px"})
         reset_range_button.on_click(partial(self.reset_range, start_pos, end_pos))
-        pos_range_cust_row = pn.Row(pn.pane.Markdown("Set genome length range:",
+
+        pos_range_cust_row = pn.Row(pn.pane.Markdown("Set contig length range:",
                                                      styles={'font-size': "14px", 'margin': "10px 5px 5px 5px"}),
                                     pn.Spacer(width=10), self.start_pos_input, pn.Spacer(width=5), self.end_pos_input,
                                     pn.Spacer(width=5), reset_range_button,
                                     styles={'margin-left': "5px"})
 
+        self.avg_plot_chkbox = pn.widgets.Checkbox(name='Show avg. scores', value=True)
+        self.avg_plot_color = pn.widgets.ColorPicker(name='Color:', value='#000080',
+                                                     disabled=pn.bind(change_disabled_state_inverse,
+                                                                      chkbox_state=self.avg_plot_chkbox,
+                                                                      watch=True))
         avg_plot_chkbox_col = pn.Column(pn.Spacer(height=20), self.avg_plot_chkbox)
         avg_plot_cust_row = pn.Row(avg_plot_chkbox_col, pn.Spacer(width=10), self.avg_plot_color,
                                    styles={'margin-left': "5px"})
 
+        self.coverage_plot_chkbox = pn.widgets.Checkbox(name='Show all synteny scores', value=True)
+        self.coverage_plot_color = pn.widgets.ColorPicker(name='Color:', value='#ba55d3',
+                                                          disabled=pn.bind(change_disabled_state_inverse,
+                                                                           chkbox_state=self.coverage_plot_chkbox,
+                                                                           watch=True))
         coverage_plot_chkbox_col = pn.Column(pn.Spacer(height=20), self.coverage_plot_chkbox)
         coverage_plot_cust_row = pn.Row(coverage_plot_chkbox_col, pn.Spacer(width=10), self.coverage_plot_color,
                                         styles={'margin-left': "5px"})
 
+        self.hypervar_chkbox = pn.widgets.Checkbox(name='Highlight hypervariable regions', value=True)
+        self.hypervar_color = pn.widgets.ColorPicker(name='Color:', value='#00ffff',
+                                                     disabled=pn.bind(change_disabled_state_inverse,
+                                                                      chkbox_state=self.hypervar_chkbox,
+                                                                      watch=True))
+        self.hypervar_alpha_slider = pn.widgets.FloatSlider(name='Alpha transparency', start=0, end=1, step=0.1,
+                                                            value=0.2,
+                                                            disabled=pn.bind(change_disabled_state_inverse,
+                                                                             chkbox_state=self.hypervar_chkbox,
+                                                                             watch=True))
         hypervar_chkbox_col = pn.Column(pn.Spacer(height=20), self.hypervar_chkbox)
         hypervar_cust_row = pn.Row(hypervar_chkbox_col, pn.Spacer(width=10), self.hypervar_color, pn.Spacer(width=5),
                                    self.hypervar_alpha_slider, styles={'margin-left': "5px"})
 
+        self.hypercons_chkbox = pn.widgets.Checkbox(name='Highlight hyperconserved regions', value=True)
+        self.hypercons_color = pn.widgets.ColorPicker(name='Color:', value='#fa8072',
+                                                      disabled=pn.bind(change_disabled_state_inverse,
+                                                                       chkbox_state=self.hypercons_chkbox,
+                                                                       watch=True))
+        self.hypercons_alpha_slider = pn.widgets.FloatSlider(name='Alpha transparency', start=0, end=1, step=0.1,
+                                                             value=0.2,
+                                                             disabled=pn.bind(change_disabled_state_inverse,
+                                                                              chkbox_state=self.hypercons_chkbox,
+                                                                              watch=True))
         hypercons_chkbox_col = pn.Column(pn.Spacer(height=20), self.hypercons_chkbox)
         hypercons_cust_row = pn.Row(hypercons_chkbox_col, pn.Spacer(width=10), self.hypercons_color, pn.Spacer(width=5),
                                     self.hypercons_alpha_slider, styles={'margin-left': "5px"})
@@ -1359,20 +1835,33 @@ class SynTrackerVisApp:
                                 hypervar_cust_row,
                                 hypercons_cust_row)
 
-        save_file_title = "Download image options:"
+        save_file_title = "Plot download options:"
         download_button = pn.widgets.Button(name='Download high-resolution image', button_type='primary')
-        download_button.on_click(partial(self.download_coverage_plot, contig_name))
+        download_button.on_click(self.download_coverage_plot)
 
         coverage_file = "Coverage_plot_" + self.ref_genome + "_" + contig_name
-        self.save_coverage_file_path.placeholder = coverage_file
+        self.save_coverage_plot_path.placeholder = coverage_file
 
-        self.download_coverage_column = pn.Column(pn.pane.Markdown(save_file_title,
-                                                                   styles={'font-size': "15px", 'font-weight': "bold",
-                                                                           'color': config.title_blue_color,
-                                                                           'margin': "10px 5px 5px 5px"}),
-                                                  self.coverage_image_format, self.save_coverage_file_path,
-                                                  pn.Spacer(height=10),
-                                                  download_button, pn.pane.Markdown())
+        self.download_coverage_plot_column = pn.Column(self.coverage_image_format, self.save_coverage_plot_path,
+                                                       pn.Spacer(height=10), download_button, pn.pane.Markdown())
+
+        coverage_table = "Data_for_coverage_plot_" + self.ref_genome + "_" + contig_name
+        self.save_coverage_table_path.placeholder = coverage_table
+
+        download_table_button = pn.widgets.Button(name='Download underling data in csv format', button_type='primary')
+        download_table_button.on_click(self.download_coverage_table)
+
+        self.download_coverage_table_column = pn.Column(self.save_coverage_table_path, pn.Spacer(height=10),
+                                                        download_table_button, pn.pane.Markdown(), align='end')
+
+        download_files_row = pn.Row(self.download_coverage_plot_column, pn.Spacer(width=100),
+                                    self.download_coverage_table_column)
+
+        download_coverage_column = pn.Column(pn.pane.Markdown(save_file_title,
+                                                              styles={'font-size': "15px", 'font-weight': "bold",
+                                                                      'color': config.title_blue_color,
+                                                                      'margin': "10px 5px 5px 5px"}),
+                                             download_files_row)
 
         # Prepare the data structures necessary for the coverage plots of a specific contig
         # Calculate the average synteny scores for each position
@@ -1405,7 +1894,7 @@ class SynTrackerVisApp:
         if min_score < 0:
             height += abs(min_score) + 0.05
             bottom = min_score - 0.05
-        print("Min score = " + str(min_score))
+        print("\nMin score = " + str(min_score))
         print("Height = " + str(height))
         avg_score_per_pos_contig['Hypervariable'] = np.where(
             avg_score_per_pos_contig['Avg_synteny_score'] < (self.avg_score_genome - 0.75 * self.std_score_genome),
@@ -1413,7 +1902,15 @@ class SynTrackerVisApp:
         avg_score_per_pos_contig['Hyperconserved'] = np.where(
             avg_score_per_pos_contig['Avg_synteny_score'] > (self.avg_score_genome + 0.75 * self.std_score_genome),
             height, 0)
-        #print(avg_score_per_pos_contig)
+
+        print("\nAVG score per position table:")
+        print(avg_score_per_pos_contig)
+
+        self.avg_score_per_pos_contig = avg_score_per_pos_contig.copy()
+        self.avg_score_per_pos_contig['Hypervariable'] = np.where(self.avg_score_per_pos_contig['Hypervariable'] == 0,
+                                                                  0, 1)
+        self.avg_score_per_pos_contig['Hyperconserved'] = np.where(self.avg_score_per_pos_contig['Hyperconserved'] == 0,
+                                                                   0, 1)
 
         # Create the coverage plot for the selected contig of the Ref-genome with the customized parameters
         self.coverage_plot = pn.bind(
@@ -1435,20 +1932,22 @@ class SynTrackerVisApp:
         self.selected_contig_column.append(coverage_plot_row)
         self.selected_contig_column.append(pn.Spacer(width=20))
         self.selected_contig_column.append(styling_col)
-        self.selected_contig_column.append(self.download_coverage_column)
+        self.selected_contig_column.append(download_coverage_column)
 
     def reset_range(self, start, end, event):
+        print("\nIn reset_range")
+        print("Start=" + start + ", end=" + end)
         self.start_pos_input.value = start
         self.end_pos_input.value = end
 
-    def download_coverage_plot(self, contig_name, event):
+    def download_coverage_plot(self, event):
         fformat = self.coverage_image_format.value
 
         # Set the directory for saving
-        if self.save_coverage_file_path.value == "":
-            coverage_file_path = self.downloads_dir_path + self.save_coverage_file_path.placeholder + "." + fformat
+        if self.save_coverage_plot_path.value == "":
+            coverage_file_path = self.downloads_dir_path + self.save_coverage_plot_path.placeholder + "." + fformat
         else:
-            coverage_file_path = self.save_coverage_file_path.value
+            coverage_file_path = self.save_coverage_plot_path.value
 
             # Add a file-format suffix if there is none
             regex = r"^\S+\." + re.escape(fformat) + r"$"
@@ -1461,11 +1960,37 @@ class SynTrackerVisApp:
 
         self.coverage_plot().savefig(coverage_file_path, format=fformat, dpi=300.0, bbox_inches='tight')
 
-        download_message = "The image was downloaded successfully under:\n" + coverage_file_path
+        download_message = "The image is successfully saved under:\n" + coverage_file_path
         markdown = pn.pane.Markdown(download_message, styles={'font-size': "12px", 'color': config.title_red_color})
         download_floatpanel = pn.layout.FloatPanel(markdown, name='Download message', margin=10)
-        self.download_coverage_column.pop(5)
-        self.download_coverage_column.append(download_floatpanel)
+        self.download_coverage_plot_column.pop(4)
+        self.download_coverage_plot_column.append(download_floatpanel)
+
+    def download_coverage_table(self, event):
+        fformat = "csv"
+
+        # Set the directory for saving
+        if self.save_coverage_table_path.value == "":
+            coverage_file_path = self.downloads_dir_path + self.save_coverage_table_path.placeholder + "." + fformat
+        else:
+            coverage_file_path = self.save_coverage_table_path.value
+
+            # Add a file-format suffix if there is none
+            regex = r"^\S+\." + re.escape(fformat) + r"$"
+            if not re.search(regex, coverage_file_path, re.IGNORECASE):
+                coverage_file_path += "." + fformat
+
+            # If path is not absolute - save file basename under the downloads dir
+            if not os.path.isabs(coverage_file_path):
+                coverage_file_path = self.downloads_dir_path + coverage_file_path
+
+        self.avg_score_per_pos_contig.to_csv(coverage_file_path, index=False)
+
+        download_message = "The table is successfully saved under:\n" + coverage_file_path
+        markdown = pn.pane.Markdown(download_message, styles={'font-size': "12px", 'color': config.title_red_color})
+        download_floatpanel = pn.layout.FloatPanel(markdown, name='Download message', margin=10)
+        self.download_coverage_table_column.pop(3)
+        self.download_coverage_table_column.append(download_floatpanel)
 
     def create_multi_genome_column(self):
 
@@ -1491,10 +2016,11 @@ class SynTrackerVisApp:
             self.genomes_select_card,
             self.update_genomes_selection_button,
             self.main_plots_multi_column,
-            styles={'padding': "15px"}
+            styles={'margin': "0px", 'padding': "0"}
         )
 
-        return multi_genome_col
+        self.main_multi_column.clear()
+        self.main_multi_column.append(multi_genome_col)
 
     def update_genomes_selection(self, event):
         # Build the two bar-plots for subsampled regions based on the selected list of genomes
@@ -1511,7 +2037,6 @@ class SynTrackerVisApp:
     def create_multi_genomes_plots_initial_column(self):
         self.main_plots_multi_column.clear()
         self.plots_by_size_multi_column.clear()
-        #self.box_plot_feature_select.param.unwatch(self.feature_select_watcher)
 
         # Initialize the dictionaries that hold the APSS for all the genomes in different sampling sizes
         for size in config.sampling_sizes:
@@ -1588,7 +2113,7 @@ class SynTrackerVisApp:
         self.box_plot_card.clear()
         self.metadata_box_plot_card.clear()
 
-        if self.sampling_size_multi == 'All_regions':
+        if self.sampling_size_multi == 'All':
             size_title = "Presenting plots using average synteny scores from all available regions:"
         else:
             size_title = "Presenting plots using average synteny scores from " + self.sampling_size_multi + \
@@ -1648,16 +2173,22 @@ class SynTrackerVisApp:
                                 self.metadata_box_plot_card
                                 )
 
-        save_file_title = "Download image options:"
+        save_file_title = "Plot download options:"
         download_button = pn.widgets.Button(name='Download high-resolution image', button_type='primary')
         download_button.on_click(self.download_box_plot)
 
         genomes_num = len(self.selected_genomes_subset)
         if genomes_num == self.number_of_genomes:
-            box_plot_file = "Boxplot_all_genomes_" + self.sampling_size_multi + "_regions"
+            box_plot_file = "Boxplot_all_genomes_" + self.sampling_size_multi
+            boxplot_table = "Data_for_boxplot_all_genomes_" + self.sampling_size_multi
+            pvalues_table = "P-values_all_genomes_" + self.sampling_size_multi
         else:
             box_plot_file = "Boxplot_" + str(genomes_num) + "_genomes_" + self.sampling_size_multi + "_regions"
+            boxplot_table = "Data_for_boxplot_" + str(genomes_num) + "_genomes_" + self.sampling_size_multi + "_regions"
+            pvalues_table = "P-values_" + str(genomes_num) + "_genomes_" + self.sampling_size_multi + "_regions"
         self.save_box_plot_file_path.placeholder = box_plot_file
+        self.save_boxplot_table_path.placeholder = boxplot_table
+        self.save_pvalues_table_path.placeholder = pvalues_table
 
         self.download_box_plot_column = pn.Column(pn.pane.Markdown(save_file_title,
                                                                    styles={'font-size': "15px",
@@ -1667,21 +2198,32 @@ class SynTrackerVisApp:
                                                   self.box_plot_image_format, self.save_box_plot_file_path,
                                                   download_button, pn.pane.Markdown())
 
-        controls_col = pn.Column(styling_col, pn.Spacer(height=30), self.download_box_plot_column)
+        download_table_button = pn.widgets.Button(name='Download data table in csv format', button_type='primary')
+        download_table_button.on_click(self.download_boxplot_table)
+
+        self.download_boxplot_table_column = pn.Column(self.save_boxplot_table_path, download_table_button,
+                                                       pn.pane.Markdown())
+
+        download_pvalues_button = pn.widgets.Button(name='Download P-values table in csv format', button_type='primary')
+        download_pvalues_button.on_click(self.download_pvalues_table)
+
+        self.download_pvalues_table_column = pn.Column(self.save_pvalues_table_path, download_pvalues_button,
+                                                       pn.pane.Markdown())
+
+        controls_col = pn.Column(styling_col, pn.Spacer(height=30), self.download_box_plot_column,
+                                 self.download_boxplot_table_column, self.download_pvalues_table_column)
 
         # There is metadata
         if self.is_metadata:
 
-            # Fill the features drop-down menu
             self.box_plot_feature_select.options = self.metadata_features_list
             self.box_plot_feature_select.value = self.metadata_features_list[0]
 
-            # Prepare the APSS dataframe including the current feature and the p-values dataframe
             self.calculate_metadata_for_box_plot()
 
             # Set watcher for the feature-select widget
             self.feature_select_watcher = self.box_plot_feature_select.param.watch(self.update_feature_in_boxplot,
-                                                                                   'value', onlychanged=True)
+                                                                                   'value', onlychanged=False)
 
         # No metadata
         else:
@@ -1704,6 +2246,9 @@ class SynTrackerVisApp:
         print("\ncalculate_metadata_for_box_plot: Number of genomes to present = " + str(genomes_num))
 
         feature = self.box_plot_feature_select.value
+        self.save_box_plot_file_path.placeholder += "_" + feature
+        self.save_boxplot_table_path.placeholder += "_" + feature
+        self.save_pvalues_table_path.placeholder += "_" + feature
 
         self.genomes_subset_selected_size_APSS_df['Category'] = self.genomes_subset_selected_size_APSS_df.apply(
             lambda row: category_by_feature(row, feature, self.metadata_dict), axis=1)
@@ -1785,11 +2330,63 @@ class SynTrackerVisApp:
 
         self.box_plot().savefig(box_plot_file_path, format=fformat, dpi=300.0, bbox_inches='tight')
 
-        download_message = "The image was downloaded successfully under:\n" + box_plot_file_path
+        download_message = "The image is successfully saved under:\n" + box_plot_file_path
         markdown = pn.pane.Markdown(download_message, styles={'font-size': "12px", 'color': config.title_red_color})
-        download_floatpanel = pn.layout.FloatPanel(markdown, name='Download message', margin=20)
+        download_floatpanel = pn.layout.FloatPanel(markdown, name='Download message', margin=10)
         self.download_box_plot_column.pop(4)
         self.download_box_plot_column.append(download_floatpanel)
+
+    def download_boxplot_table(self, event):
+        fformat = "csv"
+
+        # Set the directory for saving
+        if self.save_boxplot_table_path.value == "":
+            boxplot_table_path = self.downloads_dir_path + self.save_boxplot_table_path.placeholder + "." + fformat
+        else:
+            boxplot_table_path = self.save_boxplot_table_path.value
+
+            # Add a file-format suffix if there is none
+            regex = r"^\S+\." + re.escape(fformat) + r"$"
+            if not re.search(regex, boxplot_table_path, re.IGNORECASE):
+                boxplot_table_path += "." + fformat
+
+            # If path is not absolute - save file basename under the downloads dir
+            if not os.path.isabs(boxplot_table_path):
+                boxplot_table_path = self.downloads_dir_path + boxplot_table_path
+
+        self.genomes_subset_selected_size_APSS_df.to_csv(boxplot_table_path, index=False, sep='\t')
+
+        download_message = "The table is successfully saved under:\n" + boxplot_table_path
+        markdown = pn.pane.Markdown(download_message, styles={'font-size': "12px", 'color': config.title_red_color})
+        download_floatpanel = pn.layout.FloatPanel(markdown, name='Download message', margin=10)
+        self.download_boxplot_table_column.pop(2)
+        self.download_boxplot_table_column.append(download_floatpanel)
+
+    def download_pvalues_table(self, event):
+        fformat = "csv"
+
+        # Set the directory for saving
+        if self.save_pvalues_table_path.value == "":
+            pvalues_table_path = self.downloads_dir_path + self.save_pvalues_table_path.placeholder + "." + fformat
+        else:
+            pvalues_table_path = self.save_pvalues_table_path.value
+
+            # Add a file-format suffix if there is none
+            regex = r"^\S+\." + re.escape(fformat) + r"$"
+            if not re.search(regex, pvalues_table_path, re.IGNORECASE):
+                pvalues_table_path += "." + fformat
+
+            # If path is not absolute - save file basename under the downloads dir
+            if not os.path.isabs(pvalues_table_path):
+                pvalues_table_path = self.downloads_dir_path + pvalues_table_path
+
+        self.boxplot_p_values_df.to_csv(pvalues_table_path, index=False, sep='\t')
+
+        download_message = "The table is successfully saved under:\n" + pvalues_table_path
+        markdown = pn.pane.Markdown(download_message, styles={'font-size': "12px", 'color': config.title_red_color})
+        download_floatpanel = pn.layout.FloatPanel(markdown, name='Download message', margin=10)
+        self.download_pvalues_table_column.pop(2)
+        self.download_pvalues_table_column.append(download_floatpanel)
 
 
 

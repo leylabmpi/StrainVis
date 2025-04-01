@@ -38,8 +38,8 @@ def complete_metadata(score_per_region_df, metadata_df):
                 #new_row.append("NaN")
             metadata_df.loc[len(metadata_df)] = new_row
 
-    #print("\nMetadata after filling missing samples:")
-    #print(metadata_df)
+    print("\nMetadata after filling missing samples:")
+    print(metadata_df)
 
     # Create a dictionary to map the samples to feature values from metadata_df
     for feature in metadata_features_list:
@@ -63,6 +63,27 @@ def count_species_num(row, df):
     return species_num
 
 
+def create_sorted_by_pairs_genomes_list(score_per_region_all_genomes_df):
+    regions_num_per_pair_df = score_per_region_all_genomes_df[['Ref_genome', 'Sample1', 'Sample2', 'Synteny_score']]. \
+        groupby(['Ref_genome', 'Sample1', 'Sample2']).count().reset_index(). \
+        rename(columns={"Synteny_score": "Num_of_compared_regions"})
+
+    regions_num_per_pair_df['40'] = np.where(regions_num_per_pair_df['Num_of_compared_regions'] >= 40, 1, 0)
+
+    pairs_num_at_40_regions_df = regions_num_per_pair_df[['Ref_genome', '40']].groupby('Ref_genome').sum().\
+        sort_values('40', ascending=False).reset_index()
+    pairs_num_at_40_regions_df.columns.values[1] = "Number_of_pairs"
+
+    print("\ncreate_sorted_by_pairs_genomes_list:")
+    print(pairs_num_at_40_regions_df)
+
+    genomes_list_by_pairs_num = list(pairs_num_at_40_regions_df['Ref_genome'])
+    #print("\nGenomes list sorted by pairs number:")
+    #print(genomes_list_by_pairs_num)
+
+    return genomes_list_by_pairs_num
+
+
 def create_pairs_num_per_sampling_size(score_per_region_selected_genomes_df):
 
     regions_num_per_pair_df = score_per_region_selected_genomes_df[['Ref_genome', 'Sample1', 'Sample2', 'Synteny_score']].\
@@ -72,7 +93,7 @@ def create_pairs_num_per_sampling_size(score_per_region_selected_genomes_df):
 
     # Add a column for each subsampling size (to calculate how many pairs have results for at least this size)
     for size in config.sampling_sizes:
-        if size == 'All_regions':
+        if size == 'All':
             regions_num_per_pair_df[size] = np.where(regions_num_per_pair_df['Num_of_compared_regions'] >= 1,
                                                      1, 0)
         else:
@@ -80,7 +101,7 @@ def create_pairs_num_per_sampling_size(score_per_region_selected_genomes_df):
                                                      1, 0)
     #print(regions_num_per_pair_df)
 
-    pairs_num_per_sampling_size_df = regions_num_per_pair_df[['Ref_genome', 'All_regions', '40', '60', '80', '100',
+    pairs_num_per_sampling_size_df = regions_num_per_pair_df[['Ref_genome', 'All', '40', '60', '80', '100',
                                                               '125', '150', '175', '200', '250', '300', '350',
                                                               '400']].groupby('Ref_genome').sum().reset_index()
     #print(pairs_num_per_sampling_size_df)
@@ -90,7 +111,7 @@ def create_pairs_num_per_sampling_size(score_per_region_selected_genomes_df):
                                                         pairs_num_per_sampling_size_df[size], 0)
     #print(pairs_num_per_sampling_size_df)
 
-    summary_df = pairs_num_per_sampling_size_df[['All_regions', '40', '60', '80', '100', '125', '150', '175', '200',
+    summary_df = pairs_num_per_sampling_size_df[['All', '40', '60', '80', '100', '125', '150', '175', '200',
                                                  '250', '300', '350', '400']].sum().reset_index()
 
     summary_df.columns.values[0] = "Subsampled_regions"
@@ -109,7 +130,7 @@ def create_pairs_num_per_sampling_size(score_per_region_selected_genomes_df):
 def calculate_APSS_all_genomes_sampling_size(score_per_region_df, size):
 
     # Taking all available regions - no subsampling
-    if size == 'All_regions':
+    if size == 'All':
         avg_scores_one_size_df = score_per_region_df.groupby(['Ref_genome', 'Sample1', 'Sample2'])['Synteny_score'].\
             mean().reset_index().rename(columns={"Synteny_score": "APSS"})
 
@@ -131,18 +152,18 @@ def calculate_APSS_all_genomes_sampling_size(score_per_region_df, size):
     if not avg_scores_one_size_df.empty:
         avg_scores_one_size_df['Compared_regions'] = size
 
-    print("\ncalculate_APSS_all_genomes_sampling_size:")
-    print(avg_scores_one_size_df)
+    #print("\ncalculate_APSS_all_genomes_sampling_size:")
+    #print(avg_scores_one_size_df)
 
     # Filter out species with less than 10 pairs
     samples_per_genome_df = avg_scores_one_size_df[['Ref_genome', 'APSS']].groupby('Ref_genome').count().reset_index().\
         rename(columns={"APSS": "count"})
-    print(samples_per_genome_df)
+    #print(samples_per_genome_df)
     merged_df = avg_scores_one_size_df.merge(samples_per_genome_df[['Ref_genome', 'count']], on='Ref_genome',
                                              how='left')
     avg_scores_one_size_filtered_df = merged_df[merged_df['count'] >= 10].drop(columns='count')
-    print("\ncalculate_APSS_all_genomes_sampling_size after genomes filtering:")
-    print(avg_scores_one_size_filtered_df)
+    #print("\ncalculate_APSS_all_genomes_sampling_size after genomes filtering:")
+    #print(avg_scores_one_size_filtered_df)
 
     return avg_scores_one_size_filtered_df
 
@@ -152,8 +173,8 @@ def return_genomes_subset_APSS_selected_size_table(all_genomes_selected_size_APS
         all_genomes_selected_size_APSS_df[all_genomes_selected_size_APSS_df['Ref_genome'].isin(genomes_list)].\
         reset_index()
 
-    print("\nreturn_genomes_subset_APSS_selected_size_table:")
-    print(genomes_subset_selected_size_APSS_df)
+    #print("\nreturn_genomes_subset_APSS_selected_size_table:")
+    #print(genomes_subset_selected_size_APSS_df)
     return genomes_subset_selected_size_APSS_df
 
 

@@ -1,11 +1,15 @@
+import time
 import numpy as np
 import pandas as pd
+from itertools import count
 import networkx as nx
 import hvplot.pandas  # Enable interactive
 import holoviews as hv
 import hvplot.networkx as hvnx
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+from matplotlib import cm
+from matplotlib.lines import Line2D
 from matplotlib.colors import Normalize
 import seaborn as sns
 from bokeh.plotting import figure
@@ -41,6 +45,26 @@ def plot_pairs_vs_sampling_size_bar(df, sampling_size, is_all_regions):
     return bar_plot
 
 
+def plot_samples_vs_sampling_size_bar(df, sampling_size, is_all_regions):
+    value = str(sampling_size)
+
+    # If 'All regions' shouldn't be presented, remove this row from the df
+    if is_all_regions == 0:
+        df = df.drop(0)
+
+    df['color'] = np.where(df['Subsampled_regions'] == value, config.highlight_bar_color, config.normal_bar_color)
+
+    tooltips = [
+        ('Number of samples', '@Number_of_samples'),
+    ]
+    hover = HoverTool(tooltips=tooltips)
+
+    bar_plot = df.hvplot.bar(x='Subsampled_regions', y='Number_of_samples', color='color', xlabel='Subsampled regions',
+                             ylabel='Number of samples').opts(shared_axes=False, tools=[hover])
+
+    return bar_plot
+
+
 def create_jitter_plot_bokeh(avg_df, color):
     df_for_jitter = avg_df[['APSS']]
     df_for_jitter.insert(1, 'Category', 'Comparisons')
@@ -59,19 +83,7 @@ def create_jitter_plot_bokeh(avg_df, color):
     print("\ncreate_jitter_plot:")
     print(plot)
 
-    # DEbug
-    #export_png(plot, filename="/Users/ipaz/ownCloud/Projects/SynTracker_Vis/Downloads/Jitter_try.png")
-    ###
-
     return plot
-
-
-def jitter_dots(dots):
-    offsets = dots.get_offsets()
-    jittered_offsets = offsets
-    # only jitter in the x-direction
-    jittered_offsets[:, 0] += np.random.uniform(-0.1, 0.1, offsets.shape[0])
-    dots.set_offsets(jittered_offsets)
 
 
 def category_by_feature(row, feature, metadata_dict):
@@ -90,26 +102,28 @@ def create_jitter_plot(avg_df, color, use_metadata, metadata_dict, feature, same
                                                         axis=1)
         same_feature = 'Same ' + feature
         diff_feature = 'Different ' + feature
-        jitter_plot = sns.catplot(data=df_for_jitter, x="Category", y="APSS", order=[same_feature, diff_feature],
-                                  hue="Category", hue_order=[same_feature, diff_feature],
-                                  palette=[same_color, different_color], edgecolor="gray", linewidth=0.1)
+        #jitter_plot = sns.catplot(data=df_for_jitter, x="Category", y="APSS", order=[same_feature, diff_feature],
+        #                          hue="Category", hue_order=[same_feature, diff_feature],
+        #                          palette=[same_color, different_color], edgecolor="gray", linewidth=0.1)
+        boxplot = sns.boxplot(data=df_for_jitter, x="Category", y="APSS", order=[same_feature, diff_feature],
+                              hue="Category", hue_order=[same_feature, diff_feature],
+                              palette=[same_color, different_color])
 
     # Do not use metadata in plot - show all the comparisons together
     else:
         df_for_jitter['Category'] = 'All Comparisons'
-        jitter_plot = sns.catplot(data=df_for_jitter, x="Category", y="APSS", color=color, edgecolor="gray",
-                                  linewidth=0.1)
+        #jitter_plot = sns.catplot(data=df_for_jitter, x="Category", y="APSS", color=color, edgecolor="gray",
+        #                          linewidth=0.1)
+        boxplot = sns.boxplot(data=df_for_jitter, x="Category", y="APSS", color=color)
 
     print("\nDF for jitter plot:")
     print(df_for_jitter)
 
-    return jitter_plot.figure
+    #return jitter_plot.figure
+    return boxplot.figure
 
 
 def create_clustermap(matrix, cmap):
-
-    np.fill_diagonal(matrix.values, 1.0)
-    matrix = matrix.fillna(100.0)
 
     # The number of columns doesn't exceed the defined maximum - continue creating the clustermap plot
     col_num = len(matrix.columns)
@@ -149,6 +163,8 @@ def create_clustermap(matrix, cmap):
     clustermap.ax_heatmap.set_yticklabels(clustermap.ax_heatmap.get_ymajorticklabels(), fontsize=font_size,
                                           rotation='horizontal')
 
+    plt.close(clustermap.figure)
+
     return clustermap.figure
 
 
@@ -156,8 +172,11 @@ def cretae_network_plot(network, is_metadata, nodes_feature, is_continuous, cmap
                         is_edge_colorby, edges_feature, within_edge_color, between_edge_color, iterations, pos_dict,
                         show_labels, metadata_dict):
     iter_num = int(iterations)
+    print("\nIn cretae_network_plot.\nIterations number = " + str(iter_num) + "\nFeature: " + nodes_feature)
 
     pos = nx.layout.fruchterman_reingold_layout(network, iterations=iter_num, pos=pos_dict, k=2)
+
+    is_legend = False
 
     if is_metadata:
         tooltips = [
@@ -180,9 +199,9 @@ def cretae_network_plot(network, is_metadata, nodes_feature, is_continuous, cmap
         if is_continuous:
             print("Continuous feature")
 
-            # Step 1: Extract non-missing values
+            # Step 1: Extract non-missing values (only if the values are not strings)
             non_missing_values = [network.nodes[node][nodes_feature] for node in network.nodes
-                                  if network.nodes[node][nodes_feature] is not np.nan]
+                                  if not np.isnan(network.nodes[node][nodes_feature])]
 
             # Step 2: Define min and max values based only on non-missing values
             min_value = min(non_missing_values)
@@ -195,40 +214,220 @@ def cretae_network_plot(network, is_metadata, nodes_feature, is_continuous, cmap
             norm = Normalize(vmin=min_value, vmax=max_value)
 
             if is_edge_colorby:
+                # Plot using holoviews
                 network_plot = hvnx.draw(network, pos, node_size=300, node_color=nodes_feature, cmap=cmap, norm=norm,
                                          node_alpha=0.95, edge_color=hv.dim('edge_color'),
                                          edge_width=hv.dim('weight') / 5, vmin=min_value, vmax=max_value)
 
             else:
+                # Plot using holoviews
                 network_plot = hvnx.draw(network, pos, node_size=300, node_color=nodes_feature, cmap=cmap, norm=norm,
                                          node_alpha=0.95, edge_color=edge_color, edge_width=hv.dim('weight')/5,
                                          vmin=min_value, vmax=max_value)
 
             network_plot.opts(colorbar=True)
 
+            hover = HoverTool(tooltips=tooltips)
+            network_plot.opts(tools=[hover])
+
         # Feature is categorical
         else:
+            print("Categorical feature")
+
+            # Prepare the colors mapping for the legend
+            unique_groups = list(set([str(network.nodes[node][nodes_feature]) for node in network.nodes()]))
+            groups_num = len(unique_groups)
+            # Move the 'nan' group (if any) to the end of the list
+            if 'nan' in unique_groups:
+                unique_groups.remove('nan')
+                unique_groups.append('nan')
+            print(unique_groups)
+            cmap_length = len(cmap)
+            print("Cmap length = " + str(cmap_length))
+            group_to_color = {group: cmap[i % cmap_length] for i, group in enumerate(unique_groups)}
+            colors = [group_to_color[str(network.nodes[node][nodes_feature])] for node in network.nodes()]
+
             if is_edge_colorby:
-                network_plot = hvnx.draw(network, pos, node_size=300, node_color=nodes_feature, cmap=cmap, node_alpha=0.95,
+                # Plot using holoviews
+                network_plot = hvnx.draw(network, pos, node_size=300, node_color=colors, cmap=cmap,
+                                         node_alpha=0.95,
                                          edge_color=hv.dim('edge_color'), edge_width=hv.dim('weight') / 5)
+
             else:
-                network_plot = hvnx.draw(network, pos, node_size=300, node_color=nodes_feature, cmap=cmap, node_alpha=0.95,
+                # Plot using holoviews
+                network_plot = hvnx.draw(network, pos, node_size=300, node_color=colors, node_alpha=0.95,
                                          edge_color=edge_color, edge_width=hv.dim('weight')/5)
 
-        hover = HoverTool(tooltips=tooltips)
-        network_plot.opts(tools=[hover])
+            hover = HoverTool(tooltips=tooltips)
+            network_plot.opts(tools=[hover])
+
+            # Add a legend if there are up to 10 groups
+            if groups_num <= 10:
+                legend_items = []
+                for i, group in enumerate(unique_groups):
+                    legend_items.append(hv.Scatter((0, 1 - i * 0.1), label=str(group)).opts(
+                        show_legend=True, color=group_to_color[group], size=0))
+                # Combine the plot with the generated legend
+                legend = hv.Overlay(legend_items)
+                is_legend = True
 
     else:
+        # Plot using holoviews
         network_plot = hvnx.draw(network, pos, node_size=300, node_color=node_color, node_alpha=0.95,
                                  edge_color=edge_color, edge_width=hv.dim('weight')/5)
 
     if show_labels:
         labels = hv.Labels(network_plot.nodes, ['x', 'y'], 'index').opts(text_font_size='8pt', text_color='black')
-        hv_layout = network_plot * labels
+        # Display legend and sample names
+        if is_legend:
+            hv_layout = network_plot * legend * labels
+        else:
+            hv_layout = network_plot * labels
     else:
-        hv_layout = network_plot
+        if is_legend:
+            hv_layout = network_plot * legend
+        else:
+            hv_layout = network_plot
 
     return hv_layout
+
+
+def cretae_network_plot_matplotlib(network, is_metadata, nodes_feature, is_continuous, cmap, node_color, edge_color,
+                                   is_edge_colorby, edges_feature, within_edge_color, between_edge_color, iterations,
+                                   pos_dict, show_labels, metadata_dict):
+    iter_num = int(iterations)
+    print("\nIn cretae_network_plot_matplotlib. Iterations number = " + str(iter_num))
+    print("cmap: " + str(cmap))
+
+    # Preparing network drawing also with matplotlib for better image production
+    fig, ax1 = plt.subplots(figsize=(8, 7))
+    widths = [network[u][v]['weight']/10 for u, v in network.edges()]
+
+    pos = nx.layout.fruchterman_reingold_layout(network, iterations=iter_num, pos=pos_dict, k=2)
+
+    # Get the colormap
+    cmap_mpl = plt.get_cmap(cmap)
+
+    if is_metadata:
+        # Set the edges colors for the requested color-by feature
+        if is_edge_colorby:
+            edges = network.edges()
+            for u, v in edges:
+                if metadata_dict[edges_feature][u] == metadata_dict[edges_feature][v]:
+                    network.edges[u, v]['edge_color'] = within_edge_color
+                else:
+                    network.edges[u, v]['edge_color'] = between_edge_color
+
+            edge_colors = nx.get_edge_attributes(network, 'edge_color').values()
+
+        # In case of numeric continuous feature:
+        if is_continuous:
+            print("Continuous feature")
+
+            # Extract non-missing values
+            non_missing_values = [network.nodes[node][nodes_feature] for node in network.nodes
+                                  if not np.isnan(network.nodes[node][nodes_feature])]
+
+            # Define min and max values based only on non-missing values
+            min_value = min(non_missing_values)
+            max_value = max(non_missing_values)
+            print("Min value: " + str(min_value))
+            print("Max value: " + str(max_value))
+
+            nodes_feature_array = np.array([network.nodes[node][nodes_feature] for node in network.nodes()])
+            normalized_values = (nodes_feature_array - min_value) / (max_value - min_value)
+
+            # Map the node values to colors using the colormap
+            node_colors = []
+            for i, node in enumerate(network.nodes):
+                value = network.nodes[node][nodes_feature]
+                if np.isnan(value):  # If the value is NaN, use the default color
+                    node_colors.append(config.nodes_default_color)
+                else:
+                    node_colors.append(cmap_mpl(normalized_values[i]))  # Apply the colormap to the value
+
+            # Create a ScalarMappable to associate the colormap with the normalized values
+            norm = Normalize(vmin=min_value, vmax=max_value)
+            sm = plt.cm.ScalarMappable(cmap=cmap_mpl, norm=norm)
+            sm.set_array([])  # Empty array as we don't need to pass actual data to the ScalarMappable
+
+            if is_edge_colorby:
+                if show_labels:
+                    nx.draw(network, pos, node_size=80, node_color=node_colors, alpha=0.95,
+                            edge_color=list(edge_colors), width=list(widths), vmin=min_value, vmax=max_value,
+                            with_labels=True, linewidths=0.5, edgecolors='black', font_size=6)
+                else:
+                    nx.draw(network, pos, node_size=80, node_color=node_colors, alpha=0.95,
+                            edge_color=list(edge_colors), width=list(widths), with_labels=False,
+                            vmin=min_value, vmax=max_value, linewidths=0.5, edgecolors='black')
+
+            else:
+                if show_labels:
+                    nx.draw(network, pos, node_size=80, node_color=node_colors, alpha=0.95,
+                            edge_color=edge_color, width=list(widths), vmin=min_value, vmax=max_value, with_labels=True,
+                            linewidths=0.5, edgecolors='black', font_size=6)
+                else:
+                    nx.draw(network, pos, node_size=80, node_color=node_colors, alpha=0.95,
+                            edge_color=edge_color, width=list(widths), with_labels=False,
+                            vmin=min_value, vmax=max_value, linewidths=0.5, edgecolors='black')
+
+            plt.colorbar(ax=ax1, mappable=sm, label=nodes_feature)
+
+        # Feature is categorical
+        else:
+            # Prepare the colors mapping for the matplotlib plot
+            unique_groups = list(set([str(network.nodes[node][nodes_feature]) for node in network.nodes()]))
+            groups_num = len(unique_groups)
+            # Move the 'nan' group (if any) to the end of the list
+            if 'nan' in unique_groups:
+                unique_groups.remove('nan')
+                unique_groups.append('nan')
+            print(unique_groups)
+            cmap_length = cmap_mpl.N
+            group_to_color = {group: cmap_mpl(i % cmap_length) for i, group in enumerate(unique_groups)}
+            colors = [group_to_color[str(network.nodes[node][nodes_feature])] for node in network.nodes()]
+
+            if is_edge_colorby:
+                if show_labels:
+                    nx.draw(network, pos, node_size=80, node_color=colors, alpha=0.95,
+                            edge_color=list(edge_colors), width=list(widths), with_labels=True, linewidths=0.5,
+                            edgecolors='black', font_size=6)
+                else:
+                    nx.draw(network, pos, node_size=80, node_color=colors, alpha=0.95,
+                            edge_color=list(edge_colors), width=list(widths), with_labels=False, linewidths=0.5,
+                            edgecolors='black')
+
+            else:
+                if show_labels:
+                    nx.draw(network, pos, node_size=80, node_color=colors, alpha=0.95,
+                            edge_color=edge_color, width=list(widths), with_labels=True, linewidths=0.5,
+                            edgecolors='black', font_size=6)
+                else:
+                    nx.draw(network, pos, node_size=80, node_color=colors, alpha=0.95,
+                            edge_color=edge_color, width=list(widths), with_labels=False, linewidths=0.5,
+                            edgecolors='black')
+
+            # If number of groups <= 10, add legend
+            if groups_num <= 10:
+                legend_handles = [
+                    Line2D([0], [0], marker='o', color='w', markerfacecolor=group_to_color[group], markersize=8,
+                           markeredgecolor='black', markeredgewidth=0.1, label=group)
+                    for group in unique_groups]
+
+                # Add the legend to the plot
+                plt.legend(handles=legend_handles, title=nodes_feature, loc="best")
+
+    else:
+        if show_labels:
+            nx.draw(network, pos, node_size=100, node_color=node_color, alpha=0.95, edge_color=edge_color,
+                    width=list(widths), with_labels=True, linewidths=0.5, edgecolors='black', font_size=6)
+        else:
+            nx.draw(network, pos, node_size=100, node_color=node_color, alpha=0.95, edge_color=edge_color,
+                    width=list(widths), with_labels=False, linewidths=0.5, edgecolors='black')
+
+    plt.close(fig)
+
+    return fig
 
 
 def create_coverage_plot(contig_name, score_per_pos_contig, avg_score_per_pos_contig,
@@ -237,9 +436,10 @@ def create_coverage_plot(contig_name, score_per_pos_contig, avg_score_per_pos_co
                          show_hyper_var, hyper_var_color, hyper_var_alpha,
                          show_hyper_cons, hyper_cons_color, hyper_cons_alpha, bottom_val):
 
+    before = time.time()
     print("\ncreate_coverage_plot:\nContig name: " + contig_name)
-    print("Start position: " + start_pos)
-    print("End position: " + end_pos)
+    #print("Start position: " + start_pos)
+    #print("End position: " + end_pos)
 
     #print("\nScore per contig df sorted:")
     #print(score_per_pos_contig)
@@ -249,6 +449,10 @@ def create_coverage_plot(contig_name, score_per_pos_contig, avg_score_per_pos_co
     score_per_pos_contig = score_per_pos_contig[score_per_pos_contig['Position'] < int(end_pos)]
     avg_score_per_pos_contig = avg_score_per_pos_contig[avg_score_per_pos_contig['Position'] >= int(start_pos)]
     avg_score_per_pos_contig = avg_score_per_pos_contig[avg_score_per_pos_contig['Position'] < int(end_pos)]
+
+    after = time.time()
+    duration = after - before
+    print("Setting the correct range took " + str(duration) + " seconds")
 
     # Prepare data for plotting the avg scores as lines
     avg_score_per_pos_contig_end_pos = avg_score_per_pos_contig.copy()
@@ -263,13 +467,13 @@ def create_coverage_plot(contig_name, score_per_pos_contig, avg_score_per_pos_co
     #print("\nAverage data for line plot after concatenating:")
     #print(avg_score_per_pos_contig_for_line_plot)
 
-    fig, ax1 = plt.subplots(figsize=(10, 5))
-
     pos_array = np.full((2, len(score_per_pos_contig.index)), 0)
     pos_array[1, :] = config.region_length - 100
 
     avg_pos_array = np.full((2, len(avg_score_per_pos_contig.index)), 0)
     avg_pos_array[1, :] = config.region_length
+
+    fig, ax1 = plt.subplots(figsize=(10, 5))
 
     if show_scores:
         coverage_plot = plt.errorbar(score_per_pos_contig['Position'], score_per_pos_contig['Synteny_score'],
@@ -306,6 +510,10 @@ def create_coverage_plot(contig_name, score_per_pos_contig, avg_score_per_pos_co
     #plt.legend(fontsize='small', loc=(1.01, 0.8))
 
     plt.close(fig)
+
+    after = time.time()
+    duration = after - before
+    print("Create/update the coverage plot took " + str(duration) + " seconds")
 
     return fig
 

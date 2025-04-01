@@ -20,6 +20,16 @@ def create_species_num_text(df, sampling_size):
     }
 
 
+def create_samples_num_text(df, sampling_size):
+    samples_num = df.loc[df['Subsampled_regions'] == sampling_size, 'Number_of_samples'].values[0]
+    total_samples_num = df.at[0, 'Number_of_samples']
+
+    return {
+        'object': "Number of samples: " + str(samples_num) + " out of " + str(total_samples_num),
+        'styles': {'font-size': "16px", 'text-align': "center"}
+    }
+
+
 def get_contig_title(contig_name):
     contig_title = "Contig name: " + contig_name
     return contig_title
