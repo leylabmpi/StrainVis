@@ -1,7 +1,4 @@
 import numpy as np
-from scipy.stats import mannwhitneyu, ranksums
-from statsmodels.stats.multitest import multipletests
-import pandas as pd
 import hvplot.pandas  # Enable interactive
 from bokeh.models import HoverTool
 import seaborn as sns

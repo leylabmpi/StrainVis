@@ -10,10 +10,8 @@ import re
 import time
 import threading
 from functools import partial
-import holoviews as hv
 import networkx as nx
 import random
-from bokeh.io import export_svgs, export_png
 from scipy.stats import mannwhitneyu, ranksums
 from statsmodels.stats.multitest import multipletests
 import seaborn as sns
@@ -116,6 +114,7 @@ class SynTrackerVisApp:
         self.filename = ""
         self.input_file_loaded = 0
         self.is_metadata = 0
+        self.valid_metadata = 1
         self.metadata_dict = dict()
         self.metadata_features_list = []
         self.sample_ids_column_name = ""
@@ -438,11 +437,11 @@ class SynTrackerVisApp:
                                                styles={'font-size': "20px", 'color': config.title_purple_color,
                                                        'margin-bottom': "0"}))
 
-        metadata_upload_title = "Upload a metadata file for the compared genomes (delimited format: csv or tsv):"
+        metadata_upload_title = "Upload a metadata file for the compared genomes (in tab delimited format):"
         self.main_area.append(pn.pane.Markdown(metadata_upload_title, styles={'font-size': "17px", 'margin-bottom': "0",
                                                                               'margin-top': "0"}))
         self.main_area.append(self.metadata_file)
-        metadata_note = "Please note: the metadata file may contain an unlimited number of columns (metadata levels)." \
+        metadata_note = "Please note: the metadata file may contain an unlimited number of columns (metadata levels).  " \
                         "\nThe first column must contain the sample IDs (identical to the sample IDs that appear in " \
                         "SynTracker's output file)."
         self.main_area.append(pn.pane.Markdown(metadata_note, styles={'font-size': "15px", 'margin-bottom': "0",
@@ -592,7 +591,7 @@ class SynTrackerVisApp:
     def display_error_page(self, message):
         self.main_area.clear()
 
-        self.main_area.append(pn.pane.Markdown(message, styles={'font-size': "20px"}))
+        self.main_area.append(pn.pane.Markdown(message, styles={'font-size': "20px", 'color': config.title_red_color}))
         self.main_area.append(self.submit_new_file_button())
 
     def display_results_page(self):
@@ -600,9 +599,6 @@ class SynTrackerVisApp:
 
         title = "Loading input file: " + self.filename
         self.main_area.append(pn.pane.Markdown(title, styles={'font-size': "20px"}))
-
-    def read_metadata_file(self):
-        pass
 
     def start_process(self):
         self.ref_genomes_list = []
@@ -647,74 +643,83 @@ class SynTrackerVisApp:
             print("\nMetadata before validation:")
             print(metadata_df)
 
+            # Check if the provided metadata is valid and match the sample-IDs.
             # If some samples are missing from the metadata - fill them with np.nan values
             before = time.time()
-            self.metadata_dict, self.metadata_features_list, self.sample_ids_column_name = \
+            self.metadata_dict, self.metadata_features_list, self.sample_ids_column_name, error = \
                 dm.complete_metadata(self.score_per_region_all_genomes_df, metadata_df)
             after = time.time()
             duration = after - before
-            print("\nFilling missing metadata took " + str(duration) + " seconds.\n")
+
+            # There is some problem with the metadata file - print error
+            if error != "":
+                self.display_error_page(error)
+                self.valid_metadata = 0
+
+            else:
+                print("\nFilling missing metadata took " + str(duration) + " seconds.\n")
 
         # Initialize the dictionaries that save the dataframes for all the combinations of ref_genomes and sizes
         # and whether they have already been calculated
-        for genome in self.ref_genomes_list:
-            self.calculated_APSS_genome_size_dict[genome] = dict()
-            for size in config.sampling_sizes:
-                self.APSS_all_genomes_all_sizes_dict[size] = pd.DataFrame()
-                self.calculated_APSS_all_genomes_size_dict[size] = 0
+        if self.valid_metadata:
+            for genome in self.ref_genomes_list:
+                self.calculated_APSS_genome_size_dict[genome] = dict()
+                for size in config.sampling_sizes:
+                    self.APSS_all_genomes_all_sizes_dict[size] = pd.DataFrame()
+                    self.calculated_APSS_all_genomes_size_dict[size] = 0
 
-        # Input file contains only one ref-genome -> present only single genome visualization
-        if self.number_of_genomes == 1:
-            self.ref_genome = self.ref_genomes_list[0]
-            print("\nReference genome = " + self.ref_genome)
+            # Input file contains only one ref-genome -> present only single genome visualization
+            if self.number_of_genomes == 1:
+                self.ref_genome = self.ref_genomes_list[0]
+                print("\nReference genome = " + self.ref_genome)
 
-            # Create the single-genome visualization layout
-            self.create_single_genome_column()
-            self.main_single_column.append(self.ref_genome_column)
+                # Create the single-genome visualization layout
+                self.create_single_genome_column()
+                self.main_single_column.append(self.ref_genome_column)
 
-            self.main_area.clear()
-            self.main_area.append(self.main_single_column)
+                self.main_area.clear()
+                self.main_area.append(self.main_single_column)
 
-        # Input file contains more than one ref-genome -> display two tabs, for single- and multi-genome visualizations
-        else:
-            # Calculate the number of pairs at 40 regions for all the genomes and create a sorted list of genomes
-            self.ref_genomes_list_by_pairs_num = \
-                dm.create_sorted_by_pairs_genomes_list(self.score_per_region_all_genomes_df)
+            # Input file contains more than one ref-genome -> display two tabs, for single- and multi-genome visualizations
+            else:
+                # Calculate the number of pairs at 40 regions for all the genomes and create a sorted list of genomes
+                self.ref_genomes_list_by_pairs_num = \
+                    dm.create_sorted_by_pairs_genomes_list(self.score_per_region_all_genomes_df)
 
-            self.genomes_select.options = self.ref_genomes_list_by_pairs_num
-            self.genomes_select.value = self.ref_genomes_list_by_pairs_num[0]
-            self.ref_genome = self.ref_genomes_list_by_pairs_num[0]
-            pn.state.location.sync(self.genomes_select, {'value': 'ref_genome'})
+                self.genomes_select.options = self.ref_genomes_list_by_pairs_num
+                self.genomes_select.value = self.ref_genomes_list_by_pairs_num[0]
+                self.ref_genome = self.ref_genomes_list_by_pairs_num[0]
+                pn.state.location.sync(self.genomes_select, {'value': 'ref_genome'})
 
-            genome_select_row = pn.Row(self.genomes_select, pn.Spacer(width=20), self.genomes_sort_select)
-            self.main_single_column.append(genome_select_row)
+                genome_select_row = pn.Row(self.genomes_select, pn.Spacer(width=20), self.genomes_sort_select)
+                self.main_single_column.append(genome_select_row)
 
-            # Create the single-genome visualization layout for the selected ref-genome
-            self.create_single_genome_column()
-            self.main_single_column.append(self.ref_genome_column)
+                # Create the single-genome visualization layout for the selected ref-genome
+                self.create_single_genome_column()
+                self.main_single_column.append(self.ref_genome_column)
 
-            # Define watchers for the ref_genome_select and the genome_sorting_select widgets
-            # This will create the single genome column with the selected reference genome
-            self.genomes_select_watcher = self.genomes_select.param.watch(partial(self.select_ref_genome,
-                                                                          self.genomes_select), 'value',
-                                                                          onlychanged=True)
-            self.genomes_sort_select_watcher = self.genomes_sort_select.param.watch(self.changed_genomes_sorting,
-                                                                                    'value', onlychanged=True)
+                # Define watchers for the ref_genome_select and the genome_sorting_select widgets
+                # This will create the single genome column with the selected reference genome
+                self.genomes_select_watcher = self.genomes_select.param.watch(partial(self.select_ref_genome,
+                                                                              self.genomes_select), 'value',
+                                                                              onlychanged=True)
+                self.genomes_sort_select_watcher = self.genomes_sort_select.param.watch(self.changed_genomes_sorting,
+                                                                                        'value', onlychanged=True)
 
-            self.single_multi_genome_tabs.append(('Single genome visualization', self.main_single_column))
+                self.single_multi_genome_tabs.append(('Single genome visualization', self.main_single_column))
 
-            multi_message = "Preparing the multiple genomes visualization - please wait..."
-            self.main_multi_column.append(pn.pane.Markdown(multi_message, styles={'font-size': "20px",
-                                                                                  'margin': "0"}))
-            self.single_multi_genome_tabs.append(('Multiple genomes visualization', self.main_multi_column))
+                multi_message = "Preparing the multiple genomes visualization - please wait..."
+                self.main_multi_column.append(pn.pane.Markdown(multi_message, styles={'font-size': "20px",
+                                                                                      'margin': "0"}))
+                self.single_multi_genome_tabs.append(('Multiple genomes visualization', self.main_multi_column))
 
-            self.single_multi_genome_tabs.param.watch(self.changed_single_multi_tabs, 'active')
+                self.single_multi_genome_tabs.param.watch(self.changed_single_multi_tabs, 'active')
 
-            self.main_area.clear()
+                self.main_area.clear()
 
-        self.main_area.append(self.single_multi_genome_tabs)
+            self.main_area.append(self.single_multi_genome_tabs)
 
-        self.main_area.append(self.submit_new_file_button())
+            self.main_area.append(self.submit_new_file_button())
 
     def changed_single_multi_tabs(self, event):
 
@@ -949,24 +954,6 @@ class SynTrackerVisApp:
 
                 self.visited_coverage_tab = 1
 
-            # Wait for the building of the initial coverage plots tab to finish
-            #else:
-            #    while self.finished_initial_coverage_plot == 0:
-            #        time.sleep(1)
-
-            #    contigs_num = len(self.contigs_list_by_name)
-
-            #    # If there is more than one contig -
-            #    # trigger changed_contig to create the coverage plot for the selected contig
-            #    if contigs_num > 1:
-            #        self.contig_select.param.trigger('value')
-
-            #    # Create the coverage plot for the Ref-genome
-            #    else:
-            #        self.create_selected_contig_column(self.contigs_list_by_name[0])
-
-            #    self.visited_coverage_tab = 1
-
     def create_single_genome_plots_by_APSS(self, event):
 
         self.sampling_size = self.sample_sizes_slider.value
@@ -986,6 +973,9 @@ class SynTrackerVisApp:
             self.nodes_colormap.param.unwatch(self.colormap_watcher)
             self.nodes_color_by.param.unwatch(self.nodes_colorby_watcher)
         self.network_threshold_input.value = config.APSS_connections_threshold_default
+        self.is_continuous.value = False
+        self.nodes_colormap.options = config.categorical_colormap_dict
+        self.nodes_colormap.value = config.categorical_colormap_dict['cet_glasbey']
 
         # Check if the requested genome and size have already been calculated. If so, fetch the specific dataframe
         if self.calculated_APSS_genome_size_dict[self.sampling_size]:
@@ -1315,7 +1305,7 @@ class SynTrackerVisApp:
     def change_continuous_state(self, event):
         # Continuous feature
         if self.is_continuous.value:
-            print("\nIn change_continuous_state. Continuous feature")
+            #print("\nIn change_continuous_state. Continuous feature")
 
             # Verify that the feature is indeed continuous
             nodes_feature = self.nodes_color_by.value
@@ -1327,7 +1317,7 @@ class SynTrackerVisApp:
 
             # Feature is not really continuous, treat as categorical
             if str_type == 1:
-                print("The feature is not really continuous - uncheck...")
+                #print("The feature is not really continuous - uncheck...")
                 self.is_continuous.value = False
 
             # Feature is indeed really continuous
@@ -1337,16 +1327,16 @@ class SynTrackerVisApp:
 
         # Categorical feature
         else:
-            print("\nIn change_continuous_state. Categorical feature")
+            #print("\nIn change_continuous_state. Categorical feature")
             self.nodes_colormap.options = config.categorical_colormap_dict
             self.nodes_colormap.value = config.categorical_colormap_dict['cet_glasbey']
 
     def change_colormap(self, event):
-        print("\nIn change_colormap. Continuous state = " + str(self.is_continuous.value))
+        #print("\nIn change_colormap. Continuous state = " + str(self.is_continuous.value))
         self.update_network_plot()
 
     def set_not_continuous(self, event):
-        print("\nIn set_not_continuous")
+        #print("\nIn set_not_continuous")
         self.is_continuous.value = False
         self.update_network_plot()
 
@@ -2050,7 +2040,8 @@ class SynTrackerVisApp:
         pairs_num_per_sampling_size_multi_genomes_df = \
             dm.create_pairs_num_per_sampling_size(self.score_per_region_genomes_subset_df)
 
-        # If the number of genomes with 40 sampled regions is smaller than the maximum, present also the 'All regions' bar
+        # If the number of genomes with 40 sampled regions is smaller than the maximum,
+        # present also the 'All regions' bar.
         # If not, do not present this bar (and remove this option from the slider)
         species_at_40 = pairs_num_per_sampling_size_multi_genomes_df['Number_of_species'].iloc[1]
         if species_at_40 == self.number_of_genomes:

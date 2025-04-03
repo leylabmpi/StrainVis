@@ -1,14 +1,12 @@
 import time
 import numpy as np
 import pandas as pd
-from itertools import count
 import networkx as nx
 import hvplot.pandas  # Enable interactive
 import holoviews as hv
 import hvplot.networkx as hvnx
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-from matplotlib import cm
 from matplotlib.lines import Line2D
 from matplotlib.colors import Normalize
 import seaborn as sns
@@ -84,43 +82,6 @@ def create_jitter_plot_bokeh(avg_df, color):
     print(plot)
 
     return plot
-
-
-def category_by_feature(row, feature, metadata_dict):
-    if metadata_dict[feature][row['Sample1']] == metadata_dict[feature][row['Sample2']]:
-        return 'Same ' + feature
-    else:
-        return 'Different ' + feature
-
-
-def create_jitter_plot(avg_df, color, use_metadata, metadata_dict, feature, same_color, different_color):
-    df_for_jitter = avg_df.loc[:, ['Sample1', 'Sample2', 'APSS']].copy()
-
-    # Use metadata to separate plot to same/different feature
-    if use_metadata:
-        df_for_jitter['Category'] = df_for_jitter.apply(lambda row: category_by_feature(row, feature, metadata_dict),
-                                                        axis=1)
-        same_feature = 'Same ' + feature
-        diff_feature = 'Different ' + feature
-        #jitter_plot = sns.catplot(data=df_for_jitter, x="Category", y="APSS", order=[same_feature, diff_feature],
-        #                          hue="Category", hue_order=[same_feature, diff_feature],
-        #                          palette=[same_color, different_color], edgecolor="gray", linewidth=0.1)
-        boxplot = sns.boxplot(data=df_for_jitter, x="Category", y="APSS", order=[same_feature, diff_feature],
-                              hue="Category", hue_order=[same_feature, diff_feature],
-                              palette=[same_color, different_color])
-
-    # Do not use metadata in plot - show all the comparisons together
-    else:
-        df_for_jitter['Category'] = 'All Comparisons'
-        #jitter_plot = sns.catplot(data=df_for_jitter, x="Category", y="APSS", color=color, edgecolor="gray",
-        #                          linewidth=0.1)
-        boxplot = sns.boxplot(data=df_for_jitter, x="Category", y="APSS", color=color)
-
-    print("\nDF for jitter plot:")
-    print(df_for_jitter)
-
-    #return jitter_plot.figure
-    return boxplot.figure
 
 
 def create_clustermap(matrix, cmap):
@@ -507,7 +468,6 @@ def create_coverage_plot(contig_name, score_per_pos_contig, avg_score_per_pos_co
                 label='Hyperconserved regions')
 
     plt.legend(fontsize='small', loc=(0, 1.02))
-    #plt.legend(fontsize='small', loc=(1.01, 0.8))
 
     plt.close(fig)
 

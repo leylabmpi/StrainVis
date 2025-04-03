@@ -104,30 +104,10 @@ def create_pairs_num_per_sampling_size(score_per_region_df):
 
 
 def return_sorted_contigs_lists(score_per_region_df):
-    '''
-    contigs_dict = {}
-
-    region_list = list(score_per_region_df['Region'])
-    for region in region_list:
-        regex = r'(\S+)_(\d+)_\d+'
-        m = re.search(regex, region)
-        if m:
-            contig_name = m.group(1)
-            pos = m.group(2)
-            contigs_dict[contig_name] = int(pos)
-
-    # Sort the contigs dict by name
-    contigs_list_by_name = sorted(contigs_dict)
-
-    # Sort the contigs dict by length
-    contigs_list_by_length = sorted(contigs_dict, key=lambda k: contigs_dict[k], reverse=True)
-    '''
-
     before = time.time()
     # Split the 'Region' column into Contig_name and Position
     pattern = re.compile(r'(\S+)_(\d+)_\d+')
     score_per_region_df[['Contig_name', 'Position']] = score_per_region_df['Region'].str.extract(pattern)
-    #score_per_region_df[['Contig_name', 'Position']] = score_per_region_df['Region'].str.extract(r'(\S+)_(\d+)_\d+')
     score_per_region_df['Position'] = score_per_region_df['Position'].astype(int)
 
     after = time.time()

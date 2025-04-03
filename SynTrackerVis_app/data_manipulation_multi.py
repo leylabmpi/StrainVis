@@ -6,11 +6,19 @@ import SynTrackerVis_app.config as config
 def complete_metadata(score_per_region_df, metadata_df):
 
     metadata_dict = dict()
+    error_msg = ""
+    sample_ids_column_name = ""
 
     # Extract the metadata feature names and save them in the list
     metadata_features_list = list(metadata_df.columns)
     print("\nMetadata features:")
     print(metadata_features_list)
+
+    # There are less than two columns - probably a delimiter problem
+    if len(metadata_features_list) < 2:
+        error_msg = "The provided metadata file contains only one column - probably the delimiter is not correct.  \n" \
+                    "Please provide a new metadata file, saved in tab-delimited format."
+        return metadata_dict, metadata_features_list, sample_ids_column_name, error_msg
 
     # Extract the name of the first column in the metadata (the sample_IDs column)
     sample_ids_column_name = metadata_features_list.pop(0)
@@ -45,7 +53,7 @@ def complete_metadata(score_per_region_df, metadata_df):
     for feature in metadata_features_list:
         metadata_dict[feature] = metadata_df.set_index(sample_ids_column_name)[feature].to_dict()
 
-    return metadata_dict, metadata_features_list, sample_ids_column_name
+    return metadata_dict, metadata_features_list, sample_ids_column_name, error_msg
 
 
 def return_genomes_subset_table(score_per_region_df, genomes_list):
