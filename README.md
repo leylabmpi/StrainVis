@@ -89,6 +89,6 @@ The user may enter the name of the file (including full path), or use the defaul
 
 ## Help pages
 
-A detailed documentation is found here: https://github.com/leylabmpi/SynTrackerVis/blob/main/SynTrackerVis_app/manual.md
+A detailed documentation about all the types of provided analyses and the visualisation options is found here: https://github.com/leylabmpi/SynTrackerVis/blob/main/SynTrackerVis_app/manual.md
 
 The manual can also be viewed from the SynTrackerVis web-application, under the 'Help' tab.
