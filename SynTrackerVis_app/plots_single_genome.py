@@ -188,9 +188,6 @@ def cretae_network_plot(network, is_metadata, nodes_feature, is_continuous, cmap
 
             network_plot.opts(colorbar=True)
 
-            hover = HoverTool(tooltips=tooltips)
-            network_plot.opts(tools=[hover])
-
         # Feature is categorical
         else:
             print("Categorical feature")
@@ -219,9 +216,6 @@ def cretae_network_plot(network, is_metadata, nodes_feature, is_continuous, cmap
                 network_plot = hvnx.draw(network, pos, node_size=300, node_color=colors, node_alpha=0.95,
                                          edge_color=edge_color, edge_width=hv.dim('weight')/5)
 
-            hover = HoverTool(tooltips=tooltips)
-            network_plot.opts(tools=[hover])
-
             # Add a legend if there are up to 10 groups
             if groups_num <= 10:
                 legend_items = []
@@ -232,13 +226,22 @@ def cretae_network_plot(network, is_metadata, nodes_feature, is_continuous, cmap
                 legend = hv.Overlay(legend_items)
                 is_legend = True
 
+    # No metadata
     else:
+        tooltips = [
+            ('SampleID', '@SampleID')
+        ]
+
         # Plot using holoviews
         network_plot = hvnx.draw(network, pos, node_size=300, node_color=node_color, node_alpha=0.95,
                                  edge_color=edge_color, edge_width=hv.dim('weight')/5)
 
+    hover = HoverTool(tooltips=tooltips)
+    network_plot.opts(tools=[hover])
+
     if show_labels:
         labels = hv.Labels(network_plot.nodes, ['x', 'y'], 'index').opts(text_font_size='8pt', text_color='black')
+
         # Display legend and sample names
         if is_legend:
             hv_layout = network_plot * legend * labels
@@ -399,17 +402,19 @@ def create_coverage_plot(contig_name, score_per_pos_contig, avg_score_per_pos_co
 
     before = time.time()
     print("\ncreate_coverage_plot:\nContig name: " + contig_name)
-    #print("Start position: " + start_pos)
-    #print("End position: " + end_pos)
-
-    #print("\nScore per contig df sorted:")
-    #print(score_per_pos_contig)
+    print("Start position: " + start_pos)
+    print("End position: " + end_pos)
 
     # Consider only the positions within the requested range
     score_per_pos_contig = score_per_pos_contig[score_per_pos_contig['Position'] >= int(start_pos)]
     score_per_pos_contig = score_per_pos_contig[score_per_pos_contig['Position'] < int(end_pos)]
     avg_score_per_pos_contig = avg_score_per_pos_contig[avg_score_per_pos_contig['Position'] >= int(start_pos)]
     avg_score_per_pos_contig = avg_score_per_pos_contig[avg_score_per_pos_contig['Position'] < int(end_pos)]
+
+    #print("\nScore per position table:")
+    #print(score_per_pos_contig)
+    #print("\nAVG score per position table:")
+    #print(avg_score_per_pos_contig)
 
     after = time.time()
     duration = after - before

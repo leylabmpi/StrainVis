@@ -16,6 +16,7 @@ from scipy.stats import mannwhitneyu, ranksums
 from statsmodels.stats.multitest import multipletests
 import seaborn as sns
 import SynTrackerVis_app.config as config
+#import SynTrackerVis_app.manual as manual
 import SynTrackerVis_app.data_manipulation_single as ds
 import SynTrackerVis_app.data_manipulation_multi as dm
 import SynTrackerVis_app.plots_single_genome as ps
@@ -117,7 +118,6 @@ class SynTrackerVisApp:
         self.valid_metadata = 1
         self.metadata_dict = dict()
         self.metadata_features_list = []
-        self.sample_ids_column_name = ""
         self.number_of_genomes = 0
         self.ref_genomes_list = []
         self.ref_genomes_list_by_pairs_num = []
@@ -138,8 +138,13 @@ class SynTrackerVisApp:
         self.downloads_dir_path = self.working_directory + config.downloads_dir
         self.contigs_list_by_name = []
         self.contigs_list_by_length = []
+        self.total_pairs_genome = 0
         self.avg_score_genome = 0
         self.std_score_genome = 0
+        self.top_percentile = 0
+        self.bottom_percentile = 0
+        self.median_counts = 0
+        self.bottom_percentile_counts = 0
         self.genomes_select_watcher = ""
         self.genomes_sort_select_watcher = ""
         self.threshold_select_watcher = ""
@@ -153,10 +158,46 @@ class SynTrackerVisApp:
         # Bootstrap template
         self.template = pn.template.VanillaTemplate(
             title='SynTrackerVis',
-            site_url="syntracker_vis"
+            site_url="syntracker_vis",
         )
-        self.main_area = pn.Column(styles=config.main_area_style)
-        self.template.main.append(self.main_area)
+
+        # Apply custom CSS to adjust button font size in the header
+        button_css = '''
+            /* Target buttons in the header of the Vanilla template */
+            .bk-btn { 
+                font-size: 20px !important;
+                color: white; 
+            }
+            .bk-btn:active { 
+                color: #87cefa !important; 
+            }
+            .bk-btn:hover { 
+                color: #87cefa !important; 
+            }
+        '''
+
+        self.home_button = pn.widgets.Button(name='Home', button_type='primary', stylesheets=[button_css])
+        self.home_button.on_click(self.load_home_page)
+        self.help_button = pn.widgets.Button(name='Help', button_type='primary', stylesheets=[button_css])
+        self.help_button.on_click(self.load_help_page)
+        self.menu_row = pn.Row(self.home_button, self.help_button, styles=config.menu_row_style, sizing_mode='fixed')
+        self.header_container = pn.Column(
+            self.menu_row,
+            styles=config.header_container_style, sizing_mode='fixed')
+        self.template.header.append(self.header_container)
+
+        self.main_container = pn.Column(sizing_mode='stretch_width')
+        self.main_area = pn.Column(styles=config.main_area_style, sizing_mode='fixed')
+        
+        # Reading the manual.md into a variable and display it in a markdown pane
+        manual_file_path = self.working_directory + config.manual_file
+        with open(manual_file_path, 'r') as manual:
+            manual_content = manual.read()
+        self.help_area = pn.Column(styles=config.main_area_style, sizing_mode='fixed')
+        self.help_area.append(pn.pane.Markdown(manual_content, styles={'font-size': "16px"}))
+
+        self.main_container.append(self.main_area)
+        self.template.main.append(self.main_container)
 
         # Widgets
         self.text_input = pn.widgets.TextInput(name='', placeholder='Enter the file path here...')
@@ -301,7 +342,7 @@ class SynTrackerVisApp:
                                                                           watch=True))
         self.network_edge_color = pn.widgets.ColorPicker(name='Edges color:', value='#000000',
                                                          disabled=pn.bind(change_disabled_state_straight,
-                                                                          chkbox_state=self.color_edges_by_feature,
+                                                                          chkbox_state=self.use_metadata_network,
                                                                           watch=True))
         self.nodes_color_by = pn.widgets.Select(options=['Select feature'], name="Color nodes by:", width=100)
         self.is_continuous = pn.widgets.Checkbox(name='Continuous feature', value=False)
@@ -421,9 +462,8 @@ class SynTrackerVisApp:
                                                styles={'font-size': "20px", 'color': config.title_purple_color,
                                                        'margin-bottom': "0"}))
 
-        file_upload_title = "Upload SynTracker's output table 'synteny_scores_per_region' for one or multiple genomes:"
-        text_input_title = "Or, if the file size is bigger than 300 Mb, enter it's full path here and press the " \
-                           "Enter key:"
+        file_upload_title = "Upload SynTracker's output table 'synteny_scores_per_region.csv' for one or multiple genomes:"
+        text_input_title = "Or, if the file size is bigger than 300 Mb, enter it's full path here:"
         self.main_area.append(pn.pane.Markdown(file_upload_title, styles={'font-size': "17px", 'margin-bottom': "0",
                                                                           'margin-top': "0"}))
         self.main_area.append(self.input_file)
@@ -441,7 +481,7 @@ class SynTrackerVisApp:
         self.main_area.append(pn.pane.Markdown(metadata_upload_title, styles={'font-size': "17px", 'margin-bottom': "0",
                                                                               'margin-top': "0"}))
         self.main_area.append(self.metadata_file)
-        metadata_note = "Please note: the metadata file may contain an unlimited number of columns (metadata levels).  " \
+        metadata_note = "Please note: the metadata file may contain an unlimited number of columns (features).  " \
                         "\nThe first column must contain the sample IDs (identical to the sample IDs that appear in " \
                         "SynTracker's output file)."
         self.main_area.append(pn.pane.Markdown(metadata_note, styles={'font-size': "15px", 'margin-bottom': "0",
@@ -455,6 +495,23 @@ class SynTrackerVisApp:
         #pn.state.onload(self.init_query_params)
 
         self.template.servable()
+
+    def load_home_page(self, event):
+        self.main_container.clear()
+        self.main_container.append(self.main_area)
+
+    def load_help_page(self, event):
+        self.main_container.clear()
+        self.main_container.append(self.help_area)
+
+    def changed_main_tab(self, event):
+        if self.menu_tabs.active == 1:
+            self.main_container.clear()
+            self.main_container.append(self.help_area)
+
+        else:
+            self.main_container.clear()
+            self.main_container.append(self.main_area)
 
     def init_parameters(self):
         del self.score_per_region_all_genomes_df
@@ -646,7 +703,7 @@ class SynTrackerVisApp:
             # Check if the provided metadata is valid and match the sample-IDs.
             # If some samples are missing from the metadata - fill them with np.nan values
             before = time.time()
-            self.metadata_dict, self.metadata_features_list, self.sample_ids_column_name, error = \
+            self.metadata_dict, self.metadata_features_list, error = \
                 dm.complete_metadata(self.score_per_region_all_genomes_df, metadata_df)
             after = time.time()
             duration = after - before
@@ -797,7 +854,7 @@ class SynTrackerVisApp:
                                                        styles={'font-size': "20px", 'color': config.title_purple_color,
                                                                'margin': "0"}))
 
-        coverage_message = "Preparing the coverage plots - please wait..."
+        coverage_message = "Preparing the plot - please wait..."
         self.coverage_plot_column.append(pn.pane.Markdown(coverage_message, styles={'font-size': "20px",
                                                                                     'margin': "0"}))
 
@@ -819,9 +876,10 @@ class SynTrackerVisApp:
             ds.create_pairs_num_per_sampling_size(self.score_per_region_selected_genome_df)
 
         # If the number of pairs with 40 sampled regions is smaller than 100, present also the 'All regions' bar
-        # If not, do not present this bar (and remove this option from the slider)
+        # If not (or if it is equal to the total number of pairs), do not present this bar (and remove this option from the slider)
         pairs_at_40 = pairs_num_per_sampling_size_selected_genome_df['Number_of_pairs'].iloc[1]
-        if pairs_at_40 >= config.min_pairs_for_all_regions:
+        self.total_pairs_genome = pairs_num_per_sampling_size_selected_genome_df['Number_of_pairs'].iloc[0]
+        if pairs_at_40 >= config.min_pairs_for_all_regions or pairs_at_40 == self.total_pairs_genome:
             self.sample_sizes_slider.options = config.sampling_sizes_wo_all
             self.sample_sizes_slider.value = config.sampling_sizes_wo_all[0]
             is_all_regions = 0
@@ -835,7 +893,7 @@ class SynTrackerVisApp:
                                                   df=pairs_num_per_sampling_size_selected_genome_df,
                                                   sampling_size=self.sample_sizes_slider,
                                                   is_all_regions=is_all_regions)
-        pairs_bar_plot_pane = pn.pane.HoloViews(pairs_vs_sampling_size_bar_plot, width=510, sizing_mode="fixed")
+        pairs_bar_plot_pane = pn.pane.HoloViews(pairs_vs_sampling_size_bar_plot, width=530, sizing_mode="fixed")
 
         # Create a markdown for the pairs lost percent (binded to the slider)
         binded_text = pn.bind(widgets.create_pairs_lost_text, pairs_num_per_sampling_size_selected_genome_df,
@@ -849,7 +907,7 @@ class SynTrackerVisApp:
                                                     df=pairs_num_per_sampling_size_selected_genome_df,
                                                     sampling_size=self.sample_sizes_slider,
                                                     is_all_regions=is_all_regions)
-        samples_bar_plot_pane = pn.pane.HoloViews(samples_vs_sampling_size_bar_plot, width=510, sizing_mode="fixed")
+        samples_bar_plot_pane = pn.pane.HoloViews(samples_vs_sampling_size_bar_plot, width=530, sizing_mode="fixed")
 
         # Create a markdown for the number of samples (binded to the slider)
         binded_text = pn.bind(widgets.create_samples_num_text, pairs_num_per_sampling_size_selected_genome_df,
@@ -872,8 +930,8 @@ class SynTrackerVisApp:
         )
 
         self.single_tabs.clear()
-        self.single_tabs.append(('Sample-pairs comparisons', initial_plots_column))
-        self.single_tabs.append(('Coverage plots', self.coverage_plot_column))
+        self.single_tabs.append(('APSS-based analyses', initial_plots_column))
+        self.single_tabs.append(('Synteny per position', self.coverage_plot_column))
 
         self.ref_genome_column.append(self.single_tabs)
 
@@ -898,10 +956,33 @@ class SynTrackerVisApp:
         # Calculate the average score and std for the whole genome (all contigs)
         self.avg_score_genome = self.score_per_region_selected_genome_df['Synteny_score'].mean()
         self.std_score_genome = self.score_per_region_selected_genome_df['Synteny_score'].std()
+        median = self.score_per_region_selected_genome_df['Synteny_score'].median()
         print("\nAverage score for the genome = " + str(self.avg_score_genome))
         print("Std of score for the genome = " + str(self.std_score_genome))
+        print("Median score for the genome = " + str(median))
+
+        # Calculate the avg score per region for all the regions of all the contigs
+        avg_score_per_region = self.score_per_region_selected_genome_df[['Contig_name', 'Position', 'Synteny_score']]. \
+            groupby(['Contig_name', 'Position']).\
+            agg(Count=('Synteny_score', 'size'), Avg_synteny_score=('Synteny_score', 'mean')).\
+            sort_values(['Count'], ascending=False).reset_index()
+        print("\nAvg. score per region df for all the regions of all the contigs:")
+        print(avg_score_per_region)
+
+        self.median_counts = avg_score_per_region['Count'].median()
+        self.bottom_percentile_counts = avg_score_per_region['Count'].quantile(0.1)
+        print("\nMedian of pairs per region counts is: " + str(self.median_counts))
+        print("Percentile 10 of pairs per region counts is: " + str(self.bottom_percentile_counts))
+
+        self.top_percentile = avg_score_per_region['Avg_synteny_score'].quantile(config.top_percentile)
+        self.bottom_percentile = avg_score_per_region['Avg_synteny_score'].quantile(config.bottom_percentile)
+        print("\nPercentile " + str(config.top_percentile) + " score for the genome = " + str(self.top_percentile))
+        print("Percentile " + str(config.bottom_percentile) + " score for the genome = " + str(self.bottom_percentile))
+
+        print("\nTotal number of pairs for the genome = " + str(self.total_pairs_genome))
 
         contigs_num = len(self.contigs_list_by_name)
+        print("\nNumber of contigs: " + str(contigs_num))
 
         # If there is more than one contig - display a select widget to select the contig
         if contigs_num > 1:
@@ -931,7 +1012,12 @@ class SynTrackerVisApp:
             self.coverage_plot_column.append(contig_select_row)
             self.coverage_plot_column.append(self.selected_contig_column)
 
-            self.finished_initial_coverage_plot = 1
+        # There is only one contig
+        else:
+            self.coverage_plot_column.clear()
+            self.coverage_plot_column.append(self.selected_contig_column)
+
+        self.finished_initial_coverage_plot = 1
 
     def changed_single_tabs(self, event):
 
@@ -1003,10 +1089,9 @@ class SynTrackerVisApp:
         # Enough data -> creating plots
         else:
             if self.sampling_size == 'All':
-                size_title = "Presenting plots using average synteny scores from all available regions:"
+                size_title = "Presenting plots using APSS from all available regions:"
             else:
-                size_title = "Presenting plots using average synteny scores from " + self.sampling_size + \
-                             " subsampled regions:"
+                size_title = "Presenting plots using APSS from " + self.sampling_size + " subsampled regions:"
 
             self.plots_by_size_single_column.append(pn.pane.Markdown(size_title, styles={'font-size': "18px",
                                                                                          'margin': "0 0 10px 0",
@@ -1017,7 +1102,7 @@ class SynTrackerVisApp:
             self.create_clustermap_pane(selected_genome_and_size_avg_df)
             self.create_network_pane(selected_genome_and_size_avg_df)
 
-            plots_column = pn.Column(self.jitter_card, pn.Spacer(height=30), self.clustermap_card, pn.Spacer(height=20),
+            plots_column = pn.Column(self.jitter_card, pn.Spacer(height=20), self.clustermap_card, pn.Spacer(height=20),
                                      self.network_card)
             self.plots_by_size_single_column.append(plots_column)
 
@@ -1227,7 +1312,7 @@ class SynTrackerVisApp:
         # If the num of columns exceeds the defined maximum, do not create the clustermap plot
         # and display a message + a possibility to download the matrix
         if col_num > config.max_clustermap_cols:
-            error = "The number of samples is too high to be well presented in a clustered heatmap plot."
+            error = "The number of samples exceeds the limit of 120 so the heatmap plot cannot be well presented."
             suggestion = "It ia possible to download the scoring matrix and display the heatmap in another program."
             clustermap_col = pn.Column(
                                        pn.pane.Markdown(error, styles={'font-size': "16px",
@@ -1429,7 +1514,7 @@ class SynTrackerVisApp:
         # If the number of nodes in the network exceeds the defined maximum, do not create the plot
         # and display only a message + a possibility to download the network data in tsv format
         if nodes_num > config.max_network_nodes:
-            error = "The number of samples is too high to present the network with all its interactive features."
+            error = "The number of samples exceeds the limit of 300, so the network cannot be presented with all its interactive features."
             suggestion = "It ia possible to download the network data in tsv format and visualize it using another program."
             network_col = pn.Column(
                 pn.pane.Markdown(error, styles={'font-size': "16px",
@@ -1460,12 +1545,14 @@ class SynTrackerVisApp:
             str_mean_std = config.network_thresholds_options[1] + " (APSS=" + str(mean_std) + ")"
             self.network_threshold_select.options.append(str_mean_std)
 
+            # Add the mean + 2std option only if it's <= 0.99 (and mean + 1std also <= 0.99)
             if not mean_std_only:
                 mean_2_std = round((mean_APSS + 2 * std_APSS), 2)
-                if mean_2_std >= 1:
-                    mean_2_std = 0.99
-                str_mean_2_std = config.network_thresholds_options[2] + " (APSS=" + str(mean_2_std) + ")"
-                self.network_threshold_select.options.append(str_mean_2_std)
+                if mean_2_std <= 0.99:
+                    str_mean_2_std = config.network_thresholds_options[2] + " (APSS=" + str(mean_2_std) + ")"
+                    self.network_threshold_select.options.append(str_mean_2_std)
+                else:
+                    mean_std_only = 1
 
             self.network_threshold_select.options.append(config.network_thresholds_options[3])
             self.network_threshold_select.value = self.network_threshold_select.options[0]
@@ -1505,6 +1592,10 @@ class SynTrackerVisApp:
             # No metadata
             else:
                 self.use_metadata_network.disabled = True
+
+                # Add node attribute 'SampleID' for the hover tooltip
+                for node in self.nodes_list:
+                    self.network.nodes[node]['SampleID'] = node
 
             # Create the network plot using the selected parameters
             self.network_plot_hv = pn.bind(ps.cretae_network_plot, network=self.network,
@@ -1769,7 +1860,7 @@ class SynTrackerVisApp:
                                     pn.Spacer(width=5), reset_range_button,
                                     styles={'margin-left': "5px"})
 
-        self.avg_plot_chkbox = pn.widgets.Checkbox(name='Show avg. scores', value=True)
+        self.avg_plot_chkbox = pn.widgets.Checkbox(name='Show average synteny scores', value=True)
         self.avg_plot_color = pn.widgets.ColorPicker(name='Color:', value='#000080',
                                                      disabled=pn.bind(change_disabled_state_inverse,
                                                                       chkbox_state=self.avg_plot_chkbox,
@@ -1829,13 +1920,13 @@ class SynTrackerVisApp:
         download_button = pn.widgets.Button(name='Download high-resolution image', button_type='primary')
         download_button.on_click(self.download_coverage_plot)
 
-        coverage_file = "Coverage_plot_" + self.ref_genome + "_" + contig_name
+        coverage_file = "Synteny_per_position_plot_" + self.ref_genome + "_" + contig_name
         self.save_coverage_plot_path.placeholder = coverage_file
 
         self.download_coverage_plot_column = pn.Column(self.coverage_image_format, self.save_coverage_plot_path,
                                                        pn.Spacer(height=10), download_button, pn.pane.Markdown())
 
-        coverage_table = "Data_for_coverage_plot_" + self.ref_genome + "_" + contig_name
+        coverage_table = "Data_for_synteny_per_position_plot_" + self.ref_genome + "_" + contig_name
         self.save_coverage_table_path.placeholder = coverage_table
 
         download_table_button = pn.widgets.Button(name='Download underling data in csv format', button_type='primary')
@@ -1855,11 +1946,11 @@ class SynTrackerVisApp:
 
         # Prepare the data structures necessary for the coverage plots of a specific contig
         # Calculate the average synteny scores for each position
-        avg_score_per_pos_contig = \
-            score_per_pos_contig[['Contig_name', 'Position', 'Synteny_score']]. \
-            sort_values(['Position']).groupby(['Position']).mean(numeric_only=True).reset_index(). \
-            rename(columns={"Synteny_score": "Avg_synteny_score"})
-        #print("\nAverage df:")
+        avg_score_per_pos_contig = score_per_pos_contig[['Contig_name', 'Position', 'Synteny_score']]. \
+            sort_values(['Position']).groupby('Position') \
+            .agg(Count=('Synteny_score', 'size'), Avg_synteny_score=('Synteny_score', 'mean')) \
+            .reset_index()
+        #print("\nAverage + count df:")
         #print(avg_score_per_pos_contig)
 
         # Fill the missing positions with score=0 (default jump=5000)
@@ -1886,13 +1977,18 @@ class SynTrackerVisApp:
             bottom = min_score - 0.05
         print("\nMin score = " + str(min_score))
         print("Height = " + str(height))
-        avg_score_per_pos_contig['Hypervariable'] = np.where(
-            avg_score_per_pos_contig['Avg_synteny_score'] < (self.avg_score_genome - 0.75 * self.std_score_genome),
-            height, 0)
-        avg_score_per_pos_contig['Hyperconserved'] = np.where(
-            avg_score_per_pos_contig['Avg_synteny_score'] > (self.avg_score_genome + 0.75 * self.std_score_genome),
-            height, 0)
+        hypervar_threshold = self.bottom_percentile
+        hypercons_threshold = self.top_percentile
 
+        avg_score_per_pos_contig['Hypervariable'] = np.where(
+            (avg_score_per_pos_contig['Avg_synteny_score'] <= hypervar_threshold) &
+            (avg_score_per_pos_contig['Count'] >= self.bottom_percentile_counts), height, 0)
+        avg_score_per_pos_contig['Hyperconserved'] = np.where(
+            (avg_score_per_pos_contig['Avg_synteny_score'] >= hypercons_threshold) &
+            (avg_score_per_pos_contig['Count'] >= self.median_counts), height, 0)
+
+        print("\nScore per position table:")
+        print(score_per_pos_contig)
         print("\nAVG score per position table:")
         print(avg_score_per_pos_contig)
 
@@ -2056,7 +2152,7 @@ class SynTrackerVisApp:
                                                   df=pairs_num_per_sampling_size_multi_genomes_df,
                                                   sampling_size=self.sample_sizes_slider_multi,
                                                   is_all_regions=is_all_regions)
-        pairs_bar_plot_pane = pn.pane.HoloViews(pairs_vs_sampling_size_bar_plot, width=520, sizing_mode="fixed")
+        pairs_bar_plot_pane = pn.pane.HoloViews(pairs_vs_sampling_size_bar_plot, width=535, sizing_mode="fixed")
 
         # Create a markdown for the pairs lost percent (binded to the slider)
         binded_text = pn.bind(widgets.create_pairs_lost_text, pairs_num_per_sampling_size_multi_genomes_df,
@@ -2070,7 +2166,7 @@ class SynTrackerVisApp:
                                                     df=pairs_num_per_sampling_size_multi_genomes_df,
                                                     sampling_size=self.sample_sizes_slider_multi,
                                                     is_all_regions=is_all_regions)
-        species_bar_plot_pane = pn.pane.HoloViews(species_vs_sampling_size_bar_plot, width=520, sizing_mode="fixed")
+        species_bar_plot_pane = pn.pane.HoloViews(species_vs_sampling_size_bar_plot, width=535, sizing_mode="fixed")
 
         # Create a markdown for the pairs lost percent (binded to the slider)
         binded_text = pn.bind(widgets.create_species_num_text, pairs_num_per_sampling_size_multi_genomes_df,
@@ -2079,7 +2175,7 @@ class SynTrackerVisApp:
         species_plot_column = pn.Column(pn.pane.Markdown(refs=binded_text, align='center'), species_bar_plot_pane,
                                         styles={'background-color': "white"})
 
-        plots_row = pn.Row(pairs_plot_column, pn.Spacer(width=25), species_plot_column)
+        plots_row = pn.Row(pairs_plot_column, pn.Spacer(width=30), species_plot_column)
         slider_row = pn.Row(self.sample_sizes_slider_multi, align='center')
         button_row = pn.Row(self.show_box_plot_multi_button,  align='center')
 
@@ -2105,9 +2201,9 @@ class SynTrackerVisApp:
         self.metadata_box_plot_card.clear()
 
         if self.sampling_size_multi == 'All':
-            size_title = "Presenting plots using average synteny scores from all available regions:"
+            size_title = "Presenting plots using APSS from all available regions:"
         else:
-            size_title = "Presenting plots using average synteny scores from " + self.sampling_size_multi + \
+            size_title = "Presenting plots using APSS from " + self.sampling_size_multi + \
                          " subsampled regions:"
 
         self.plots_by_size_multi_column.append(pn.pane.Markdown(size_title, styles={'font-size': "18px",

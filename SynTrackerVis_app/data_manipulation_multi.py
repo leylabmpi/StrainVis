@@ -53,7 +53,7 @@ def complete_metadata(score_per_region_df, metadata_df):
     for feature in metadata_features_list:
         metadata_dict[feature] = metadata_df.set_index(sample_ids_column_name)[feature].to_dict()
 
-    return metadata_dict, metadata_features_list, sample_ids_column_name, error_msg
+    return metadata_dict, metadata_features_list, error_msg
 
 
 def return_genomes_subset_table(score_per_region_df, genomes_list):

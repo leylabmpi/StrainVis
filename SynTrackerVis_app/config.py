@@ -14,13 +14,16 @@ network_iterations_options = ['50', '100', '150', '200', '250', '300', '350', '4
 network_thresholds_options = ['Mean APSS', 'Mean APSS+1 STD', 'Mean APSS+2 STD', 'Define another threshold']
 APSS_connections_threshold_default = 0.9
 region_length = 5000
+top_percentile = 0.9
+bottom_percentile = 0.1
 
 file_upload_timeout = 20
 downloads_dir = "/Downloads/"
+manual_file = "/SynTrackerVis_app/manual.md"
 
 ## CSS Styles ##
+header_color = "#0072b5"
 normal_bar_color = "#B048B5"
-#highlight_bar_color = "#ba2649"
 highlight_bar_color = "#43BFC7"
 title_red_color = "#800517"
 title_purple_color = "#800080"
@@ -29,27 +32,40 @@ same_color = "#F22C5D"
 diff_color = "#47A3E1"
 nodes_default_color = 'gray'
 
+header_container_style = {
+    'margin': '0 auto',
+    'padding': '0',
+    'width': "1350px",
+}
+
+menu_row_style = {
+    'margin': '0',
+    'padding': '0',
+}
+
+menu_tabs_style = {
+    'font-size': "20px",
+}
 
 main_area_style = {
+    'margin': '0 auto',
     'width': "1200px",
-    'padding': "20px",
 }
 
 single_multi_tabs_style = {
-    'width': "1200px",
     'font-size': "24px",
     'background': "#f9f9f9",
-    'padding': "0px",
 }
 
 single_tabs_style = {
-    'width': "1200px",
+    'width': "1160px",
     'font-size': "20px",
     'background': "#f3f3f3",
     'padding': "0px",
 }
 
 main_column_style = {
+    'width': "1200px",
     'background': "#f9f9f9",
     'padding': "20px",
 }
@@ -57,6 +73,7 @@ main_column_style = {
 plot_card_style = {
     'background': "#ffffff",
     'width': "1150px",
+    'font-size': "20px"
 }
 
 secondary_button = {
