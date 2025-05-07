@@ -42,3 +42,53 @@ Please note that several instances of SynTrackerVis can be opened simultaneously
 It is also possible to launch more than several server processes simultaneously using different ports. 
 
 **Stop the server**: In order to stop the Bokeh server, its running process should be killed.
+
+## Input
+
+#### Mandatory input:
+SynTracker's output file 'synteny_scores_per_region.csv' for one or multiple genomes.  
+Note that if the file is bigger than 300 Mb, it cannot be selected via the FileInput widget, but it's full path should
+be typed into the TextInput field.
+
+#### Optional input:
+A metadata file in tab-delimited format. The first column must contain the sample IDs, that should match the sample IDs
+in the uploaded SynTracker output file. The metadata may contain an unlimited number of columns (features).
+
+## Visualization
+
+When uploading a summary file which contains SynTracker's results for more than one reference genome, SynTrackerVis 
+presents both Single Genome Visualization and Multiple Genomes Visualization in separate tabs. 
+
+#### A. Single Genome Visualization
+The analysis is performed for one reference genome at a time. The reference genome can be selected from a drop-down menu, 
+containing all the genomes in the input file. The list of genomes may be sorted by the number of compared sample-pairs 
+(in order to display the more abundant species first), or by the genome names.
+
+#### B. Multiple Genomes Visualization
+The analysis is performed for all the reference genomes together or for a selected set.
+
+### Customizing the plots
+
+Each plot allows the user to interactively set/change some visual parameters, like color, colormap, etc. 
+In some of the plots it is possible to show/hide elements and to set other parameters which influence the data visualization. 
+
+#### Including metadata in the plots
+
+When a metadata file is uploaded, it is possible to incorporate it into most of the APSS-based plots. The user 
+can interactively select a feature from the provided metadata features, by which the presented data will be grouped and colored.  
+
+### Saving the plots
+
+The plots can be saved either as images or as text files, containing the underlying data of the plots.  
+The user may enter the name of the file (including full path), or use the default name and path provided by SynTrackerVis 
+(under the 'SynTrackerVis/Downloads/' directory).
+
+1. **Save as image:** Each one of the plots can be saved as a high-resolution image in one of the following formats: png, pdf, svg, eps.
+
+2. **Save data table:** The data table that was used to create the plot can be saved as text in a delimited format.
+
+## Help pages
+
+A detailed documentation is found here: https://github.com/leylabmpi/SynTrackerVis/blob/main/SynTrackerVis_app/manual.md
+
+The manual can also be viewed from the SynTrackerVis web-application, under the 'Help' tab.
