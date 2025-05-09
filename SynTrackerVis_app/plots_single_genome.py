@@ -1,4 +1,5 @@
 import time
+import re
 import numpy as np
 import pandas as pd
 import networkx as nx
@@ -129,7 +130,7 @@ def create_clustermap(matrix, cmap):
     return clustermap.figure
 
 
-def cretae_network_plot(network, is_metadata, nodes_feature, is_continuous, cmap, node_color, edge_color,
+def cretae_network_plot(network, is_metadata, nodes_feature, is_continuous, cmap, custom_cmap, node_color, edge_color,
                         is_edge_colorby, edges_feature, within_edge_color, between_edge_color, iterations, pos_dict,
                         show_labels, metadata_dict):
     iter_num = int(iterations)
@@ -193,15 +194,27 @@ def cretae_network_plot(network, is_metadata, nodes_feature, is_continuous, cmap
             print("Categorical feature")
 
             # Prepare the colors mapping for the legend
-            unique_groups = list(set([str(network.nodes[node][nodes_feature]) for node in network.nodes()]))
+            unique_groups = sorted(list(set([str(network.nodes[node][nodes_feature]) for node in network.nodes()])))
             groups_num = len(unique_groups)
             # Move the 'nan' group (if any) to the end of the list
             if 'nan' in unique_groups:
                 unique_groups.remove('nan')
                 unique_groups.append('nan')
             print(unique_groups)
+
             cmap_length = len(cmap)
             print("Cmap length = " + str(cmap_length))
+
+            # If the user defined a custom cmap - process it and turn it into a cmap
+            if cmap_length == 1:
+                custom_colors_list = custom_cmap
+                #cmap = custom_colors_list.split(',')
+                cmap = re.split(r'\s*,\s*', custom_colors_list)
+                cmap_length = len(cmap)
+                print("Custom cmap:")
+                print(cmap)
+                print("custom cmap length: " + str(cmap_length))
+
             group_to_color = {group: cmap[i % cmap_length] for i, group in enumerate(unique_groups)}
             colors = [group_to_color[str(network.nodes[node][nodes_feature])] for node in network.nodes()]
 
@@ -256,9 +269,9 @@ def cretae_network_plot(network, is_metadata, nodes_feature, is_continuous, cmap
     return hv_layout
 
 
-def cretae_network_plot_matplotlib(network, is_metadata, nodes_feature, is_continuous, cmap, node_color, edge_color,
-                                   is_edge_colorby, edges_feature, within_edge_color, between_edge_color, iterations,
-                                   pos_dict, show_labels, metadata_dict):
+def cretae_network_plot_matplotlib(network, is_metadata, nodes_feature, is_continuous, cmap, custom_cmap, node_color,
+                                   edge_color, is_edge_colorby, edges_feature, within_edge_color, between_edge_color,
+                                   iterations, pos_dict, show_labels, metadata_dict):
     iter_num = int(iterations)
     print("\nIn cretae_network_plot_matplotlib. Iterations number = " + str(iter_num))
     print("cmap: " + str(cmap))
@@ -340,7 +353,7 @@ def cretae_network_plot_matplotlib(network, is_metadata, nodes_feature, is_conti
         # Feature is categorical
         else:
             # Prepare the colors mapping for the matplotlib plot
-            unique_groups = list(set([str(network.nodes[node][nodes_feature]) for node in network.nodes()]))
+            unique_groups = sorted(list(set([str(network.nodes[node][nodes_feature]) for node in network.nodes()])))
             groups_num = len(unique_groups)
             # Move the 'nan' group (if any) to the end of the list
             if 'nan' in unique_groups:

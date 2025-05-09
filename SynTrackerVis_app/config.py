@@ -92,18 +92,19 @@ clustermap_colormaps_list = ['Blues', 'Purples', 'Greens', 'Oranges', 'Reds', 'G
                              'spring', 'summer', 'autumn', 'winter', 'cool', 'Wistia']
 
 categorical_colormap_dict = {
-    'cet_glasbey': cc.glasbey,
-    'cet_glasbey_light': cc.glasbey_light,
-    'cet_glasbey_category10': bp.Category10[10],
+    'Glasbey': cc.glasbey,
+    'Glasbey_light': cc.glasbey_light,
+    'Glasbey_category10': bp.Category10[10],
     'Set1': bp.Set1[9],
-    'Set3': bp.Set3[12]
+    'Set3': bp.Set3[12],
+    'Define custom colormap': ['#000000']
 }
 
 continuous_colormap_dict = {
-    'cet_rainbow4': cc.m_rainbow4,
-    'cet_isolum': cc.isolum,
-    'plasma': bp.Plasma256,
-    'viridis': bp.Viridis256,
+    'Rainbow4': cc.m_rainbow4,
+    'Isolum': cc.isolum,
+    'Plasma': bp.Plasma256,
+    'Viridis': bp.Viridis256,
     'Blues': bp.Blues256,
     'Reds': bp.Reds256,
     'Greens': bp.Greens256,

@@ -47,22 +47,15 @@ def change_collapse_state(selection_val):
         return False
 
 
-def change_continuous_state(chkbox_state):
-    if chkbox_state:
-        return config.continuous_colormap_dict
-    else:
-        return config.categorical_colormap_dict
-
-
-def change_continuous_state_for_value(chkbox_state):
-    if chkbox_state:
-        return config.continuous_colormap_dict['cet_rainbow4']
-    else:
-        return config.categorical_colormap_dict['cet_glasbey']
-
-
 def change_disabled_state_threshold(value):
     if value == 'Define another threshold':
+        return False
+    else:
+        return True
+
+
+def change_disabled_state_custom_colormap(value):
+    if value == config.categorical_colormap_dict['Define custom colormap']:
         return False
     else:
         return True
@@ -152,6 +145,7 @@ class SynTrackerVisApp:
         self.feature_select_watcher = ""
         self.continuous_watcher = ""
         self.colormap_watcher = ""
+        self.custom_colormap_watcher = ""
         self.nodes_colorby_watcher = ""
         self.visited_multi_genome_tab = 0
 
@@ -332,7 +326,7 @@ class SynTrackerVisApp:
         self.use_metadata_network = pn.widgets.Checkbox(name='Use metadata for coloring', value=False)
         self.color_edges_by_feature = pn.widgets.Checkbox(name='Color edges by feature (same/different)', value=False)
         self.metadata_colorby_card = pn.Card(title='Set the coloring by metadata', header_background="#ffffff",
-                                             styles={'background': "#ffffff", 'margin': "10px", 'width': "300px"},
+                                             styles={'background': "#ffffff", 'margin': "10px", 'width': "335px"},
                                              hide_header=True, collapsed=pn.bind(change_disabled_state_inverse,
                                                                                  chkbox_state=self.use_metadata_network,
                                                                                  watch=True))
@@ -344,11 +338,18 @@ class SynTrackerVisApp:
                                                          disabled=pn.bind(change_disabled_state_straight,
                                                                           chkbox_state=self.use_metadata_network,
                                                                           watch=True))
-        self.nodes_color_by = pn.widgets.Select(options=['Select feature'], name="Color nodes by:", width=100)
+        self.nodes_color_by = pn.widgets.Select(options=['Select feature'], name="Color nodes by:", width=130)
         self.is_continuous = pn.widgets.Checkbox(name='Continuous feature', value=False)
         self.nodes_colormap = pn.widgets.ColorMap(name="Select colormap for nodes:",
                                                   options=config.categorical_colormap_dict,
-                                                  value=config.categorical_colormap_dict['cet_glasbey'])
+                                                  value=config.categorical_colormap_dict['Glasbey'])
+        self.custom_colormap_input = pn.widgets.TextInput(name='Custom colormap: enter a list of colors separated by '
+                                                               'comma:',
+                                                          placeholder='color1, color2, color3, etc...',
+                                                          disabled=pn.bind(change_disabled_state_custom_colormap,
+                                                                           value=self.nodes_colormap,
+                                                                           watch=True)
+                                                          )
         self.edges_color_by = pn.widgets.Select(options=['Select feature'],
                                                 name="Color edges by:", width=100,
                                                 disabled=pn.bind(change_disabled_state_inverse,
@@ -532,6 +533,7 @@ class SynTrackerVisApp:
         self.nodes_color_by.param.unwatch(self.nodes_colorby_watcher)
         self.is_continuous.param.unwatch(self.continuous_watcher)
         self.nodes_colormap.param.unwatch(self.colormap_watcher)
+        self.custom_colormap_input.param.unwatch(self.custom_colormap_watcher)
         self.box_plot_feature_select.param.unwatch(self.feature_select_watcher)
         self.genomes_select.param.unwatch(self.genomes_select_watcher)
         self.genomes_sort_select.param.unwatch(self.genomes_sort_select_watcher)
@@ -1057,11 +1059,12 @@ class SynTrackerVisApp:
         if self.is_metadata:
             self.is_continuous.param.unwatch(self.continuous_watcher)
             self.nodes_colormap.param.unwatch(self.colormap_watcher)
+            self.custom_colormap_input.param.unwatch(self.custom_colormap_watcher)
             self.nodes_color_by.param.unwatch(self.nodes_colorby_watcher)
         self.network_threshold_input.value = config.APSS_connections_threshold_default
         self.is_continuous.value = False
         self.nodes_colormap.options = config.categorical_colormap_dict
-        self.nodes_colormap.value = config.categorical_colormap_dict['cet_glasbey']
+        self.nodes_colormap.value = config.categorical_colormap_dict['Glasbey']
 
         # Check if the requested genome and size have already been calculated. If so, fetch the specific dataframe
         if self.calculated_APSS_genome_size_dict[self.sampling_size]:
@@ -1408,15 +1411,19 @@ class SynTrackerVisApp:
             # Feature is indeed really continuous
             else:
                 self.nodes_colormap.options = config.continuous_colormap_dict
-                self.nodes_colormap.value = config.continuous_colormap_dict['cet_rainbow4']
+                self.nodes_colormap.value = config.continuous_colormap_dict['Rainbow4']
 
         # Categorical feature
         else:
             #print("\nIn change_continuous_state. Categorical feature")
             self.nodes_colormap.options = config.categorical_colormap_dict
-            self.nodes_colormap.value = config.categorical_colormap_dict['cet_glasbey']
+            self.nodes_colormap.value = config.categorical_colormap_dict['Glasbey']
 
     def change_colormap(self, event):
+        #print("\nIn change_colormap. Continuous state = " + str(self.is_continuous.value))
+        self.update_network_plot()
+
+    def get_custom_colormap(self, event):
         #print("\nIn change_colormap. Continuous state = " + str(self.is_continuous.value))
         self.update_network_plot()
 
@@ -1438,6 +1445,7 @@ class SynTrackerVisApp:
                                     self.network_between_color)
         metadata_coloring_col = pn.Column(nodes_color_by_row,
                                           self.nodes_colormap,
+                                          self.custom_colormap_input,
                                           pn.Spacer(height=10),
                                           self.color_edges_by_feature,
                                           edges_color_by_row,
@@ -1580,6 +1588,8 @@ class SynTrackerVisApp:
                                                                          onlychanged=True)
                 self.colormap_watcher = self.nodes_colormap.param.watch(self.change_colormap, 'value',
                                                                         onlychanged=True)
+                self.custom_colormap_watcher = self.custom_colormap_input.param.watch(self.get_custom_colormap,
+                                                                                      'value', onlychanged=True)
 
                 # Insert the features information as nodes attributes
                 for node in self.nodes_list:
@@ -1602,7 +1612,9 @@ class SynTrackerVisApp:
                                            is_metadata=self.use_metadata_network,
                                            nodes_feature=self.nodes_color_by.value,
                                            is_continuous=self.is_continuous.value,
-                                           cmap=self.nodes_colormap.value, node_color=self.network_node_color,
+                                           cmap=self.nodes_colormap.value,
+                                           custom_cmap=self.custom_colormap_input.value,
+                                           node_color=self.network_node_color,
                                            edge_color=self.network_edge_color,
                                            is_edge_colorby=self.color_edges_by_feature,
                                            edges_feature=self.edges_color_by,
@@ -1654,7 +1666,9 @@ class SynTrackerVisApp:
                                                is_metadata=self.use_metadata_network,
                                                nodes_feature=self.nodes_color_by.value,
                                                is_continuous=self.is_continuous.value,
-                                               cmap=self.nodes_colormap.value_name, node_color=self.network_node_color,
+                                               cmap=self.nodes_colormap.value_name,
+                                               custom_cmap=self.custom_colormap_input.value,
+                                               node_color=self.network_node_color,
                                                edge_color=self.network_edge_color,
                                                is_edge_colorby=self.color_edges_by_feature,
                                                edges_feature=self.edges_color_by,
@@ -1785,6 +1799,7 @@ class SynTrackerVisApp:
         self.network_plot_hv = pn.bind(ps.cretae_network_plot, network=self.network,
                                        is_metadata=self.use_metadata_network, nodes_feature=self.nodes_color_by.value,
                                        is_continuous=self.is_continuous.value, cmap=self.nodes_colormap.value,
+                                       custom_cmap=self.custom_colormap_input.value,
                                        node_color=self.network_node_color, edge_color=self.network_edge_color,
                                        is_edge_colorby=self.color_edges_by_feature, edges_feature=self.edges_color_by,
                                        within_edge_color=self.network_within_color,

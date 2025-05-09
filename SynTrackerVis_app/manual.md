@@ -172,6 +172,11 @@ The variety of colormaps available for selection changes accordingly and a color
 Note that only features which numerical values can be checked as continuous.
 - **Select colormap for nodes:** Select a colormap from the drop-down menu to color the nodes by the different groups of the selected metadata feature.
 A different set of colormaps is provided for categorical data and for continuous data.
+- **Define custom colormap:** For categorical features, it is also possible to define a custom list of colors for the different groups.
+This option becomes active when selecting the 'Define custom colormap' option from the colormaps drop-down menu.
+A list of colors, separated by commas, can be entered to the text-input widget. 
+The colors can be provided as standard names (like: red, blue) or Hex-RGB values (like: #FF0000).  
+A detailed guide for color notations: https://www.w3.org/TR/css-color-4/#named-colors .
 - **Color edges by feature (same/different):** Checking this option enables to select a feature, by which the edges (connections) 
  are divided into two categories and can be colored differently. 
 One category is the connections between samples that belong to the same group and the other is the connections between samples that belong to a different group (of the selected feature).
