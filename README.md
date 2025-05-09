@@ -1,5 +1,7 @@
 # SynTrackerVis: a Python-based web application for interactive visual analysis of SynTracker's results
 
+### Version 1.0.1
+
 ## Overview
 
 SynTrackerVis is a Python-based web application, designated for visual analyses and interactive exploration of the results obtained by the SynTracker pipeline.  
