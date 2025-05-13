@@ -16,7 +16,6 @@ from scipy.stats import mannwhitneyu, ranksums
 from statsmodels.stats.multitest import multipletests
 import seaborn as sns
 import SynTrackerVis_app.config as config
-#import SynTrackerVis_app.manual as manual
 import SynTrackerVis_app.data_manipulation_single as ds
 import SynTrackerVis_app.data_manipulation_multi as dm
 import SynTrackerVis_app.plots_single_genome as ps
@@ -115,6 +114,8 @@ class SynTrackerVisApp:
         self.ref_genomes_list = []
         self.ref_genomes_list_by_pairs_num = []
         self.selected_genomes_subset = []
+        self.selected_subset_species_num = 0
+        self.species_num_at_sampling_size = 0
         self.ref_genome = ""
         self.sampling_size = ""
         self.sampling_size_multi = ""
@@ -122,6 +123,7 @@ class SynTrackerVisApp:
         self.score_per_region_genomes_subset_df = pd.DataFrame()
         self.score_per_region_selected_genome_df = pd.DataFrame()
         self.genomes_subset_selected_size_APSS_df = pd.DataFrame()
+        self.pairs_num_per_sampling_size_multi_genomes_df = pd.DataFrame()
         self.boxplot_p_values_df = pd.DataFrame()
         self.APSS_by_genome_all_sizes_dict = dict()
         self.APSS_all_genomes_all_sizes_dict = dict()
@@ -140,6 +142,7 @@ class SynTrackerVisApp:
         self.bottom_percentile_counts = 0
         self.genomes_select_watcher = ""
         self.genomes_sort_select_watcher = ""
+        self.genomes_sort_select_multi_watcher = ""
         self.threshold_select_watcher = ""
         self.threshold_input_watcher = ""
         self.feature_select_watcher = ""
@@ -223,12 +226,16 @@ class SynTrackerVisApp:
         self.genomes_select_card = pn.Card(title='Genomes subset selection',
                                            collapsed=pn.bind(change_collapse_state,
                                                              selection_val=self.all_or_subset_radio, watch=True),
-                                           styles={'margin': "5px 0 5px 10px", 'width': "500px"}
+                                           styles={'margin': "5px 0 5px 10px", 'width': "600px"}
                                            )
         self.genomes_subset_select = pn.widgets.MultiSelect(options=[],
                                                             disabled=pn.bind(change_collapse_state,
                                                                              selection_val=self.all_or_subset_radio,
                                                                              watch=True))
+        self.genomes_sort_select_multi = pn.widgets.Select(name='Sort genomes by:',
+                                                           value=config.genomes_sorting_options[0],
+                                                           options=config.genomes_sorting_options, width=200,
+                                                           styles={'margin': "0"})
         self.update_genomes_selection_button = pn.widgets.Button(name='Update genomes selection',
                                                                  button_type='primary',
                                                                  styles={'margin': "12px 0 12px 10px"})
@@ -519,6 +526,7 @@ class SynTrackerVisApp:
         del self.score_per_region_genomes_subset_df
         del self.score_per_region_selected_genome_df
         del self.genomes_subset_selected_size_APSS_df
+        del self.pairs_num_per_sampling_size_multi_genomes_df
         del self.boxplot_p_values_df
         del self.df_for_jitter
         del self.scores_matrix
@@ -537,6 +545,7 @@ class SynTrackerVisApp:
         self.box_plot_feature_select.param.unwatch(self.feature_select_watcher)
         self.genomes_select.param.unwatch(self.genomes_select_watcher)
         self.genomes_sort_select.param.unwatch(self.genomes_sort_select_watcher)
+        self.genomes_sort_select_multi.param.unwatch(self.genomes_sort_select_multi_watcher)
         self.contig_select.param.unwatch(self.contig_select_watcher)
         self.sorting_select.param.unwatch(self.sorting_select_watcher)
         self.network_threshold_select.options = []
@@ -663,6 +672,8 @@ class SynTrackerVisApp:
         self.ref_genomes_list = []
         self.ref_genomes_list_by_pairs_num = []
         self.selected_genomes_subset = []
+        self.selected_subset_species_num = 0
+        self.species_num_at_sampling_size = 0
         self.single_multi_genome_tabs.clear()
         self.main_single_column.clear()
         self.ref_genome_column.clear()
@@ -763,7 +774,10 @@ class SynTrackerVisApp:
                                                                               self.genomes_select), 'value',
                                                                               onlychanged=True)
                 self.genomes_sort_select_watcher = self.genomes_sort_select.param.watch(self.changed_genomes_sorting,
+
                                                                                         'value', onlychanged=True)
+                self.genomes_sort_select_multi_watcher = self.genomes_sort_select_multi.param.watch(
+                    self.changed_multi_genomes_sorting, 'value', onlychanged=True)
 
                 self.single_multi_genome_tabs.append(('Single genome visualization', self.main_single_column))
 
@@ -804,6 +818,15 @@ class SynTrackerVisApp:
         else:
             self.genomes_select.options = self.ref_genomes_list_by_pairs_num
             self.genomes_select.value = self.ref_genomes_list_by_pairs_num[0]
+
+    def changed_multi_genomes_sorting(self, event):
+        sorting_method = self.genomes_sort_select_multi.value
+        print("\nChanged sorting method for genomes subset selection. Sort by: " + sorting_method)
+
+        if sorting_method == "Genome name":
+            self.genomes_subset_select.options = self.ref_genomes_list
+        else:
+            self.genomes_subset_select.options = self.ref_genomes_list_by_pairs_num
 
     def select_ref_genome(self, ref_genome, event):
         self.ref_genome = ref_genome.value
@@ -2097,12 +2120,15 @@ class SynTrackerVisApp:
 
         self.sample_sizes_slider_multi.value = config.sampling_sizes[0]
 
-        self.genomes_subset_select.options = self.ref_genomes_list
+        self.genomes_subset_select.options = self.ref_genomes_list_by_pairs_num
         if self.number_of_genomes > 20:
             self.genomes_subset_select.size = 20
         else:
             self.genomes_subset_select.size = self.number_of_genomes
-        genomes_select_row = pn.Row(self.genomes_subset_select, styles={'padding': "10px"})
+
+        genomes_select_col = pn.Column(pn.Spacer(height=12), self.genomes_subset_select)
+        genomes_select_row = pn.Row(genomes_select_col, pn.Spacer(width=10), self.genomes_sort_select_multi,
+                                    styles={'padding': "10px"})
         self.genomes_select_card.append(genomes_select_row)
 
         # Build the two bar-plots for subsampled regions based on the selected list of genomes
@@ -2110,6 +2136,9 @@ class SynTrackerVisApp:
             self.selected_genomes_subset = self.ref_genomes_list
         else:
             self.selected_genomes_subset = self.genomes_subset_select.value
+
+        self.selected_subset_species_num = len(self.selected_genomes_subset)
+
         self.create_multi_genomes_plots_initial_column()
 
         multi_genome_col = pn.Column(
@@ -2130,7 +2159,9 @@ class SynTrackerVisApp:
         else:
             self.selected_genomes_subset = self.genomes_subset_select.value
 
-        print("\nupdate_genomes_selection:")
+        self.selected_subset_species_num = len(self.selected_genomes_subset)
+
+        print("\nupdate_genomes_selection:\nNumber of selected genomes: " + str(self.selected_subset_species_num))
         print(self.selected_genomes_subset)
 
         self.create_multi_genomes_plots_initial_column()
@@ -2148,13 +2179,13 @@ class SynTrackerVisApp:
                                                                                  self.selected_genomes_subset)
 
         # Create the df for plot presenting the number of pairs vs. subsampled regions
-        pairs_num_per_sampling_size_multi_genomes_df = \
+        self.pairs_num_per_sampling_size_multi_genomes_df = \
             dm.create_pairs_num_per_sampling_size(self.score_per_region_genomes_subset_df)
 
         # If the number of genomes with 40 sampled regions is smaller than the maximum,
         # present also the 'All regions' bar.
         # If not, do not present this bar (and remove this option from the slider)
-        species_at_40 = pairs_num_per_sampling_size_multi_genomes_df['Number_of_species'].iloc[1]
+        species_at_40 = self.pairs_num_per_sampling_size_multi_genomes_df['Number_of_species'].iloc[1]
         if species_at_40 == self.number_of_genomes:
             self.sample_sizes_slider_multi.options = config.sampling_sizes_wo_all
             self.sample_sizes_slider_multi.value = config.sampling_sizes_wo_all[0]
@@ -2162,15 +2193,17 @@ class SynTrackerVisApp:
         else:
             is_all_regions = 1
 
+        self.selected_subset_species_num = len(self.selected_genomes_subset)
+
         # Create the number of pairs vs. subsampled regions bar plot
         pairs_vs_sampling_size_bar_plot = pn.bind(pm.plot_pairs_vs_sampling_size_bar,
-                                                  df=pairs_num_per_sampling_size_multi_genomes_df,
+                                                  df=self.pairs_num_per_sampling_size_multi_genomes_df,
                                                   sampling_size=self.sample_sizes_slider_multi,
                                                   is_all_regions=is_all_regions)
         pairs_bar_plot_pane = pn.pane.HoloViews(pairs_vs_sampling_size_bar_plot, width=535, sizing_mode="fixed")
 
         # Create a markdown for the pairs lost percent (binded to the slider)
-        binded_text = pn.bind(widgets.create_pairs_lost_text, pairs_num_per_sampling_size_multi_genomes_df,
+        binded_text = pn.bind(widgets.create_pairs_lost_text, self.pairs_num_per_sampling_size_multi_genomes_df,
                               self.sample_sizes_slider_multi)
 
         pairs_plot_column = pn.Column(pn.pane.Markdown(refs=binded_text, align='center'), pairs_bar_plot_pane,
@@ -2178,13 +2211,13 @@ class SynTrackerVisApp:
 
         # Create the number of species vs. subsampled regions bar plot
         species_vs_sampling_size_bar_plot = pn.bind(pm.plot_species_vs_sampling_size_bar,
-                                                    df=pairs_num_per_sampling_size_multi_genomes_df,
+                                                    df=self.pairs_num_per_sampling_size_multi_genomes_df,
                                                     sampling_size=self.sample_sizes_slider_multi,
                                                     is_all_regions=is_all_regions)
         species_bar_plot_pane = pn.pane.HoloViews(species_vs_sampling_size_bar_plot, width=535, sizing_mode="fixed")
 
         # Create a markdown for the pairs lost percent (binded to the slider)
-        binded_text = pn.bind(widgets.create_species_num_text, pairs_num_per_sampling_size_multi_genomes_df,
+        binded_text = pn.bind(widgets.create_species_num_text, self.pairs_num_per_sampling_size_multi_genomes_df,
                               self.sample_sizes_slider_multi)
 
         species_plot_column = pn.Column(pn.pane.Markdown(refs=binded_text, align='center'), species_bar_plot_pane,
@@ -2209,6 +2242,11 @@ class SynTrackerVisApp:
 
         self.sampling_size_multi = self.sample_sizes_slider_multi.value
         print("\nMulti genomes visualization. Selected subsampling size = " + self.sampling_size_multi)
+
+        self.species_num_at_sampling_size = self.pairs_num_per_sampling_size_multi_genomes_df.loc[
+            self.pairs_num_per_sampling_size_multi_genomes_df['Subsampled_regions'] == self.sampling_size_multi,
+            'Number_of_species'].values[0]
+        print("Number of species at this sampling size: " + str(self.species_num_at_sampling_size))
 
         self.box_plot_feature_select.param.unwatch(self.feature_select_watcher)
         self.plots_by_size_multi_column.clear()
@@ -2279,15 +2317,17 @@ class SynTrackerVisApp:
         download_button = pn.widgets.Button(name='Download high-resolution image', button_type='primary')
         download_button.on_click(self.download_box_plot)
 
-        genomes_num = len(self.selected_genomes_subset)
-        if genomes_num == self.number_of_genomes:
+        if self.species_num_at_sampling_size == self.number_of_genomes:
             box_plot_file = "Boxplot_all_genomes_" + self.sampling_size_multi
             boxplot_table = "Data_for_boxplot_all_genomes_" + self.sampling_size_multi
             pvalues_table = "P-values_all_genomes_" + self.sampling_size_multi
         else:
-            box_plot_file = "Boxplot_" + str(genomes_num) + "_genomes_" + self.sampling_size_multi + "_regions"
-            boxplot_table = "Data_for_boxplot_" + str(genomes_num) + "_genomes_" + self.sampling_size_multi + "_regions"
-            pvalues_table = "P-values_" + str(genomes_num) + "_genomes_" + self.sampling_size_multi + "_regions"
+            box_plot_file = "Boxplot_" + str(self.species_num_at_sampling_size) + "_genomes_" + \
+                            self.sampling_size_multi + "_regions"
+            boxplot_table = "Data_for_boxplot_" + str(self.species_num_at_sampling_size) + "_genomes_" + \
+                            self.sampling_size_multi + "_regions"
+            pvalues_table = "P-values_" + str(self.species_num_at_sampling_size) + "_genomes_" + \
+                            self.sampling_size_multi + "_regions"
         self.save_box_plot_file_path.placeholder = box_plot_file
         self.save_boxplot_table_path.placeholder = boxplot_table
         self.save_pvalues_table_path.placeholder = pvalues_table
@@ -2344,13 +2384,25 @@ class SynTrackerVisApp:
     def calculate_metadata_for_box_plot(self):
 
         presented_genomes_list = self.genomes_subset_selected_size_APSS_df['Ref_genome'].unique()
-        genomes_num = len(presented_genomes_list)
-        print("\ncalculate_metadata_for_box_plot: Number of genomes to present = " + str(genomes_num))
+        print("\ncalculate_metadata_for_box_plot: Number of genomes to present = " +
+              str(self.species_num_at_sampling_size))
 
         feature = self.box_plot_feature_select.value
-        self.save_box_plot_file_path.placeholder += "_" + feature
-        self.save_boxplot_table_path.placeholder += "_" + feature
-        self.save_pvalues_table_path.placeholder += "_" + feature
+        if self.species_num_at_sampling_size == self.number_of_genomes:
+            box_plot_file = "Boxplot_all_genomes_"
+            boxplot_table = "Data_for_boxplot_all_genomes_"
+            pvalues_table = "P-values_all_genomes_"
+        else:
+            box_plot_file = "Boxplot_" + str(self.species_num_at_sampling_size) + "_genomes_"
+            boxplot_table = "Data_for_boxplot_" + str(self.species_num_at_sampling_size) + "_genomes_"
+            pvalues_table = "P-values_" + str(self.species_num_at_sampling_size) + "_genomes_"
+
+        self.save_box_plot_file_path.placeholder = box_plot_file + self.sampling_size_multi + "_regions_feature_" + \
+                                                   feature
+        self.save_boxplot_table_path.placeholder = boxplot_table + self.sampling_size_multi + "_regions_feature_" + \
+                                                   feature
+        self.save_pvalues_table_path.placeholder = pvalues_table + self.sampling_size_multi + "_regions_feature_" + \
+                                                   feature
 
         self.genomes_subset_selected_size_APSS_df['Category'] = self.genomes_subset_selected_size_APSS_df.apply(
             lambda row: category_by_feature(row, feature, self.metadata_dict), axis=1)
