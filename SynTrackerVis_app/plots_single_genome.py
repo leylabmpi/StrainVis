@@ -361,6 +361,17 @@ def cretae_network_plot_matplotlib(network, is_metadata, nodes_feature, is_conti
                 unique_groups.append('nan')
             print(unique_groups)
             cmap_length = cmap_mpl.N
+
+            # If the user defined a custom cmap - process it and turn it into a cmap
+            if cmap_length == 1:
+                custom_colors_list = custom_cmap
+                # cmap = custom_colors_list.split(',')
+                cmap = re.split(r'\s*,\s*', custom_colors_list)
+                cmap_length = len(cmap)
+                print("Custom cmap:")
+                print(cmap)
+                print("custom cmap length: " + str(cmap_length))
+
             group_to_color = {group: cmap_mpl(i % cmap_length) for i, group in enumerate(unique_groups)}
             colors = [group_to_color[str(network.nodes[node][nodes_feature])] for node in network.nodes()]
 

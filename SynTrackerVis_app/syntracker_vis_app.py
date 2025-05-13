@@ -349,7 +349,7 @@ class SynTrackerVisApp:
         self.is_continuous = pn.widgets.Checkbox(name='Continuous feature', value=False)
         self.nodes_colormap = pn.widgets.ColorMap(name="Select colormap for nodes:",
                                                   options=config.categorical_colormap_dict,
-                                                  value=config.categorical_colormap_dict['Glasbey'])
+                                                  value=config.categorical_colormap_dict['cet_glasbey'])
         self.custom_colormap_input = pn.widgets.TextInput(name='Custom colormap: enter a list of colors separated by '
                                                                'comma:',
                                                           placeholder='color1, color2, color3, etc...',
@@ -1087,7 +1087,7 @@ class SynTrackerVisApp:
         self.network_threshold_input.value = config.APSS_connections_threshold_default
         self.is_continuous.value = False
         self.nodes_colormap.options = config.categorical_colormap_dict
-        self.nodes_colormap.value = config.categorical_colormap_dict['Glasbey']
+        self.nodes_colormap.value = config.categorical_colormap_dict['cet_glasbey']
 
         # Check if the requested genome and size have already been calculated. If so, fetch the specific dataframe
         if self.calculated_APSS_genome_size_dict[self.sampling_size]:
@@ -1434,13 +1434,13 @@ class SynTrackerVisApp:
             # Feature is indeed really continuous
             else:
                 self.nodes_colormap.options = config.continuous_colormap_dict
-                self.nodes_colormap.value = config.continuous_colormap_dict['Rainbow4']
+                self.nodes_colormap.value = config.continuous_colormap_dict['cet_rainbow4']
 
         # Categorical feature
         else:
             #print("\nIn change_continuous_state. Categorical feature")
             self.nodes_colormap.options = config.categorical_colormap_dict
-            self.nodes_colormap.value = config.categorical_colormap_dict['Glasbey']
+            self.nodes_colormap.value = config.categorical_colormap_dict['cet_glasbey']
 
     def change_colormap(self, event):
         #print("\nIn change_colormap. Continuous state = " + str(self.is_continuous.value))
