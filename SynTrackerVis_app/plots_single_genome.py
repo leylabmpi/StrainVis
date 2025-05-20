@@ -6,7 +6,7 @@ import networkx as nx
 import hvplot.pandas  # Enable interactive
 import holoviews as hv
 import hvplot.networkx as hvnx
-import matplotlib as mpl
+#import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from matplotlib.colors import Normalize
@@ -85,19 +85,63 @@ def create_jitter_plot_bokeh(avg_df, color):
     return plot
 
 
-def create_clustermap(matrix, cmap):
+def create_clustermap(matrix, cmap, is_metadata, feature, cmap_metadata, custom_cmap, metadata_dict):
 
     # The number of columns doesn't exceed the defined maximum - continue creating the clustermap plot
     col_num = len(matrix.columns)
     mask_array = np.full((col_num, col_num), np.where(matrix == 100, True, False))
 
     print("\ncreate_clustermap: selected cmap: " + cmap)
-    colmap = mpl.colormaps.get_cmap(cmap)
+    colmap = plt.get_cmap(cmap)
     colmap.set_bad("lightgrey")
 
-    clustermap = sns.clustermap(matrix, cmap=colmap, row_cluster=True, linewidths=.5,
-                                cbar_pos=(0.04, 0.82, 0.02, 0.15), xticklabels=1, yticklabels=1,
-                                dendrogram_ratio=(0.2, 0.2), mask=mask_array)
+    if is_metadata:
+
+        # Get the unique groups of the selected feature
+        unique_groups = sorted(list(set([str(metadata_dict[feature][sample]) for sample in matrix.iloc[:, 0].index])))
+        groups_num = len(unique_groups)
+
+        # Move the 'nan' group (if any) to the end of the list
+        if 'nan' in unique_groups:
+            unique_groups.remove('nan')
+            unique_groups.append('nan')
+        print(unique_groups)
+
+        # If the user defined a custom cmap - process it and turn it into a cmap
+        if cmap_metadata == 'Define custom colormap':
+            custom_colors_list = custom_cmap
+            cmap_metadata_mpl = re.split(r'\s*,\s*', custom_colors_list)
+            cmap_length = len(cmap_metadata_mpl)
+            print("Custom cmap:")
+            print(cmap_metadata_mpl)
+
+            # Assign each group with a color, according to the colormap order
+            group_to_color = {group: cmap_metadata_mpl[i % cmap_length] for i, group in enumerate(unique_groups)}
+
+        # Standard colormap
+        else:
+            cmap_metadata_mpl = plt.get_cmap(cmap_metadata)
+            cmap_length = cmap_metadata_mpl.N
+
+            # Assign each group with a color, according to the colormap order
+            group_to_color = {group: cmap_metadata_mpl(i % cmap_length) for i, group in enumerate(unique_groups)}
+
+        print("cmap length: " + str(cmap_length))
+
+        # Create a colors dataframe, with sample names as indices
+        colors = [group_to_color[str(metadata_dict[feature][sample])] for sample in matrix.iloc[:, 0].index]
+        colors_df = pd.DataFrame({feature: colors}, index=matrix.index)
+        print(colors_df)
+
+        clustermap = sns.clustermap(matrix, cmap=colmap, row_cluster=True, linewidths=.5,
+                                    cbar_pos=(0.04, 0.82, 0.02, 0.15), xticklabels=1, yticklabels=1,
+                                    dendrogram_ratio=(0.2, 0.2), mask=mask_array, row_colors=colors_df)
+
+    # No metadata
+    else:
+        clustermap = sns.clustermap(matrix, cmap=colmap, row_cluster=True, linewidths=.5,
+                                    cbar_pos=(0.04, 0.82, 0.02, 0.15), xticklabels=1, yticklabels=1,
+                                    dendrogram_ratio=(0.2, 0.2), mask=mask_array)
 
     if col_num <= 10:
         font_size = 14
@@ -120,10 +164,26 @@ def create_clustermap(matrix, cmap):
     else:
         font_size = 4
 
-    clustermap.ax_heatmap.set_xticklabels(clustermap.ax_heatmap.get_xmajorticklabels(), fontsize=font_size,
+    clustermap.ax_heatmap.set_xticklabels(clustermap.ax_heatmap.get_xticklabels(), fontsize=font_size,
                                           rotation='vertical')
-    clustermap.ax_heatmap.set_yticklabels(clustermap.ax_heatmap.get_ymajorticklabels(), fontsize=font_size,
+    clustermap.ax_heatmap.set_yticklabels(clustermap.ax_heatmap.get_xticklabels(), fontsize=font_size,
                                           rotation='horizontal')
+
+    # Set the font size of the feature label to be the same as the xticklabels
+    if is_metadata:
+        for ax in clustermap.fig.axes:
+            if len(ax.get_xticklabels()) > 0:
+                ax.set_xticklabels(ax.get_xticklabels(), fontsize=font_size)
+
+        # If number of groups <= 10, add legend
+        if groups_num <= 10:
+            legend_handles = [
+                Line2D([0], [0], marker='o', color='w', markerfacecolor=group_to_color[group], markersize=8,
+                       markeredgecolor='black', markeredgewidth=0.1, label=group) for group in unique_groups]
+
+            # Add the legend to the plot
+            clustermap.ax_heatmap.legend(handles=legend_handles, title=feature, loc="upper left",
+                                         bbox_to_anchor=(1.06, 1.25), fontsize=10)
 
     plt.close(clustermap.figure)
 
@@ -283,7 +343,8 @@ def cretae_network_plot_matplotlib(network, is_metadata, nodes_feature, is_conti
     pos = nx.layout.fruchterman_reingold_layout(network, iterations=iter_num, pos=pos_dict, k=2)
 
     # Get the colormap
-    cmap_mpl = plt.get_cmap(cmap)
+    if cmap != 'Define custom colormap':
+        cmap_mpl = plt.get_cmap(cmap)
 
     if is_metadata:
         # Set the edges colors for the requested color-by feature
@@ -352,7 +413,7 @@ def cretae_network_plot_matplotlib(network, is_metadata, nodes_feature, is_conti
 
         # Feature is categorical
         else:
-            # Prepare the colors mapping for the matplotlib plot
+            # Get a list of the unique groups of the selected feature
             unique_groups = sorted(list(set([str(network.nodes[node][nodes_feature]) for node in network.nodes()])))
             groups_num = len(unique_groups)
             # Move the 'nan' group (if any) to the end of the list
@@ -360,19 +421,27 @@ def cretae_network_plot_matplotlib(network, is_metadata, nodes_feature, is_conti
                 unique_groups.remove('nan')
                 unique_groups.append('nan')
             print(unique_groups)
-            cmap_length = cmap_mpl.N
 
             # If the user defined a custom cmap - process it and turn it into a cmap
-            if cmap_length == 1:
+            if cmap == 'Define custom colormap':
                 custom_colors_list = custom_cmap
-                # cmap = custom_colors_list.split(',')
-                cmap = re.split(r'\s*,\s*', custom_colors_list)
-                cmap_length = len(cmap)
+                cmap_mpl = re.split(r'\s*,\s*', custom_colors_list)
+                cmap_length = len(cmap_mpl)
                 print("Custom cmap:")
-                print(cmap)
-                print("custom cmap length: " + str(cmap_length))
+                print(cmap_mpl)
 
-            group_to_color = {group: cmap_mpl(i % cmap_length) for i, group in enumerate(unique_groups)}
+                # Assign each group with a color, according to the colormap order
+                group_to_color = {group: cmap_mpl[i % cmap_length] for i, group in enumerate(unique_groups)}
+
+            # Standard colormap
+            else:
+                cmap_length = cmap_mpl.N
+                # Assign each group with a color, according to the colormap order
+                group_to_color = {group: cmap_mpl(i % cmap_length) for i, group in enumerate(unique_groups)}
+
+            print("cmap length: " + str(cmap_length))
+
+            # Get a list of colors for all the nodes
             colors = [group_to_color[str(network.nodes[node][nodes_feature])] for node in network.nodes()]
 
             if is_edge_colorby:

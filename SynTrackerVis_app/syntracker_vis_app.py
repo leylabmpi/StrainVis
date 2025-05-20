@@ -150,6 +150,7 @@ class SynTrackerVisApp:
         self.colormap_watcher = ""
         self.custom_colormap_watcher = ""
         self.nodes_colorby_watcher = ""
+        self.feature_colormap_watcher = ""
         self.visited_multi_genome_tab = 0
 
         # Bootstrap template
@@ -277,6 +278,7 @@ class SynTrackerVisApp:
 
         # Clustermap elements
         self.clustermap_plot = ""
+        self.clustermap_pane = ""
         self.scores_matrix = pd.DataFrame()
         self.clustermap_cmap = pn.widgets.Select(value=config.clustermap_colormaps_list[0],
                                                  options=config.clustermap_colormaps_list,
@@ -289,6 +291,22 @@ class SynTrackerVisApp:
         download_matrix_text = 'Save matrix as: (if no full path, the file is saved under \'Downloads/\')'
         self.save_matrix_file_path = pn.widgets.TextInput(name=download_matrix_text)
         self.download_matrix_column = pn.Column()
+
+        self.use_metadata_clustermap = pn.widgets.Checkbox(name='Use metadata for coloring', value=False)
+        self.metadata_clustermap_card = pn.Card(title='', header_background="#ffffff",
+                                                styles={'background': "#ffffff", 'margin': "10px", 'width': "335px"},
+                                                hide_header=True,
+                                                collapsed=pn.bind(change_disabled_state_inverse,
+                                                                  chkbox_state=self.use_metadata_clustermap,
+                                                                  watch=True))
+        self.color_by_feature = pn.widgets.Select(options=['Select feature'], name="Color rows by:", width=150)
+        self.feature_colormap = pn.widgets.ColorMap(name="Select colormap:",
+                                                    options=config.categorical_colormap_dict,
+                                                    value=config.categorical_colormap_dict['cet_glasbey'])
+        self.custom_colormap_input_clustermap = pn.widgets.TextInput(
+            name='Custom colormap: enter a list of colors separated by comma:',
+            placeholder='color1, color2, color3, etc...',
+            disabled=pn.bind(change_disabled_state_custom_colormap, value=self.feature_colormap, watch=True))
 
         # Jitter plot elements
         self.jitter_plot = ""
@@ -542,6 +560,7 @@ class SynTrackerVisApp:
         self.is_continuous.param.unwatch(self.continuous_watcher)
         self.nodes_colormap.param.unwatch(self.colormap_watcher)
         self.custom_colormap_input.param.unwatch(self.custom_colormap_watcher)
+        self.feature_colormap.param.unwatch(self.feature_colormap_watcher)
         self.box_plot_feature_select.param.unwatch(self.feature_select_watcher)
         self.genomes_select.param.unwatch(self.genomes_select_watcher)
         self.genomes_sort_select.param.unwatch(self.genomes_sort_select_watcher)
@@ -1073,6 +1092,7 @@ class SynTrackerVisApp:
         self.plots_by_size_single_column.clear()
         self.jitter_card.clear()
         self.clustermap_card.clear()
+        self.metadata_clustermap_card.clear()
         self.network_card.clear()
         self.metadata_colorby_card.clear()
         self.metadata_jitter_card.clear()
@@ -1084,6 +1104,7 @@ class SynTrackerVisApp:
             self.nodes_colormap.param.unwatch(self.colormap_watcher)
             self.custom_colormap_input.param.unwatch(self.custom_colormap_watcher)
             self.nodes_color_by.param.unwatch(self.nodes_colorby_watcher)
+            self.feature_colormap.param.unwatch(self.feature_colormap_watcher)
         self.network_threshold_input.value = config.APSS_connections_threshold_default
         self.is_continuous.value = False
         self.nodes_colormap.options = config.categorical_colormap_dict
@@ -1291,11 +1312,19 @@ class SynTrackerVisApp:
 
     def create_clustermap_pane(self, selected_genome_and_size_avg_df):
 
-        styling_title = "Heatmap styling options:"
+        styling_title = "Heatmap customization options:"
+        metadata_coloring_col = pn.Column(self.color_by_feature,
+                                          self.feature_colormap,
+                                          self.custom_colormap_input_clustermap,
+                                          styles={'padding': "10x"})
+        self.metadata_clustermap_card.append(metadata_coloring_col)
         styling_col = pn.Column(pn.pane.Markdown(styling_title, styles={'font-size': "15px", 'font-weight': "bold",
                                                                         'color': config.title_blue_color,
                                                                         'margin': "0"}),
-                                self.clustermap_cmap)
+                                self.clustermap_cmap,
+                                pn.Spacer(height=5),
+                                self.use_metadata_clustermap,
+                                self.metadata_clustermap_card)
 
         save_file_title = "Plot download options:"
         download_button = pn.widgets.Button(name='Download high-resolution image', button_type='primary')
@@ -1353,16 +1382,59 @@ class SynTrackerVisApp:
 
         # Display the full clustermap pane, including the plot
         else:
-            self.clustermap_plot = pn.bind(ps.create_clustermap, matrix=self.scores_matrix,
-                                           cmap=self.clustermap_cmap)
+            # There is metadata
+            if self.is_metadata:
+                # Update the color rows by- drop-down menu with the available metadata features
+                self.color_by_feature.options = self.metadata_features_list
+                self.color_by_feature.value = self.metadata_features_list[0]
 
-            clustermap_pane = pn.pane.Matplotlib(self.clustermap_plot, height=600, dpi=300, tight=True, format='png')
-            clustermap_row = pn.Row(controls_col, pn.Spacer(width=110), clustermap_pane, styles={'padding': "15px"})
+                # Define a watcher for the colormap widget
+                self.feature_colormap_watcher = self.feature_colormap.param.watch(self.change_colormap_clustermap,
+                                                                                  'value', onlychanged=True)
+
+            # No metadata
+            else:
+                self.use_metadata_clustermap.disabled = True
+
+            self.clustermap_plot = pn.bind(ps.create_clustermap, matrix=self.scores_matrix,
+                                           cmap=self.clustermap_cmap, is_metadata=self.use_metadata_clustermap,
+                                           feature=self.color_by_feature,
+                                           cmap_metadata=self.feature_colormap.value_name,
+                                           custom_cmap=self.custom_colormap_input_clustermap,
+                                           metadata_dict=self.metadata_dict)
+
+            self.clustermap_pane = pn.pane.Matplotlib(self.clustermap_plot, height=600, dpi=300, tight=True, format='png')
+            clustermap_row = pn.Row(controls_col, pn.Spacer(width=50), self.clustermap_pane, styles={'padding': "15px"})
 
             self.clustermap_card.append(clustermap_row)
 
+    def change_colormap_clustermap(self, event):
+        self.update_clustermap_plot()
+
+    # Update the clustermap plot
+    def update_clustermap_plot(self):
+        print("\nIn update_clustermap_plot")
+        self.clustermap_plot = pn.bind(ps.create_clustermap, matrix=self.scores_matrix,
+                                       cmap=self.clustermap_cmap, is_metadata=self.use_metadata_clustermap,
+                                       feature=self.color_by_feature,
+                                       cmap_metadata=self.feature_colormap.value_name,
+                                       custom_cmap=self.custom_colormap_input_clustermap,
+                                       metadata_dict=self.metadata_dict)
+
+        self.clustermap_pane.object = self.clustermap_plot
+
     def download_clustermap(self, event):
         fformat = self.clustermap_image_format.value
+
+        # Update the placeholder of the filename for download.
+        clustermap_file = "Clustermap_" + self.ref_genome + "_" + self.sampling_size + "_regions_" + \
+                          self.clustermap_cmap.value
+        if self.use_metadata_clustermap.value:
+            if self.feature_colormap.value_name == 'Define custom colormap':
+                clustermap_file += "_colorby_" + self.color_by_feature.value + "_custom_colormap"
+            else:
+                clustermap_file += "_colorby_" + self.color_by_feature.value + "_" + self.feature_colormap.value_name
+        self.save_clustermap_file_path.placeholder = clustermap_file
 
         # Set the directory for saving
         if self.save_clustermap_file_path.value == "":
@@ -1657,9 +1729,16 @@ class SynTrackerVisApp:
 
         # Update the placeholder of the filenames for download with the default threshold.
         if self.use_metadata_network.value:
-            network_file = "Network_plot_" + self.ref_genome + "_" + self.sampling_size + "_regions_" + \
-                           self.network_iterations.value + "_iterations_threshold_" + str(self.APSS_connections_threshold) \
-                           + "_colorby_" + self.nodes_color_by.value + "_" + self.nodes_colormap.value_name
+            if self.nodes_colormap.value_name == 'Define custom colormap':
+                network_file = "Network_plot_" + self.ref_genome + "_" + self.sampling_size + "_regions_" + \
+                               self.network_iterations.value + "_iterations_threshold_" + \
+                               str(self.APSS_connections_threshold) + "_colorby_" + self.nodes_color_by.value + \
+                               "_custom_colormap"
+            else:
+                network_file = "Network_plot_" + self.ref_genome + "_" + self.sampling_size + "_regions_" + \
+                               self.network_iterations.value + "_iterations_threshold_" + \
+                               str(self.APSS_connections_threshold) + "_colorby_" + self.nodes_color_by.value + "_" + \
+                               self.nodes_colormap.value_name
         else:
             network_file = "Network_plot_" + self.ref_genome + "_" + self.sampling_size + "_regions_" + \
                            self.network_iterations.value + "_iterations_threshold_" + \
