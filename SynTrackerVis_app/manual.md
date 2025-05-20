@@ -1,6 +1,6 @@
 # SynTrackerVis: a Python-based web application for interactive visual analysis of SynTracker's results
 
-### Version 1.0.2
+### Version 1.0.3
 
 ## Overview
 
@@ -121,9 +121,20 @@ The features are derived from the upoaded metadata file and can be interactively
 
 ### Clustered heatmap plot
 
-This plot presents the APSS (Average Pairwise Synteny Scores) of between the included pairwise comparisons as a clustered heatmap.
-The colormap can be interactively selected from a list of available colormaps.  
-Please note that in case the number of samples exceeds the limit of 120, the heatmap plot cannot be 
+This plot presents the APSS (Average Pairwise Synteny Scores) of the included pairwise comparisons as a clustered heatmap.
+The colormap for the scores can be interactively selected from a list of available colormaps.
+
+**Including metadata:** An additional column, coloring the rows by a requested metadata feature, 
+can be added when checking the 'Use metadata for coloring' option.  
+- Color rows by: select a metadata feature, by which the rows in the additional column will be colored.  
+- Select colormap: select a colormap from the drop-down menu to color the different groups of the selected feature.  
+When selecting the 'Define custom colormap' option, the 'Custom colormap' text input widget becomes active. 
+- Custom colormap: here the user can enter a list of colors, separated by commas. 
+The colors can be provided as standard names (like: red, blue) or Hex-RGB values (like: #FF0000).  
+A detailed guide for color notations: https://www.w3.org/TR/css-color-4/#named-colors .
+
+
+Please note that in case the number of samples exceeds the limit of 150, the heatmap plot cannot be 
 displayed properly. The scoring matrix is provided for download and can be used in another visualization program.
 
 ### Network plot
