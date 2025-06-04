@@ -31,6 +31,10 @@ title_blue_color = "#002060"
 same_color = "#F22C5D"
 diff_color = "#47A3E1"
 nodes_default_color = 'gray'
+conserved_color = '#E66B77'
+variable_color = '#00ffff'
+#conserved_color = '#EAED0C'
+#conserved_color = '#6AEC32'
 
 header_container_style = {
     'margin': '0 auto',

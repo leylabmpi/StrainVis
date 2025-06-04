@@ -6,6 +6,7 @@ import SynTrackerVis_app.config as config
 def complete_metadata(score_per_region_df, metadata_df):
 
     metadata_dict = dict()
+    groups_per_feature_dict = dict()
     error_msg = ""
     sample_ids_column_name = ""
 
@@ -49,11 +50,15 @@ def complete_metadata(score_per_region_df, metadata_df):
     print("\nMetadata after filling missing samples:")
     print(metadata_df)
 
-    # Create a dictionary to map the samples to feature values from metadata_df
+    # Go over the features
     for feature in metadata_features_list:
+        # 1. Create a dictionary to map the samples to feature values from metadata_df
         metadata_dict[feature] = metadata_df.set_index(sample_ids_column_name)[feature].to_dict()
 
-    return metadata_dict, metadata_features_list, error_msg
+        # 2. Create another dict, with features -> feature groups
+        groups_per_feature_dict[feature] = metadata_df[feature].unique().tolist()
+
+    return metadata_dict, groups_per_feature_dict, metadata_features_list, error_msg
 
 
 def return_genomes_subset_table(score_per_region_df, genomes_list):

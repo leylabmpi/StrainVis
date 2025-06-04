@@ -268,7 +268,6 @@ def cretae_network_plot(network, is_metadata, nodes_feature, is_continuous, cmap
             # If the user defined a custom cmap - process it and turn it into a cmap
             if cmap_length == 1:
                 custom_colors_list = custom_cmap
-                #cmap = custom_colors_list.split(',')
                 cmap = re.split(r'\s*,\s*', custom_colors_list)
                 cmap_length = len(cmap)
                 print("Custom cmap:")
@@ -532,7 +531,7 @@ def create_coverage_plot(contig_name, score_per_pos_contig, avg_score_per_pos_co
     avg_pos_array = np.full((2, len(avg_score_per_pos_contig.index)), 0)
     avg_pos_array[1, :] = config.region_length
 
-    fig, ax1 = plt.subplots(figsize=(10, 5))
+    fig, ax1 = plt.subplots(figsize=(11, 5))
 
     if show_scores:
         coverage_plot = plt.errorbar(score_per_pos_contig['Position'], score_per_pos_contig['Synteny_score'],
@@ -554,16 +553,16 @@ def create_coverage_plot(contig_name, score_per_pos_contig, avg_score_per_pos_co
         plt.ylabel("Average synteny Score")
 
     if show_hyper_var:
-        plt.bar(avg_score_per_pos_contig['Position'],
-                avg_score_per_pos_contig['Hypervariable'], align='edge',
-                width=config.region_length, bottom=bottom_val, color=hyper_var_color, alpha=hyper_var_alpha,
-                label='Hypervariable regions')
+        hypervar_bars = plt.bar(avg_score_per_pos_contig['Position'],
+                        avg_score_per_pos_contig['Hypervariable'], align='edge',
+                        width=config.region_length, bottom=bottom_val, color=hyper_var_color, alpha=hyper_var_alpha,
+                        label='Hypervariable regions')
 
     if show_hyper_cons:
-        plt.bar(avg_score_per_pos_contig['Position'],
-                avg_score_per_pos_contig['Hyperconserved'], align='edge',
-                width=config.region_length, bottom=bottom_val, color=hyper_cons_color, alpha=hyper_cons_alpha,
-                label='Hyperconserved regions')
+        hypercons_bars = plt.bar(avg_score_per_pos_contig['Position'],
+                         avg_score_per_pos_contig['Hyperconserved'], align='edge',
+                         width=config.region_length, bottom=bottom_val, color=hyper_cons_color, alpha=hyper_cons_alpha,
+                         label='Hyperconserved regions')
 
     plt.legend(fontsize='small', loc=(0, 1.02))
 

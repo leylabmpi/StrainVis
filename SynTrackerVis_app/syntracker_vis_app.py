@@ -109,6 +109,7 @@ class SynTrackerVisApp:
         self.is_metadata = 0
         self.valid_metadata = 1
         self.metadata_dict = dict()
+        self.groups_per_feature_dict = dict()
         self.metadata_features_list = []
         self.number_of_genomes = 0
         self.ref_genomes_list = []
@@ -122,6 +123,10 @@ class SynTrackerVisApp:
         self.score_per_region_all_genomes_df = pd.DataFrame()
         self.score_per_region_genomes_subset_df = pd.DataFrame()
         self.score_per_region_selected_genome_df = pd.DataFrame()
+        self.score_per_pos_contig = pd.DataFrame()
+        self.score_per_pos_contig_filtered = pd.DataFrame()
+        self.avg_score_per_pos_contig = pd.DataFrame()
+        self.avg_score_per_pos_contig_filtered = pd.DataFrame()
         self.genomes_subset_selected_size_APSS_df = pd.DataFrame()
         self.pairs_num_per_sampling_size_multi_genomes_df = pd.DataFrame()
         self.boxplot_p_values_df = pd.DataFrame()
@@ -139,7 +144,9 @@ class SynTrackerVisApp:
         self.top_percentile = 0
         self.bottom_percentile = 0
         self.median_counts = 0
+        self.median_counts_filtered = 0
         self.bottom_percentile_counts = 0
+        self.bottom_percentile_counts_filtered = 0
         self.genomes_select_watcher = ""
         self.genomes_sort_select_watcher = ""
         self.genomes_sort_select_multi_watcher = ""
@@ -151,6 +158,7 @@ class SynTrackerVisApp:
         self.custom_colormap_watcher = ""
         self.nodes_colorby_watcher = ""
         self.feature_colormap_watcher = ""
+        self.synteny_per_pos_feature_select_watcher = ""
         self.visited_multi_genome_tab = 0
 
         # Bootstrap template
@@ -254,8 +262,8 @@ class SynTrackerVisApp:
         self.main_single_column = pn.Column(styles=config.main_column_style)
         self.ref_genome_column = pn.Column()
         self.single_tabs = pn.Tabs(dynamic=True, styles=config.single_tabs_style)
-        self.coverage_plot_column = pn.Column(styles={'padding': "20px"})
-        self.activated_coverage_tab = 0
+        self.synteny_per_pos_plot_column = pn.Column(styles={'padding': "20px"})
+        self.activated_synteny_per_pos_tab = 0
         self.plots_by_size_single_column = pn.Column()
         self.main_plots_multi_column = pn.Column()
         self.plots_by_size_multi_column = pn.Column()
@@ -452,35 +460,74 @@ class SynTrackerVisApp:
             name='Save P-values table as: (if no full path, the file is saved under \'Downloads/\')')
         self.download_pvalues_table_column = pn.Column()
 
-        # Coverage plots elements
-        self.visited_coverage_tab = 0
-        self.finished_initial_coverage_plot = 0
+        # synteny_per_pos plots elements
+        self.visited_synteny_per_pos_tab = 0
+        self.finished_initial_synteny_per_pos_plot = 0
+        self.ax_for_synteny_per_pos_plot = ""
+        self.synteny_per_pos_plot = ""
         self.coverage_plot = ""
-        self.avg_score_per_pos_contig = pd.DataFrame()
+        self.line_avg_plot = ""
+        self.hypervar_bars = ""
+        self.hypercons_bars = ""
+        self.synteny_per_pos_pane = ""
         self.contig_select = pn.widgets.Select(name='Select a contig:', options=[], styles={'margin': "0"})
         self.contig_select_watcher = ""
+        self.contig_name = ""
+        self.contig_length = ""
+        self.filter_plot_by_metadata = 0
         self.sorting_select = pn.widgets.Select(name='Sort by:', options=config.contig_sorting_options,
                                                 styles={'margin': "0"})
         self.sorting_select_watcher = ""
-        self.start_pos_input = ""
-        self.end_pos_input = ""
-        self.avg_plot_chkbox = ""
-        self.avg_plot_color = ""
-        self.coverage_plot_chkbox = ""
-        self.coverage_plot_color = ""
-        self.hypervar_chkbox = ""
-        self.hypervar_color = ""
-        self.hypervar_alpha_slider = ""
-        self.hypercons_chkbox = ""
-        self.hypercons_color = ""
-        self.hypercons_alpha_slider = ""
-        self.coverage_image_format = pn.widgets.Select(value=config.matplotlib_file_formats[0],
+        self.start_pos_input = pn.widgets.TextInput(name='Start position')
+        self.end_pos_input = pn.widgets.TextInput(name='End position')
+        self.avg_plot_chkbox = pn.widgets.Checkbox(name='Show average synteny scores', value=True)
+        self.avg_plot_chkbox_watcher = ""
+        self.avg_plot_color = pn.widgets.ColorPicker(name='Color:', value='#000080',
+                                                     disabled=pn.bind(change_disabled_state_inverse,
+                                                                      chkbox_state=self.avg_plot_chkbox,
+                                                                      watch=True))
+        self.avg_plot_color_watcher = ""
+        self.coverage_plot_chkbox = pn.widgets.Checkbox(name='Show all synteny scores', value=True)
+        self.coverage_plot_chkbox_watcher = ""
+        self.coverage_plot_color = pn.widgets.ColorPicker(name='Color:', value='#ba55d3',
+                                                          disabled=pn.bind(change_disabled_state_inverse,
+                                                                           chkbox_state=self.coverage_plot_chkbox,
+                                                                           watch=True))
+        self.coverage_plot_color_watcher = ""
+        self.hypervar_chkbox = pn.widgets.Checkbox(name='Highlight hypervariable regions', value=True)
+        self.hypervar_chkbox_watcher = ""
+        self.hypervar_color = pn.widgets.ColorPicker(name='Color:', value=config.variable_color,
+                                                     disabled=pn.bind(change_disabled_state_inverse,
+                                                                      chkbox_state=self.hypervar_chkbox,
+                                                                      watch=True))
+        self.hypervar_color_watcher = ""
+        self.hypercons_chkbox = pn.widgets.Checkbox(name='Highlight hyperconserved regions', value=True)
+        self.hypercons_chkbox_watcher = ""
+        self.hypercons_color = pn.widgets.ColorPicker(name='Color:', value=config.conserved_color,
+                                                      disabled=pn.bind(change_disabled_state_inverse,
+                                                                       chkbox_state=self.hypercons_chkbox,
+                                                                       watch=True))
+        self.hypercons_color_watcher = ""
+        self.alpha_slider = pn.widgets.FloatSlider(name='Alpha transparency', start=0, end=1, step=0.1, value=0.3)
+        self.alpha_slider_watcher = ""
+        self.synteny_per_pos_image_format = pn.widgets.Select(value=config.matplotlib_file_formats[0],
                                                        options=config.matplotlib_file_formats,
                                                        name="Select image format:")
-        self.save_coverage_plot_path = pn.widgets.TextInput(name=download_image_text)
-        self.download_coverage_plot_column = pn.Column()
-        self.save_coverage_table_path = pn.widgets.TextInput(name=download_table_text)
-        self.download_coverage_table_column = pn.Column()
+        self.save_synteny_per_pos_plot_path = pn.widgets.TextInput(name=download_image_text)
+        self.download_synteny_per_pos_plot_column = pn.Column()
+        self.save_synteny_per_pos_table_path = pn.widgets.TextInput(name=download_table_text)
+        self.download_synteny_per_pos_table_column = pn.Column()
+
+        self.filter_by_metadata_card = pn.Card(title='Filter plot by metadata', collapsed=True,
+                                               styles={'margin': "5px 0 5px 10px", 'width': "1000px"})
+        self.synteny_per_pos_feature_select = pn.widgets.Select(options=['Select feature'], width=200,
+                                                                name="Filter plot by the following feature:")
+        self.synteny_per_pos_groups_select = pn.widgets.MultiSelect(options=[], width=350,
+                                                                    name='Include the following groups in the plot:')
+        self.filter_synteny_per_pos_button = pn.widgets.Button(name='Filter plot', button_type='primary')
+        self.filter_synteny_per_pos_button.on_click(self.filter_synteny_per_pos_plot)
+        self.reset_filter_synteny_per_pos_button = pn.widgets.Button(name='Reset filteration', button_type='primary')
+        self.reset_filter_synteny_per_pos_button.on_click(self.reset_filter_synteny_per_pos_plot)
 
         # Build the initial layout
         mandatory_input_title = "Mandatory input"
@@ -543,6 +590,8 @@ class SynTrackerVisApp:
         del self.score_per_region_all_genomes_df
         del self.score_per_region_genomes_subset_df
         del self.score_per_region_selected_genome_df
+        del self.score_per_pos_contig
+        del self.score_per_pos_contig_filtered
         del self.genomes_subset_selected_size_APSS_df
         del self.pairs_num_per_sampling_size_multi_genomes_df
         del self.boxplot_p_values_df
@@ -550,7 +599,9 @@ class SynTrackerVisApp:
         del self.scores_matrix
         del self.df_for_network
         del self.avg_score_per_pos_contig
+        del self.avg_score_per_pos_contig_filtered
         del self.metadata_dict
+        del self.groups_per_feature_dict
         del self.APSS_by_genome_all_sizes_dict
         del self.APSS_all_genomes_all_sizes_dict
         self.use_metadata_jitter.disabled = False
@@ -566,12 +617,23 @@ class SynTrackerVisApp:
         self.genomes_sort_select.param.unwatch(self.genomes_sort_select_watcher)
         self.genomes_sort_select_multi.param.unwatch(self.genomes_sort_select_multi_watcher)
         self.contig_select.param.unwatch(self.contig_select_watcher)
+        self.avg_plot_chkbox.param.unwatch(self.avg_plot_chkbox_watcher)
+        self.avg_plot_color.param.unwatch(self.avg_plot_color_watcher)
+        self.coverage_plot_chkbox.param.unwatch(self.coverage_plot_chkbox_watcher)
+        self.coverage_plot_color.param.unwatch(self.coverage_plot_color_watcher)
+        self.hypervar_chkbox.param.unwatch(self.hypervar_chkbox_watcher)
+        self.hypervar_color.param.unwatch(self.hypervar_color_watcher)
+        self.hypercons_chkbox.param.unwatch(self.hypercons_chkbox_watcher)
+        self.hypercons_color.param.unwatch(self.hypercons_color_watcher)
+        self.alpha_slider.param.unwatch(self.alpha_slider_watcher)
+        self.synteny_per_pos_feature_select.param.unwatch(self.synteny_per_pos_feature_select_watcher)
         self.sorting_select.param.unwatch(self.sorting_select_watcher)
         self.network_threshold_select.options = []
-        self.visited_coverage_tab = 0
-        self.finished_initial_coverage_plot = 0
+        self.visited_synteny_per_pos_tab = 0
+        self.finished_initial_synteny_per_pos_plot = 0
         self.visited_multi_genome_tab = 0
         self.network = ""
+        self.filter_plot_by_metadata = 0
 
         gc.collect()
 
@@ -698,7 +760,7 @@ class SynTrackerVisApp:
         self.ref_genome_column.clear()
         self.main_multi_column.clear()
         self.single_tabs.clear()
-        self.coverage_plot_column.clear()
+        self.synteny_per_pos_plot_column.clear()
         self.plots_by_size_single_column.clear()
         self.main_plots_multi_column.clear()
         self.plots_by_size_multi_column.clear()
@@ -735,7 +797,7 @@ class SynTrackerVisApp:
             # Check if the provided metadata is valid and match the sample-IDs.
             # If some samples are missing from the metadata - fill them with np.nan values
             before = time.time()
-            self.metadata_dict, self.metadata_features_list, error = \
+            self.metadata_dict, self.groups_per_feature_dict, self.metadata_features_list, error = \
                 dm.complete_metadata(self.score_per_region_all_genomes_df, metadata_df)
             after = time.time()
             duration = after - before
@@ -851,10 +913,6 @@ class SynTrackerVisApp:
         self.ref_genome = ref_genome.value
         print("\n\nSelected ref genome = " + self.ref_genome)
 
-        # Stop watching the contig-related widgets
-        self.contig_select.param.unwatch(self.contig_select_watcher)
-        self.sorting_select.param.unwatch(self.sorting_select_watcher)
-
         self.init_ref_genome()
 
         self.create_single_genome_column()
@@ -866,26 +924,52 @@ class SynTrackerVisApp:
         self.plots_by_size_single_column.clear()
         self.sample_sizes_slider.value = config.sampling_sizes[0]
         self.selected_contig_column.clear()
-        self.coverage_plot_column.clear()
+        self.synteny_per_pos_plot_column.clear()
 
         # Initialize variables
         self.contigs_list_by_length = []
         self.contigs_list_by_name = []
-        self.visited_coverage_tab = 0
-        self.finished_initial_coverage_plot = 0
+        self.visited_synteny_per_pos_tab = 0
+        self.finished_initial_synteny_per_pos_plot = 0
         self.single_tabs.active = 0
         del self.score_per_region_selected_genome_df
+        del self.score_per_pos_contig
+        del self.score_per_pos_contig_filtered
         del self.df_for_jitter
         del self.scores_matrix
         del self.df_for_network
         del self.avg_score_per_pos_contig
+        del self.avg_score_per_pos_contig_filtered
         del self.APSS_by_genome_all_sizes_dict
 
         self.df_for_jitter = pd.DataFrame()
         self.scores_matrix = pd.DataFrame()
         self.df_for_network = pd.DataFrame()
+        self.score_per_pos_contig = pd.DataFrame()
+        self.score_per_pos_contig_filtered = pd.DataFrame()
         self.avg_score_per_pos_contig = pd.DataFrame()
+        self.avg_score_per_pos_contig_filtered = pd.DataFrame()
         self.APSS_by_genome_all_sizes_dict = dict()
+
+        self.avg_plot_chkbox.value = True
+        self.coverage_plot_chkbox.value = True
+        self.hypervar_chkbox.value = True
+        self.hypercons_chkbox.value = True
+        self.filter_plot_by_metadata = 0
+
+        # Stop watching the contig-related widgets
+        self.contig_select.param.unwatch(self.contig_select_watcher)
+        self.sorting_select.param.unwatch(self.sorting_select_watcher)
+        self.avg_plot_chkbox.param.unwatch(self.avg_plot_chkbox_watcher)
+        self.avg_plot_color.param.unwatch(self.avg_plot_color_watcher)
+        self.coverage_plot_chkbox.param.unwatch(self.coverage_plot_chkbox_watcher)
+        self.coverage_plot_color.param.unwatch(self.coverage_plot_color_watcher)
+        self.hypervar_chkbox.param.unwatch(self.hypervar_chkbox_watcher)
+        self.hypervar_color.param.unwatch(self.hypervar_color_watcher)
+        self.hypercons_chkbox.param.unwatch(self.hypercons_chkbox_watcher)
+        self.hypercons_color.param.unwatch(self.hypercons_color_watcher)
+        self.alpha_slider.param.unwatch(self.alpha_slider_watcher)
+        self.synteny_per_pos_feature_select.param.unwatch(self.synteny_per_pos_feature_select_watcher)
 
         gc.collect()
 
@@ -898,16 +982,16 @@ class SynTrackerVisApp:
                                                        styles={'font-size': "20px", 'color': config.title_purple_color,
                                                                'margin': "0"}))
 
-        coverage_message = "Preparing the plot - please wait..."
-        self.coverage_plot_column.append(pn.pane.Markdown(coverage_message, styles={'font-size': "20px",
+        synteny_per_pos_message = "Preparing the plot - please wait..."
+        self.synteny_per_pos_plot_column.append(pn.pane.Markdown(synteny_per_pos_message, styles={'font-size': "20px",
                                                                                     'margin': "0"}))
 
         # Get the score-per-region table for the selected genome only
         self.score_per_region_selected_genome_df = ds.return_selected_genome_table(self.score_per_region_all_genomes_df,
                                                                                    self.ref_genome)
 
-        # Run the task of creating the initial coverage plots tab (without the plot itself) in another thread.
-        thread = threading.Thread(target=self.create_initial_coverage_plot_tab)
+        # Run the task of creating the initial synteny_per_pos plots tab (without the plot itself) in another thread.
+        thread = threading.Thread(target=self.create_initial_synteny_per_pos_plot_tab)
         thread.start()  # Start the thread
 
         # Initialize the dictionary that holds the calculated sampleing sizes
@@ -975,7 +1059,7 @@ class SynTrackerVisApp:
 
         self.single_tabs.clear()
         self.single_tabs.append(('APSS-based analyses', initial_plots_column))
-        self.single_tabs.append(('Synteny per position', self.coverage_plot_column))
+        self.single_tabs.append(('Synteny per position', self.synteny_per_pos_plot_column))
 
         self.ref_genome_column.append(self.single_tabs)
 
@@ -985,7 +1069,7 @@ class SynTrackerVisApp:
         duration = after - before
         print("\ncreate_single_genome_column took " + str(duration) + " seconds.\n")
 
-    def create_initial_coverage_plot_tab(self):
+    def create_initial_synteny_per_pos_plot_tab(self):
 
         # Get the sorted contigs lists
         print("\nCalling return_sorted_contigs_lists to sort the contigs")
@@ -1052,37 +1136,38 @@ class SynTrackerVisApp:
 
             contig_select_row = pn.Row(self.contig_select, pn.Spacer(width=20), self.sorting_select)
 
-            self.coverage_plot_column.clear()
-            self.coverage_plot_column.append(contig_select_row)
-            self.coverage_plot_column.append(self.selected_contig_column)
+            self.synteny_per_pos_plot_column.clear()
+            self.synteny_per_pos_plot_column.append(contig_select_row)
+            self.synteny_per_pos_plot_column.append(self.selected_contig_column)
 
         # There is only one contig
         else:
-            self.coverage_plot_column.clear()
-            self.coverage_plot_column.append(self.selected_contig_column)
+            self.synteny_per_pos_plot_column.clear()
+            self.synteny_per_pos_plot_column.append(self.selected_contig_column)
 
-        self.finished_initial_coverage_plot = 1
+        self.finished_initial_synteny_per_pos_plot = 1
 
     def changed_single_tabs(self, event):
 
-        # The coverage plots tab is selected for the first time for the current reference genome
-        if self.single_tabs.active == 1 and self.visited_coverage_tab == 0:
+        # The synteny_per_pos plots tab is selected for the first time for the current reference genome
+        if self.single_tabs.active == 1 and self.visited_synteny_per_pos_tab == 0:
 
-            # Building the initial coverage plots tab has finished
-            if self.finished_initial_coverage_plot:
+            # Building the initial synteny_per_pos plots tab has finished
+            if self.finished_initial_synteny_per_pos_plot:
 
                 contigs_num = len(self.contigs_list_by_name)
 
                 # If there is more than one contig -
-                # trigger changed_contig to create the coverage plot for the selected contig
+                # trigger changed_contig to create the synteny_per_pos plot for the selected contig
                 if contigs_num > 1:
                     self.contig_select.param.trigger('value')
 
-                # Create the coverage plot for the Ref-genome
+                # Create the synteny_per_pos plot for the Ref-genome
                 else:
-                    self.create_selected_contig_column(self.contigs_list_by_name[0])
+                    self.contig_name = self.contigs_list_by_name[0]
+                    self.create_selected_contig_column()
 
-                self.visited_coverage_tab = 1
+                self.visited_synteny_per_pos_tab = 1
 
     def create_single_genome_plots_by_APSS(self, event):
 
@@ -1239,8 +1324,8 @@ class SynTrackerVisApp:
                                    palette=[same_color, different_color], width=0.5)
             else:
                 plot = sns.catplot(data=self.df_for_jitter, x="Category", y="APSS", order=[same_feature, diff_feature],
-                                          hue="Category", hue_order=[same_feature, diff_feature],
-                                          palette=[same_color, different_color], edgecolor="gray", linewidth=0.1)
+                                   hue="Category", hue_order=[same_feature, diff_feature],
+                                   palette=[same_color, different_color], edgecolor="gray", linewidth=0.1)
 
         # Do not use metadata in plot - show all the comparisons together
         else:
@@ -1419,7 +1504,8 @@ class SynTrackerVisApp:
                                        feature=self.color_by_feature,
                                        cmap_metadata=self.feature_colormap.value_name,
                                        custom_cmap=self.custom_colormap_input_clustermap,
-                                       metadata_dict=self.metadata_dict)
+                                       metadata_dict=self.metadata_dict,
+                                       groups_per_feature_dict=self.groups_per_feature_dict)
 
         self.clustermap_pane.object = self.clustermap_plot
 
@@ -1923,19 +2009,38 @@ class SynTrackerVisApp:
             contig_select.options = self.contigs_list_by_length
             contig_select.value = self.contigs_list_by_length[0]
 
-    def changed_contig(self, contig_name, event):
-        print("\nChanged_contig, contig name:")
-        print(contig_name.value)
-        self.create_selected_contig_column(contig_name.value)
+    def changed_contig(self, contig, event):
+        self.contig_name = contig.value
+        print("\nChanged_contig, contig name: " + self.contig_name)
 
-    def create_selected_contig_column(self, contig_name):
+        # Unwatch all contig-specific widgets
+        self.avg_plot_chkbox.param.unwatch(self.avg_plot_chkbox_watcher)
+        self.avg_plot_color.param.unwatch(self.avg_plot_color_watcher)
+        self.coverage_plot_chkbox.param.unwatch(self.coverage_plot_chkbox_watcher)
+        self.coverage_plot_color.param.unwatch(self.coverage_plot_color_watcher)
+        self.hypervar_chkbox.param.unwatch(self.hypervar_chkbox_watcher)
+        self.hypervar_color.param.unwatch(self.hypervar_color_watcher)
+        self.hypercons_chkbox.param.unwatch(self.hypercons_chkbox_watcher)
+        self.hypercons_color.param.unwatch(self.hypercons_color_watcher)
+        self.alpha_slider.param.unwatch(self.alpha_slider_watcher)
+        self.synteny_per_pos_feature_select.param.unwatch(self.synteny_per_pos_feature_select_watcher)
 
-        score_per_pos_contig = self.score_per_region_selected_genome_df[
-            self.score_per_region_selected_genome_df['Contig_name'] == contig_name].copy()
+        self.coverage_plot = ""
+        self.line_avg_plot = ""
+        self.hypervar_bars = ""
+        self.hypercons_bars = ""
+        self.filter_plot_by_metadata = 0
+
+        self.create_selected_contig_column()
+
+    def create_selected_contig_column(self):
+
+        self.score_per_pos_contig = self.score_per_region_selected_genome_df[
+            self.score_per_region_selected_genome_df['Contig_name'] == self.contig_name].copy()
 
         self.selected_contig_column.clear()
 
-        contig_name_title = "Contig name: " + contig_name
+        contig_name_title = "Contig name: " + self.contig_name
         self.selected_contig_column.append(pn.pane.Markdown(contig_name_title,
                                                             styles={'font-size': "17px",
                                                                     'color': config.title_purple_color,
@@ -1943,127 +2048,150 @@ class SynTrackerVisApp:
                                                                     'padding-bottom': "0px"}))
 
         # Find contig length by the last position
-        score_per_pos_contig['Position'] = score_per_pos_contig['Position'].astype(int)
-        score_per_pos_contig = score_per_pos_contig.sort_values('Position')
-        print("\nLast position: " + str(score_per_pos_contig.iloc[-1]['Position']))
-        contig_length = score_per_pos_contig.iloc[-1]['Position'] + config.region_length
-        contig_length_title = "Contig length: " + str(contig_length) + " bp"
+        self.score_per_pos_contig['Position'] = self.score_per_pos_contig['Position'].astype(int)
+        self.score_per_pos_contig = self.score_per_pos_contig.sort_values('Position')
+        print("\nLast position: " + str(self.score_per_pos_contig.iloc[-1]['Position']))
+        self.contig_length = self.score_per_pos_contig.iloc[-1]['Position'] + config.region_length
+        contig_length_title = "Contig length: " + str(self.contig_length) + " bp"
         self.selected_contig_column.append(pn.pane.Markdown(contig_length_title,
                                                             styles={'font-size': "16px", 'margin': "0px 3px 3px 5px",
                                                                     'padding-top': "0px"}))
 
         ###################################
         # Create the customization column
-        # All the binded widgets have to be defined again to prevent wrong calls to create_coverage_plot
+        # All the binded widgets have to be defined again to prevent wrong calls to create_synteny_per_pos_plot
         # with previous contigs
 
         # Set the length range
         start_pos = '0'
-        end_pos = str(contig_length)
-        self.start_pos_input = pn.widgets.TextInput(name='Start position')
+        end_pos = str(self.contig_length)
         self.start_pos_input.placeholder = start_pos
         self.start_pos_input.value = start_pos
-        self.end_pos_input = pn.widgets.TextInput(name='End position')
         self.end_pos_input.placeholder = end_pos
         self.end_pos_input.value = end_pos
 
         reset_range_button = pn.widgets.Button(name='Reset range', button_type='primary',
                                                styles={'margin-top': "22px"})
-        reset_range_button.on_click(partial(self.reset_range, start_pos, end_pos))
+        reset_range_button.on_click(self.reset_range)
+        change_range_button = pn.widgets.Button(name='Set new range', button_type='primary',
+                                                styles={'margin-top': "22px"})
+        change_range_button.on_click(self.change_range)
 
         pos_range_cust_row = pn.Row(pn.pane.Markdown("Set contig length range:",
                                                      styles={'font-size': "14px", 'margin': "10px 5px 5px 5px"}),
                                     pn.Spacer(width=10), self.start_pos_input, pn.Spacer(width=5), self.end_pos_input,
-                                    pn.Spacer(width=5), reset_range_button,
+                                    pn.Spacer(width=5), change_range_button, pn.Spacer(width=5), reset_range_button,
                                     styles={'margin-left': "5px"})
 
-        self.avg_plot_chkbox = pn.widgets.Checkbox(name='Show average synteny scores', value=True)
-        self.avg_plot_color = pn.widgets.ColorPicker(name='Color:', value='#000080',
-                                                     disabled=pn.bind(change_disabled_state_inverse,
-                                                                      chkbox_state=self.avg_plot_chkbox,
-                                                                      watch=True))
-        avg_plot_chkbox_col = pn.Column(pn.Spacer(height=20), self.avg_plot_chkbox)
-        avg_plot_cust_row = pn.Row(avg_plot_chkbox_col, pn.Spacer(width=10), self.avg_plot_color,
-                                   styles={'margin-left': "5px"})
+        avg_plot_chkbox_col = pn.Column(pn.Spacer(height=25), self.avg_plot_chkbox)
+        coverage_plot_chkbox_col = pn.Column(pn.Spacer(height=25), self.coverage_plot_chkbox)
 
-        self.coverage_plot_chkbox = pn.widgets.Checkbox(name='Show all synteny scores', value=True)
-        self.coverage_plot_color = pn.widgets.ColorPicker(name='Color:', value='#ba55d3',
-                                                          disabled=pn.bind(change_disabled_state_inverse,
-                                                                           chkbox_state=self.coverage_plot_chkbox,
-                                                                           watch=True))
-        coverage_plot_chkbox_col = pn.Column(pn.Spacer(height=20), self.coverage_plot_chkbox)
-        coverage_plot_cust_row = pn.Row(coverage_plot_chkbox_col, pn.Spacer(width=10), self.coverage_plot_color,
+        coverage_plot_cust_row = pn.Row(avg_plot_chkbox_col, pn.Spacer(width=5), self.avg_plot_color,
+                                        pn.Spacer(width=30),
+                                        coverage_plot_chkbox_col, pn.Spacer(width=5), self.coverage_plot_color,
                                         styles={'margin-left': "5px"})
 
-        self.hypervar_chkbox = pn.widgets.Checkbox(name='Highlight hypervariable regions', value=True)
-        self.hypervar_color = pn.widgets.ColorPicker(name='Color:', value='#00ffff',
-                                                     disabled=pn.bind(change_disabled_state_inverse,
-                                                                      chkbox_state=self.hypervar_chkbox,
-                                                                      watch=True))
-        self.hypervar_alpha_slider = pn.widgets.FloatSlider(name='Alpha transparency', start=0, end=1, step=0.1,
-                                                            value=0.2,
-                                                            disabled=pn.bind(change_disabled_state_inverse,
-                                                                             chkbox_state=self.hypervar_chkbox,
-                                                                             watch=True))
-        hypervar_chkbox_col = pn.Column(pn.Spacer(height=20), self.hypervar_chkbox)
-        hypervar_cust_row = pn.Row(hypervar_chkbox_col, pn.Spacer(width=10), self.hypervar_color, pn.Spacer(width=5),
-                                   self.hypervar_alpha_slider, styles={'margin-left': "5px"})
+        hypervar_chkbox_col = pn.Column(pn.Spacer(height=25), self.hypervar_chkbox)
+        hypercons_chkbox_col = pn.Column(pn.Spacer(height=25), self.hypercons_chkbox)
 
-        self.hypercons_chkbox = pn.widgets.Checkbox(name='Highlight hyperconserved regions', value=True)
-        self.hypercons_color = pn.widgets.ColorPicker(name='Color:', value='#fa8072',
-                                                      disabled=pn.bind(change_disabled_state_inverse,
-                                                                       chkbox_state=self.hypercons_chkbox,
-                                                                       watch=True))
-        self.hypercons_alpha_slider = pn.widgets.FloatSlider(name='Alpha transparency', start=0, end=1, step=0.1,
-                                                             value=0.2,
-                                                             disabled=pn.bind(change_disabled_state_inverse,
-                                                                              chkbox_state=self.hypercons_chkbox,
-                                                                              watch=True))
-        hypercons_chkbox_col = pn.Column(pn.Spacer(height=20), self.hypercons_chkbox)
-        hypercons_cust_row = pn.Row(hypercons_chkbox_col, pn.Spacer(width=10), self.hypercons_color, pn.Spacer(width=5),
-                                    self.hypercons_alpha_slider, styles={'margin-left': "5px"})
+        hypercons_cust_row = pn.Row(hypervar_chkbox_col, pn.Spacer(width=5), self.hypervar_color,
+                                    pn.Spacer(width=30),
+                                    hypercons_chkbox_col, pn.Spacer(width=5), self.hypercons_color,
+                                    pn.Spacer(width=30),
+                                    self.alpha_slider,
+                                    styles={'margin-left': "5px"})
+
+        # There is metadata
+        if self.is_metadata:
+
+            # Update the synteny_per_pos_feature_select drop-down menu with the available metadata features
+            feature = self.metadata_features_list[0]
+            self.synteny_per_pos_feature_select.options = self.metadata_features_list
+            self.synteny_per_pos_feature_select.value = feature
+
+            # Fill the groups for the first feature
+            unique_groups = sorted(self.groups_per_feature_dict[feature], key=str)
+            if 'nan' in unique_groups:
+                unique_groups.remove('nan')
+                unique_groups.append('nan')
+            self.synteny_per_pos_groups_select.options = unique_groups
+
+            # Define a watcher for the feature-selection change
+            self.synteny_per_pos_feature_select_watcher = self.synteny_per_pos_feature_select.param.watch(
+                self.fill_groups_for_multiselect, 'value', onlychanged=True)
+
+            buttons_row = pn.Row(self.filter_synteny_per_pos_button, pn.Spacer(width=10),
+                                 self.reset_filter_synteny_per_pos_button)
+            buttons_col = pn.Column(pn.Spacer(height=20), buttons_row)
+            filter_metadata_row = pn.Row(self.synteny_per_pos_feature_select, pn.Spacer(width=10),
+                                         self.synteny_per_pos_groups_select, pn.Spacer(width=10),
+                                         buttons_col,
+                                         styles={'padding': "10px"})
+            self.filter_by_metadata_card.append(filter_metadata_row)
+
+        # No metadata
+        else:
+            self.filter_by_metadata_card.collapsible = False
+            self.filter_by_metadata_card.hide_header = True
 
         styling_title = "Customization options:"
         styling_col = pn.Column(pn.pane.Markdown(styling_title, styles={'font-size': "15px", 'font-weight': "bold",
                                                                         'color': config.title_blue_color,
                                                                         'margin': "10px 5px 5px 5px"}),
                                 pos_range_cust_row,
-                                avg_plot_cust_row,
                                 coverage_plot_cust_row,
-                                hypervar_cust_row,
-                                hypercons_cust_row)
+                                hypercons_cust_row,
+                                self.filter_by_metadata_card)
+
+        # Define watchers for visual widgets
+        self.avg_plot_chkbox_watcher = self.avg_plot_chkbox.param.watch(self.show_hide_avg_plot, 'value',
+                                                                        onlychanged=True)
+        self.avg_plot_color_watcher = self.avg_plot_color.param.watch(self.change_avg_plot_color, 'value',
+                                                                      onlychanged=True)
+        self.coverage_plot_chkbox_watcher = self.coverage_plot_chkbox.param.watch(self.show_hide_coverage_plot, 'value',
+                                                                                  onlychanged=True)
+        self.coverage_plot_color_watcher = self.coverage_plot_color.param.watch(self.change_coverage_plot_color,
+                                                                                'value', onlychanged=True)
+        self.hypervar_chkbox_watcher = self.hypervar_chkbox.param.watch(self.show_hide_hypervar_plot, 'value',
+                                                                        onlychanged=True)
+        self.hypervar_color_watcher = self.hypervar_color.param.watch(self.change_hypervar_color, 'value',
+                                                                      onlychanged=True)
+        self.hypercons_chkbox_watcher = self.hypercons_chkbox.param.watch(self.show_hide_hypercons_plot,
+                                                                          'value', onlychanged=True)
+        self.hypercons_color_watcher = self.hypercons_color.param.watch(self.change_hypercons_color,
+                                                                        'value', onlychanged=True)
+        self.alpha_slider_watcher = self.alpha_slider.param.watch(self.change_alpha, 'value', onlychanged=True)
 
         save_file_title = "Plot download options:"
         download_button = pn.widgets.Button(name='Download high-resolution image', button_type='primary')
-        download_button.on_click(self.download_coverage_plot)
+        download_button.on_click(self.download_synteny_per_pos_plot)
 
-        coverage_file = "Synteny_per_position_plot_" + self.ref_genome + "_" + contig_name
-        self.save_coverage_plot_path.placeholder = coverage_file
+        synteny_per_pos_file = "Synteny_per_position_plot_" + self.ref_genome + "_" + self.contig_name
+        self.save_synteny_per_pos_plot_path.placeholder = synteny_per_pos_file
 
-        self.download_coverage_plot_column = pn.Column(self.coverage_image_format, self.save_coverage_plot_path,
+        self.download_synteny_per_pos_plot_column = pn.Column(self.synteny_per_pos_image_format, self.save_synteny_per_pos_plot_path,
                                                        pn.Spacer(height=10), download_button, pn.pane.Markdown())
 
-        coverage_table = "Data_for_synteny_per_position_plot_" + self.ref_genome + "_" + contig_name
-        self.save_coverage_table_path.placeholder = coverage_table
+        synteny_per_pos_table = "Data_for_synteny_per_position_plot_" + self.ref_genome + "_" + self.contig_name
+        self.save_synteny_per_pos_table_path.placeholder = synteny_per_pos_table
 
         download_table_button = pn.widgets.Button(name='Download underling data in csv format', button_type='primary')
-        download_table_button.on_click(self.download_coverage_table)
+        download_table_button.on_click(self.download_synteny_per_pos_table)
 
-        self.download_coverage_table_column = pn.Column(self.save_coverage_table_path, pn.Spacer(height=10),
+        self.download_synteny_per_pos_table_column = pn.Column(self.save_synteny_per_pos_table_path, pn.Spacer(height=10),
                                                         download_table_button, pn.pane.Markdown(), align='end')
 
-        download_files_row = pn.Row(self.download_coverage_plot_column, pn.Spacer(width=100),
-                                    self.download_coverage_table_column)
+        download_files_row = pn.Row(self.download_synteny_per_pos_plot_column, pn.Spacer(width=100),
+                                    self.download_synteny_per_pos_table_column)
 
-        download_coverage_column = pn.Column(pn.pane.Markdown(save_file_title,
-                                                              styles={'font-size': "15px", 'font-weight': "bold",
-                                                                      'color': config.title_blue_color,
-                                                                      'margin': "10px 5px 5px 5px"}),
-                                             download_files_row)
+        download_synteny_per_pos_column = pn.Column(pn.pane.Markdown(save_file_title,
+                                                    styles={'font-size': "15px", 'font-weight': "bold",
+                                                            'color': config.title_blue_color,
+                                                            'margin': "10px 5px 5px 5px"}), download_files_row)
 
-        # Prepare the data structures necessary for the coverage plots of a specific contig
+        # Prepare the data structures necessary for the synteny_per_pos plots of a specific contig
         # Calculate the average synteny scores for each position
-        avg_score_per_pos_contig = score_per_pos_contig[['Contig_name', 'Position', 'Synteny_score']]. \
+        self.avg_score_per_pos_contig = self.score_per_pos_contig[['Contig_name', 'Position', 'Synteny_score']]. \
             sort_values(['Position']).groupby('Position') \
             .agg(Count=('Synteny_score', 'size'), Avg_synteny_score=('Synteny_score', 'mean')) \
             .reset_index()
@@ -2071,129 +2199,479 @@ class SynTrackerVisApp:
         #print(avg_score_per_pos_contig)
 
         # Fill the missing positions with score=0 (default jump=5000)
-        avg_score_per_pos_contig = avg_score_per_pos_contig. \
+        self.avg_score_per_pos_contig = self.avg_score_per_pos_contig. \
             merge(how='right', on='Position',
                   right=pd.DataFrame(
-                      {'Position': np.arange(avg_score_per_pos_contig.iloc[0]['Position'],
-                                             avg_score_per_pos_contig.iloc[-1]['Position'] + 2 * config.region_length,
+                      {'Position': np.arange(self.avg_score_per_pos_contig.iloc[0]['Position'],
+                                             self.avg_score_per_pos_contig.iloc[-1]['Position'] + 2 * config.region_length,
                                              config.region_length)
                        })).sort_values(by='Position').reset_index(). \
             drop(['index'], axis=1)
-        avg_score_per_pos_contig['Position'] = avg_score_per_pos_contig['Position'].astype(int)
+        self.avg_score_per_pos_contig['Position'] = self.avg_score_per_pos_contig['Position'].astype(int)
 
         #print("\nAfter filling missing positions:")
         #print(avg_score_per_pos_contig)
 
-        # Create the data for highlighting hypervariable and hyperconserved regions
-        # For the calculation, consider the whole data (full range)
-        height = 1
-        bottom = 0
-        min_score = score_per_pos_contig['Synteny_score'].min()
-        if min_score < 0:
-            height += abs(min_score) + 0.05
-            bottom = min_score - 0.05
-        print("\nMin score = " + str(min_score))
-        print("Height = " + str(height))
         hypervar_threshold = self.bottom_percentile
         hypercons_threshold = self.top_percentile
 
-        avg_score_per_pos_contig['Hypervariable'] = np.where(
-            (avg_score_per_pos_contig['Avg_synteny_score'] <= hypervar_threshold) &
-            (avg_score_per_pos_contig['Count'] >= self.bottom_percentile_counts), height, 0)
-        avg_score_per_pos_contig['Hyperconserved'] = np.where(
-            (avg_score_per_pos_contig['Avg_synteny_score'] >= hypercons_threshold) &
-            (avg_score_per_pos_contig['Count'] >= self.median_counts), height, 0)
+        self.avg_score_per_pos_contig['Hypervariable'] = np.where(
+            (self.avg_score_per_pos_contig['Avg_synteny_score'] <= hypervar_threshold) &
+            (self.avg_score_per_pos_contig['Count'] >= self.bottom_percentile_counts), 1, 0)
+        self.avg_score_per_pos_contig['Hyperconserved'] = np.where(
+            (self.avg_score_per_pos_contig['Avg_synteny_score'] >= hypercons_threshold) &
+            (self.avg_score_per_pos_contig['Count'] >= self.median_counts), 1, 0)
 
-        print("\nScore per position table:")
-        print(score_per_pos_contig)
-        print("\nAVG score per position table:")
-        print(avg_score_per_pos_contig)
+        # Create the synteny_per_pos plot for the selected contig of the Ref-genome with the customized parameters
+        self.synteny_per_pos_plot = self.create_synteny_per_pos_plot()
 
-        self.avg_score_per_pos_contig = avg_score_per_pos_contig.copy()
-        self.avg_score_per_pos_contig['Hypervariable'] = np.where(self.avg_score_per_pos_contig['Hypervariable'] == 0,
-                                                                  0, 1)
-        self.avg_score_per_pos_contig['Hyperconserved'] = np.where(self.avg_score_per_pos_contig['Hyperconserved'] == 0,
-                                                                   0, 1)
+        self.synteny_per_pos_pane = pn.pane.Matplotlib(self.synteny_per_pos_plot, height=600, dpi=300, tight=True,
+                                                       format='png')
 
-        # Create the coverage plot for the selected contig of the Ref-genome with the customized parameters
-        self.coverage_plot = pn.bind(
-            ps.create_coverage_plot, contig_name=contig_name, score_per_pos_contig=score_per_pos_contig,
-            avg_score_per_pos_contig=avg_score_per_pos_contig,
-            start_pos=self.start_pos_input, end_pos=self.end_pos_input,
-            show_avg=self.avg_plot_chkbox, avg_color=self.avg_plot_color,
-            show_scores=self.coverage_plot_chkbox, scores_color=self.coverage_plot_color,
-            show_hyper_var=self.hypervar_chkbox, hyper_var_color=self.hypervar_color,
-            hyper_var_alpha=self.hypervar_alpha_slider,
-            show_hyper_cons=self.hypercons_chkbox, hyper_cons_color=self.hypercons_color,
-            hyper_cons_alpha=self.hypercons_alpha_slider, bottom_val=bottom)
+        synteny_per_pos_plot_row = pn.Row(styles={'padding': "5px 0 0 0"})
+        synteny_per_pos_plot_row.append(self.synteny_per_pos_pane)
 
-        coverage_pane = pn.pane.Matplotlib(self.coverage_plot, height=600, dpi=300, tight=True, format='png')
-
-        coverage_plot_row = pn.Row(styles={'padding': "5px 0 0 0"})
-        coverage_plot_row.append(coverage_pane)
-
-        self.selected_contig_column.append(coverage_plot_row)
+        self.selected_contig_column.append(synteny_per_pos_plot_row)
         self.selected_contig_column.append(pn.Spacer(width=20))
         self.selected_contig_column.append(styling_col)
-        self.selected_contig_column.append(download_coverage_column)
+        self.selected_contig_column.append(download_synteny_per_pos_column)
 
-    def reset_range(self, start, end, event):
+    def fill_groups_for_multiselect(self, event):
+        feature = self.synteny_per_pos_feature_select.value
+        unique_groups = sorted(self.groups_per_feature_dict[feature], key=str)
+
+        # Move the 'nan' group (if any) to the end of the list
+        if 'nan' in unique_groups:
+            unique_groups.remove('nan')
+            unique_groups.append('nan')
+        #print(unique_groups)
+
+        self.synteny_per_pos_groups_select.options = unique_groups
+
+        # Reset filteration
+        self.filter_plot_by_metadata = 0
+        self.update_synteny_per_pos_plot()
+
+    def create_synteny_per_pos_plot(self):
+        before = time.time()
+        print("\ncreate_synteny_per_pos_plot:\nContig name: " + self.contig_name)
+
+        # Set the requested positions range
+        start_pos = self.start_pos_input.value
+        end_pos = self.end_pos_input.value
+        print("Start position: " + start_pos)
+        print("End position: " + end_pos)
+
+        # The user requested to filter the data by a metadata feature - use the filtered tables
+        if self.filter_plot_by_metadata:
+            # Consider only the positions within the requested range
+            score_per_pos_contig = self.score_per_pos_contig_filtered[
+                self.score_per_pos_contig_filtered['Position'] >= int(start_pos)]
+            score_per_pos_contig = score_per_pos_contig[score_per_pos_contig['Position'] < int(end_pos)]
+            avg_score_per_pos_contig = self.avg_score_per_pos_contig_filtered[
+                self.avg_score_per_pos_contig_filtered['Position'] >= int(start_pos)]
+            avg_score_per_pos_contig = avg_score_per_pos_contig[avg_score_per_pos_contig['Position'] < int(end_pos)]
+
+        # No filtering by metadata - use the full tables
+        else:
+            # Consider only the positions within the requested range
+            score_per_pos_contig = self.score_per_pos_contig[self.score_per_pos_contig['Position'] >= int(start_pos)]
+            score_per_pos_contig = score_per_pos_contig[score_per_pos_contig['Position'] < int(end_pos)]
+            avg_score_per_pos_contig = self.avg_score_per_pos_contig[
+                self.avg_score_per_pos_contig['Position'] >= int(start_pos)]
+            avg_score_per_pos_contig = avg_score_per_pos_contig[avg_score_per_pos_contig['Position'] < int(end_pos)]
+
+        print("\nscore_per_pos_contig table:")
+        print(score_per_pos_contig)
+        print("\navg_score_per_pos_contig table:")
+        print(avg_score_per_pos_contig)
+
+        # Prepare data for plotting the avg scores as lines
+        avg_score_per_pos_contig_end_pos = avg_score_per_pos_contig.copy()
+        avg_score_per_pos_contig_end_pos['Position'] = avg_score_per_pos_contig['Position'] + config.region_length - 50
+        # print(avg_score_per_pos_contig_end_pos)
+
+        avg_score_per_pos_contig_for_line_plot = pd.concat([avg_score_per_pos_contig, avg_score_per_pos_contig_end_pos],
+                                                           ignore_index=True).sort_values(by='Position')
+
+        #print("\nAverage data for line plot after concatenating:")
+        #print(avg_score_per_pos_contig_for_line_plot)
+
+        pos_array = np.full((2, len(score_per_pos_contig.index)), 0)
+        pos_array[1, :] = config.region_length - 50
+
+        avg_pos_array = np.full((2, len(avg_score_per_pos_contig.index)), 0)
+        avg_pos_array[1, :] = config.region_length
+
+        fig, self.ax_for_synteny_per_pos_plot = plt.subplots(figsize=(11, 5))
+
+        self.coverage_plot = self.ax_for_synteny_per_pos_plot.errorbar(score_per_pos_contig['Position'],
+                                                                       score_per_pos_contig['Synteny_score'],
+                                                                       xerr=pos_array,
+                                                                       color=self.coverage_plot_color.value, fmt='none',
+                                                                       elinewidth=0.7, zorder=1, label='Synteny scores')
+        # Hide the coverage plot if the checkbox is not checked
+        if not self.coverage_plot_chkbox.value:
+            for barline in self.coverage_plot[2]:
+                barline.set_visible(False)
+            self.coverage_plot.set_label('_Synteny scores')  # Hide the label in the legend
+
+        self.line_avg_plot = self.ax_for_synteny_per_pos_plot.plot(avg_score_per_pos_contig_for_line_plot['Position'],
+                                                                   avg_score_per_pos_contig_for_line_plot['Avg_synteny_score'],
+                                                                   color=self.avg_plot_color.value, zorder=2,
+                                                                   label='Average synteny scores')
+        # Hide the average plot if the checkbox is not checked
+        if not self.avg_plot_chkbox.value:
+            self.line_avg_plot[0].set_visible(False)
+            self.line_avg_plot[0].set_label('_Average synteny scores')
+
+        height = 1
+        bottom_val = 0
+        min_score = self.score_per_pos_contig['Synteny_score'].min()
+        if min_score < 0:
+            height += abs(min_score) + 0.05
+            bottom_val = min_score - 0.05
+        print("\nMin score = " + str(min_score))
+        print("Height = " + str(height))
+
+        avg_score_per_pos_contig['Hypervariable'] = np.where(avg_score_per_pos_contig['Hypervariable'] == 0, 0, height)
+        avg_score_per_pos_contig['Hyperconserved'] = np.where(avg_score_per_pos_contig['Hyperconserved'] == 0, 0, height)
+
+        self.hypervar_bars = self.ax_for_synteny_per_pos_plot.bar(avg_score_per_pos_contig['Position'],
+                                     avg_score_per_pos_contig['Hypervariable'], align='edge',
+                                     width=config.region_length, bottom=bottom_val, color=self.hypervar_color.value,
+                                     linewidth=0, alpha=self.alpha_slider.value, label='Hypervariable regions')
+
+        # Hide the hyper variability plot if the checkbox is not checked
+        if not self.hypervar_chkbox.value:
+            for bar in self.hypervar_bars:
+                bar.set_visible(False)
+            self.hypervar_bars.set_label('_Hypervariable regions')
+
+        self.hypercons_bars = self.ax_for_synteny_per_pos_plot.bar(avg_score_per_pos_contig['Position'],
+                                      avg_score_per_pos_contig['Hyperconserved'], align='edge',
+                                      width=config.region_length, bottom=bottom_val, color=self.hypercons_color.value,
+                                      linewidth=0, alpha=self.alpha_slider.value, label='Hyperconserved regions')
+
+        # Hide the hyper conservation plot if the checkbox is not checked
+        if not self.hypercons_chkbox.value:
+            for bar in self.hypercons_bars:
+                bar.set_visible(False)
+            self.hypercons_bars.set_label('_Hyperconserved regions')
+
+        # Add a dummy row to the end of the df in order to include the end-position in the X-axis
+        avg_score_per_pos_contig = avg_score_per_pos_contig.reset_index()
+        avg_score_per_pos_contig.loc[len(avg_score_per_pos_contig)] = [len(avg_score_per_pos_contig), int(end_pos), 0,
+                                                                       0, 0, 0]
+        #print("\nFinal AVG score per position table:")
+        #print(avg_score_per_pos_contig)
+
+        # Set the X-ticks and labels of the axes
+        plt.xticks(avg_score_per_pos_contig['Position'], fontsize=6, rotation=90)
+        self.ax_for_synteny_per_pos_plot.locator_params(axis='x', tight=True, nbins=40)
+        plt.xlabel("Position in reference genome/contig", labelpad=8)
+        plt.ylabel("Synteny Score")
+
+        self.ax_for_synteny_per_pos_plot.legend(fontsize='small', loc=(0, 1.02))
+
+        plt.close(fig)
+
+        after = time.time()
+        duration = after - before
+        print("Create/update the synteny_per_pos plot took " + str(duration) + " seconds")
+
+        return fig
+
+    def update_synteny_per_pos_plot(self):
+        self.synteny_per_pos_plot = self.create_synteny_per_pos_plot()
+        self.synteny_per_pos_pane.object = self.synteny_per_pos_plot
+
+    def change_range(self, event):
+        self.update_synteny_per_pos_plot()
+
+    def reset_range(self, event):
+        start_pos = '0'
+        end_pos = str(self.contig_length)
+
+        self.start_pos_input.placeholder = start_pos
+        self.start_pos_input.value = start_pos
+        self.end_pos_input.placeholder = end_pos
+        self.end_pos_input.value = end_pos
         print("\nIn reset_range")
-        print("Start=" + start + ", end=" + end)
-        self.start_pos_input.value = start
-        self.end_pos_input.value = end
+        print("Start=" + start_pos + ", end=" + end_pos)
 
-    def download_coverage_plot(self, event):
-        fformat = self.coverage_image_format.value
+        self.update_synteny_per_pos_plot()
+
+    def update_legend(self):
+        self.ax_for_synteny_per_pos_plot.get_legend().remove()
+        self.ax_for_synteny_per_pos_plot.legend(fontsize='small', loc=(0, 1.02))
+
+    def show_hide_avg_plot(self, event):
+        if self.avg_plot_chkbox.value:
+            self.line_avg_plot[0].set_visible(True)
+            self.line_avg_plot[0].set_label('Average synteny scores')
+        else:
+            self.line_avg_plot[0].set_visible(False)
+            self.line_avg_plot[0].set_label('_Average synteny scores')
+
+        self.update_legend()
+
+        self.synteny_per_pos_pane.object = self.synteny_per_pos_plot
+
+    def change_avg_plot_color(self, event):
+        color = self.avg_plot_color.value
+        print("\nIn change_avg_plot_color. New color: " + color)
+        self.line_avg_plot[0].set_color(color)
+
+        self.update_legend()
+
+        self.synteny_per_pos_pane.object = self.synteny_per_pos_plot
+
+    def show_hide_coverage_plot(self, event):
+        if self.coverage_plot_chkbox.value:
+            for barline in self.coverage_plot[2]:
+                barline.set_visible(True)
+            self.coverage_plot.set_label('Synteny scores')
+        else:
+            for barline in self.coverage_plot[2]:
+                barline.set_visible(False)
+            self.coverage_plot.set_label('_Synteny scores')  # Hide the label in the legend
+
+        self.update_legend()
+
+        self.synteny_per_pos_pane.object = self.synteny_per_pos_plot
+
+    def change_coverage_plot_color(self, event):
+        color = self.coverage_plot_color.value
+
+        for barline in self.coverage_plot[2]:  # 2 = error bar lines
+            barline.set_color(color)
+
+        self.update_legend()
+
+        self.synteny_per_pos_pane.object = self.synteny_per_pos_plot
+
+    def show_hide_hypervar_plot(self, event):
+        if self.hypervar_chkbox.value:
+            for bar in self.hypervar_bars:
+                bar.set_visible(True)
+            self.hypervar_bars.set_label('Hypervariable regions')
+        else:
+            for bar in self.hypervar_bars:
+                bar.set_visible(False)
+            self.hypervar_bars.set_label('_Hypervariable regions')
+
+        self.update_legend()
+
+        self.synteny_per_pos_pane.object = self.synteny_per_pos_plot
+
+    def change_hypervar_color(self, event):
+        color = self.hypervar_color.value
+
+        for bar in self.hypervar_bars:
+            bar.set_color(color)
+
+        self.update_legend()
+
+        self.synteny_per_pos_pane.object = self.synteny_per_pos_plot
+
+    def show_hide_hypercons_plot(self, event):
+        if self.hypercons_chkbox.value:
+            for bar in self.hypercons_bars:
+                bar.set_visible(True)
+            self.hypercons_bars.set_label('Hyperconserved regions')
+        else:
+            for bar in self.hypercons_bars:
+                bar.set_visible(False)
+            self.hypercons_bars.set_label('_Hyperconserved regions')
+
+        self.update_legend()
+
+        self.synteny_per_pos_pane.object = self.synteny_per_pos_plot
+
+    def change_hypercons_color(self, event):
+        color = self.hypercons_color.value
+
+        for bar in self.hypercons_bars:
+            bar.set_color(color)
+
+        self.update_legend()
+
+        self.synteny_per_pos_pane.object = self.synteny_per_pos_plot
+
+    def change_alpha(self, event):
+        alpha = self.alpha_slider.value
+
+        for bar in self.hypervar_bars:
+            bar.set_alpha(alpha)
+        for bar in self.hypercons_bars:
+            bar.set_alpha(alpha)
+
+        self.update_legend()
+
+        self.synteny_per_pos_pane.object = self.synteny_per_pos_plot
+
+    def return_row_in_selected_groups(self, row, feature, groups):
+        condition = self.metadata_dict[feature][row['Sample1']] in groups and self.metadata_dict[feature][
+            row['Sample2']] in groups
+
+    def filter_synteny_per_pos_plot(self, event):
+        print("\nIn filter_synteny_per_pos_plot")
+        self.filter_plot_by_metadata = 1
+
+        feature = self.synteny_per_pos_feature_select.value
+        groups = self.synteny_per_pos_groups_select.value
+
+        # There are selected groups
+        if len(groups) > 0:
+            score_per_pos_contig = self.score_per_pos_contig.copy()
+            score_per_pos_contig['Group1'] = score_per_pos_contig['Sample1'].map(self.metadata_dict[feature])
+            score_per_pos_contig['Group2'] = score_per_pos_contig['Sample2'].map(self.metadata_dict[feature])
+
+            self.score_per_pos_contig_filtered = score_per_pos_contig[score_per_pos_contig['Group1'].isin(groups) &
+                                                                      score_per_pos_contig['Group2'].isin(groups)]
+
+            # Calculate the average synteny scores for each position
+            self.avg_score_per_pos_contig_filtered = \
+                self.score_per_pos_contig_filtered[['Contig_name', 'Position', 'Synteny_score']]. \
+                sort_values(['Position']).groupby('Position') \
+                .agg(Count=('Synteny_score', 'size'), Avg_synteny_score=('Synteny_score', 'mean')).reset_index()
+
+            # Fill the missing positions with score=0 (default jump=5000)
+            self.avg_score_per_pos_contig_filtered = self.avg_score_per_pos_contig_filtered.\
+                merge(how='right', on='Position', right=pd.DataFrame(
+                      {'Position': np.arange(self.avg_score_per_pos_contig_filtered.iloc[0]['Position'],
+                                             self.avg_score_per_pos_contig_filtered.iloc[-1]['Position'] + 2 *
+                                             config.region_length, config.region_length)
+                       })).sort_values(by='Position').reset_index().drop(['index'], axis=1)
+            self.avg_score_per_pos_contig_filtered['Position'] = self.avg_score_per_pos_contig_filtered['Position'].astype(int)
+
+            hypervar_threshold = self.bottom_percentile
+            hypercons_threshold = self.top_percentile
+            self.median_counts_filtered = self.avg_score_per_pos_contig_filtered['Count'].median()
+            self.bottom_percentile_counts_filtered = self.avg_score_per_pos_contig_filtered['Count'].quantile(0.1)
+            print("\nMedian of pairs per region counts (with filtering) is: " + str(self.median_counts_filtered))
+            print("Percentile 10 of pairs per region counts (with filtering) is: " +
+                  str(self.bottom_percentile_counts_filtered))
+
+            self.avg_score_per_pos_contig_filtered['Hypervariable'] = np.where(
+                (self.avg_score_per_pos_contig_filtered['Avg_synteny_score'] <= hypervar_threshold) &
+                (self.avg_score_per_pos_contig_filtered['Count'] >= self.bottom_percentile_counts_filtered), 1, 0)
+            self.avg_score_per_pos_contig_filtered['Hyperconserved'] = np.where(
+                (self.avg_score_per_pos_contig_filtered['Avg_synteny_score'] >= hypercons_threshold) &
+                (self.avg_score_per_pos_contig_filtered['Count'] >= self.median_counts_filtered), 1, 0)
+
+        # No groups are selected for filteration -> use the full tables
+        else:
+            self.score_per_pos_contig_filtered = self.score_per_pos_contig
+            self.avg_score_per_pos_contig_filtered = self.avg_score_per_pos_contig
+
+        self.update_synteny_per_pos_plot()
+
+    def reset_filter_synteny_per_pos_plot(self, event):
+        self.filter_plot_by_metadata = 0
+        self.synteny_per_pos_groups_select.value = []
+        self.update_synteny_per_pos_plot()
+
+    def download_synteny_per_pos_plot(self, event):
+        fformat = self.synteny_per_pos_image_format.value
+
+        # Update the placeholder of the filenames adding the positions range
+        start_pos = self.start_pos_input.value
+        end_pos = self.end_pos_input.value
+        synteny_per_pos_file = "Synteny_per_position_plot_" + self.ref_genome + "_" + self.contig_name + "_" + \
+                               str(start_pos) + "-" + str(end_pos)
+
+        # Update the placeholder of the filename when filtering by metadata, adding the selected groups.
+        if self.filter_plot_by_metadata:
+            groups = self.synteny_per_pos_groups_select.value
+            if len(groups) > 0:
+                synteny_per_pos_file += "_filtered_by_" + self.synteny_per_pos_feature_select.value
+                for group in self.synteny_per_pos_groups_select.value:
+                    synteny_per_pos_file += "_" + str(group)
+
+        self.save_synteny_per_pos_plot_path.placeholder = synteny_per_pos_file
 
         # Set the directory for saving
-        if self.save_coverage_plot_path.value == "":
-            coverage_file_path = self.downloads_dir_path + self.save_coverage_plot_path.placeholder + "." + fformat
+        if self.save_synteny_per_pos_plot_path.value == "":
+            synteny_per_pos_file_path = self.downloads_dir_path + self.save_synteny_per_pos_plot_path.placeholder + \
+                                        "." + fformat
         else:
-            coverage_file_path = self.save_coverage_plot_path.value
+            synteny_per_pos_file_path = self.save_synteny_per_pos_plot_path.value
 
             # Add a file-format suffix if there is none
             regex = r"^\S+\." + re.escape(fformat) + r"$"
-            if not re.search(regex, coverage_file_path, re.IGNORECASE):
-                coverage_file_path += "." + fformat
+            if not re.search(regex, synteny_per_pos_file_path, re.IGNORECASE):
+                synteny_per_pos_file_path += "." + fformat
 
             # If path is not absolute - save file basename under the downloads dir
-            if not os.path.isabs(coverage_file_path):
-                coverage_file_path = self.downloads_dir_path + coverage_file_path
+            if not os.path.isabs(synteny_per_pos_file_path):
+                synteny_per_pos_file_path = self.downloads_dir_path + synteny_per_pos_file_path
 
-        self.coverage_plot().savefig(coverage_file_path, format=fformat, dpi=300.0, bbox_inches='tight')
+        self.synteny_per_pos_plot.savefig(synteny_per_pos_file_path, format=fformat, dpi=300.0, bbox_inches='tight')
 
-        download_message = "The image is successfully saved under:\n" + coverage_file_path
+        download_message = "The image is successfully saved under:\n" + synteny_per_pos_file_path
         markdown = pn.pane.Markdown(download_message, styles={'font-size': "12px", 'color': config.title_red_color})
         download_floatpanel = pn.layout.FloatPanel(markdown, name='Download message', margin=10)
-        self.download_coverage_plot_column.pop(4)
-        self.download_coverage_plot_column.append(download_floatpanel)
+        self.download_synteny_per_pos_plot_column.pop(4)
+        self.download_synteny_per_pos_plot_column.append(download_floatpanel)
 
-    def download_coverage_table(self, event):
+    def download_synteny_per_pos_table(self, event):
         fformat = "csv"
 
+        # Update the placeholder of the filenames adding the positions range
+        start_pos = self.start_pos_input.value
+        end_pos = self.end_pos_input.value
+        synteny_per_pos_table = "Data_for_synteny_per_position_plot_" + self.ref_genome + "_" + self.contig_name + \
+                                "_" + str(start_pos) + "-" + str(end_pos)
+
+        # Update the placeholder of the filename when filtering by metadata, adding the selected groups.
+        if self.filter_plot_by_metadata:
+            groups = self.synteny_per_pos_groups_select.value
+            if len(groups) > 0:
+                synteny_per_pos_table += "_filtered_by_" + self.synteny_per_pos_feature_select.value
+                for group in groups:
+                    synteny_per_pos_table += "_" + str(group)
+
+        self.save_synteny_per_pos_table_path.placeholder = synteny_per_pos_table
+
         # Set the directory for saving
-        if self.save_coverage_table_path.value == "":
-            coverage_file_path = self.downloads_dir_path + self.save_coverage_table_path.placeholder + "." + fformat
+        if self.save_synteny_per_pos_table_path.value == "":
+            synteny_per_pos_file_path = self.downloads_dir_path + self.save_synteny_per_pos_table_path.placeholder + \
+                                        "." + fformat
         else:
-            coverage_file_path = self.save_coverage_table_path.value
+            synteny_per_pos_file_path = self.save_synteny_per_pos_table_path.value
 
             # Add a file-format suffix if there is none
             regex = r"^\S+\." + re.escape(fformat) + r"$"
-            if not re.search(regex, coverage_file_path, re.IGNORECASE):
-                coverage_file_path += "." + fformat
+            if not re.search(regex, synteny_per_pos_file_path, re.IGNORECASE):
+                synteny_per_pos_file_path += "." + fformat
 
             # If path is not absolute - save file basename under the downloads dir
-            if not os.path.isabs(coverage_file_path):
-                coverage_file_path = self.downloads_dir_path + coverage_file_path
+            if not os.path.isabs(synteny_per_pos_file_path):
+                synteny_per_pos_file_path = self.downloads_dir_path + synteny_per_pos_file_path
 
-        self.avg_score_per_pos_contig.to_csv(coverage_file_path, index=False)
+        # The user requested to filter the data by a metadata feature - use the filtered tables
+        if self.filter_plot_by_metadata:
+            # Consider only the positions within the requested range
+            avg_score_per_pos_contig = self.avg_score_per_pos_contig_filtered[
+                self.avg_score_per_pos_contig_filtered['Position'] >= int(start_pos)]
+            avg_score_per_pos_contig = avg_score_per_pos_contig[avg_score_per_pos_contig['Position'] < int(end_pos)]
 
-        download_message = "The table is successfully saved under:\n" + coverage_file_path
+        # No filtering by metadata - use the full tables
+        else:
+            # Consider only the positions within the requested range
+            avg_score_per_pos_contig = self.avg_score_per_pos_contig[
+                self.avg_score_per_pos_contig['Position'] >= int(start_pos)]
+            avg_score_per_pos_contig = avg_score_per_pos_contig[avg_score_per_pos_contig['Position'] < int(end_pos)]
+
+        avg_score_per_pos_contig.to_csv(synteny_per_pos_file_path, index=False)
+
+        download_message = "The table is successfully saved under:\n" + synteny_per_pos_file_path
         markdown = pn.pane.Markdown(download_message, styles={'font-size': "12px", 'color': config.title_red_color})
         download_floatpanel = pn.layout.FloatPanel(markdown, name='Download message', margin=10)
-        self.download_coverage_table_column.pop(3)
-        self.download_coverage_table_column.append(download_floatpanel)
+        self.download_synteny_per_pos_table_column.pop(3)
+        self.download_synteny_per_pos_table_column.append(download_floatpanel)
 
     def create_multi_genome_column(self):
 
