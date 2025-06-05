@@ -212,8 +212,6 @@ It is calculated based on all the sample-pairs comparisons derived from a specif
 
 2. **All synteny scores per region:** This horizontal line plot shows all the synteny scores for each region on the reference genome.  
 
-The color of the lines can be set using the color-picker widget.
-
 3. **Hypervariable regions:** Highlight regions that meet the following criteria:  
 They are among the bottom 10% regions with the lowest average synteny scores.  
 They appear in at least 10% of the compared sample-pairs.
@@ -222,5 +220,17 @@ They appear in at least 10% of the compared sample-pairs.
 They are among the top 10% regions with the highest average synteny scores.  
 They appear in at least 50% of the compared sample-pairs.
 
-The highlighting colors can be set using color-picker widget and the alpha-transparency using the slider widget (the higher the value - the lower the transparency).
+#### Customization options of (unrelated to metadata):
+
+- **Set contig length range:** Set the start and end positions of the contig that will be presented in the plot.
+- **Set new range button:** Clicking this button updates the plot to present the newly set range.
+- **Reset range button:** Clicking this button resets the range to show the whole contig in the plot.
+- **Colors:** The color of each one of the plots can be set separately, as well as the alpha transparency of the highlighted conserved / variable regions.
+
+#### Customization options when metadata is provided:
+
+- **Filter plot by metadata:** The metadata feature, by which the presented data will be filtered, can be selected from the drop-down menu.
+- **Include the following groups in the plot:** It is possible to select one or more groups to be included in the plot.
+- **Filter plot button:** Clicking this button updates the plot, so that only pairwise comparisons, originating from the selected groups of the selected feature, will be included in the plot.
+- **Reset filteration button:** Clicking this button resets the filtering and updates the plot so that all data is shown.
 
