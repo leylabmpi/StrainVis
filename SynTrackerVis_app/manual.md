@@ -1,6 +1,6 @@
 # SynTrackerVis: a Python-based web application for interactive visual analysis of SynTracker's results
 
-### Version 1.0.4
+### Version 1.0.5
 
 ## Overview
 
@@ -105,7 +105,8 @@ The initial presented bar-plots allow the user to interactively change the numbe
 and see how it influences the number of sample-pairs comparisons and the total number of samples which can be taken into account 
 in the following APSS-based analyses.  
 The numbers of sub-sampled regions available for selection are: 40, 60, 80, 100, 125, 150, 175, 200, 250, 300, 350, 400. 
-In case the number of compared pairs, when selecting 40 regions, is lower than 100, the option 'All regions' is also available for selection.
+In case the number of compared pairs, when selecting 40 regions, is lower than 100, the option 'All regions' is also available for selection.  
+Setting the desired subsampling number is done using the slider widget.
 That means that all the compared pairs from all the available regions are included in the downstream analyses.
 
 By clicking the 'Display plots using the selected number of regions' button, the following downstream analyses are being calculated and displayed.
@@ -234,3 +235,36 @@ They appear in at least 50% of the compared sample-pairs.
 - **Filter plot button:** Clicking this button updates the plot, so that only pairwise comparisons, originating from the selected groups of the selected feature, will be included in the plot.
 - **Reset filteration button:** Clicking this button resets the filtering and updates the plot so that all data is shown.
 
+## Multiple Genomes Visualization
+
+The multiple genomes visualisation tab is active when the input file contains more than one reference genomes. 
+It presents APSS-based analysis for all the reference genomes or for a selected subset.
+
+### Setting the genomes that will be included in the analysis
+- **All genomes:** Include all available reference genomes.
+- **Select a subset of genomes:** Using the multi-select widget, it is possible to select specific genomes to be included in the analysis.
+By default, the genomes are sorted by their abundance (the number of compared pairs), but they can be sorted alphabetically by their names as well.
+- **Update genome selection button:** Clicking this button updates the set of genomes that are included in the analysis.
+
+### Initial bar-plots
+The initial presented bar-plots allow the user to interactively change the number of sub-sampled regions
+and see how it influences the number of compared sample-pairs and the total number of species that can be taken into account 
+in the following APSS-based analysis.  
+The numbers of sub-sampled regions available for selection are: 40, 60, 80, 100, 125, 150, 175, 200, 250, 300, 350, 400. 
+In case the number of compared pairs, when selecting 40 regions, is lower than 100, the option 'All regions' is also available for selection.
+That means that all the compared pairs from all the available regions are included in the downstream analysis.  
+Setting the desired subsampling number is done using the slider widget.
+
+By clicking the 'Display plots using the selected number of regions' button, the following downstream analyses are being calculated and displayed.
+
+### APSS distribution among species plot
+
+This plot shows the APSS distribution among all the compared sample-pairs of each included reference genome as a boxplot.  
+The plot color can be changed using the color-picker widget.  
+
+**Including metadata:** When checking the 'Use metadata in plot' checkbox, it is possible to select a feature, 
+by which the comparisons can be divided into two categories: same / different.  
+for example: if the selected feature is 'country', the two categories are 'same country' and 'different country'.  
+The features are derived from the uploaded metadata file and can be interactively selected from a drop-down menu.  
+The colors of the same / different feature categories can be changed using the color-picker widgets.  
+When using metadata, the P-values of the comparisons for the selected feature can be downloaded in addition to the APSS table.

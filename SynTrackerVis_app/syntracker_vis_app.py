@@ -459,6 +459,7 @@ class SynTrackerVisApp:
         self.save_pvalues_table_path = pn.widgets.TextInput(
             name='Save P-values table as: (if no full path, the file is saved under \'Downloads/\')')
         self.download_pvalues_table_column = pn.Column()
+        self.download_multi_col = pn.Column
 
         # synteny_per_pos plots elements
         self.visited_synteny_per_pos_tab = 0
@@ -2748,6 +2749,8 @@ class SynTrackerVisApp:
             self.sample_sizes_slider_multi.value = config.sampling_sizes_wo_all[0]
             is_all_regions = 0
         else:
+            self.sample_sizes_slider_multi.options = config.sampling_sizes
+            self.sample_sizes_slider_multi.value = config.sampling_sizes[0]
             is_all_regions = 1
 
         self.selected_subset_species_num = len(self.selected_genomes_subset)
@@ -2909,8 +2912,8 @@ class SynTrackerVisApp:
         self.download_pvalues_table_column = pn.Column(self.save_pvalues_table_path, download_pvalues_button,
                                                        pn.pane.Markdown())
 
-        controls_col = pn.Column(styling_col, pn.Spacer(height=30), self.download_box_plot_column,
-                                 self.download_boxplot_table_column, self.download_pvalues_table_column)
+        self.download_multi_col = pn.Column(styling_col, pn.Spacer(height=30), self.download_box_plot_column,
+                                            self.download_boxplot_table_column)
 
         # There is metadata
         if self.is_metadata:
@@ -2924,6 +2927,9 @@ class SynTrackerVisApp:
             self.feature_select_watcher = self.box_plot_feature_select.param.watch(self.update_feature_in_boxplot,
                                                                                    'value', onlychanged=False)
 
+            # Add the p-values download column
+            self.download_multi_col.append(self.download_pvalues_table_column)
+
         # No metadata
         else:
             self.use_metadata_box_plot.disabled = True
@@ -2935,7 +2941,7 @@ class SynTrackerVisApp:
 
         self.box_plot_pane = pn.pane.Matplotlib(self.box_plot, width=700, dpi=300, tight=True, format='png')
 
-        box_plot_row = pn.Row(controls_col, pn.Spacer(width=30), self.box_plot_pane, styles={'padding': "15px"})
+        box_plot_row = pn.Row(self.download_multi_col, pn.Spacer(width=30), self.box_plot_pane, styles={'padding': "15px"})
         self.box_plot_card.append(box_plot_row)
 
     def calculate_metadata_for_box_plot(self):
