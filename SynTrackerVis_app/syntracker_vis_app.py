@@ -173,20 +173,20 @@ class SynTrackerVisApp:
             .bk-btn { 
                 font-size: 20px !important;
                 color: white; 
-            }
-            .bk-btn:active { 
-                color: #87cefa !important; 
+                margin-right: 20px
             }
             .bk-btn:hover { 
                 color: #87cefa !important; 
             }
+            .bk-btn.bk-active {
+                color: #87cefa !important; 
+            }
         '''
 
-        self.home_button = pn.widgets.Button(name='Home', button_type='primary', stylesheets=[button_css])
-        self.home_button.on_click(self.load_home_page)
-        self.help_button = pn.widgets.Button(name='Help', button_type='primary', stylesheets=[button_css])
-        self.help_button.on_click(self.load_help_page)
-        self.menu_row = pn.Row(self.home_button, self.help_button, styles=config.menu_row_style, sizing_mode='fixed')
+        self.header_buttons = pn.widgets.ToggleGroup(name='header_buttons', options=['Home', 'Help'], behavior="radio",
+                                                     button_type='primary', stylesheets=[button_css])
+        self.header_buttons.param.watch(self.load_correct_page, 'value')
+        self.menu_row = pn.Row(self.header_buttons, styles=config.menu_row_style, sizing_mode='fixed')
         self.header_container = pn.Column(
             self.menu_row,
             styles=config.header_container_style, sizing_mode='fixed')
@@ -590,15 +590,19 @@ class SynTrackerVisApp:
 
         self.main_area.append(self.submit_button)
 
-        #pn.state.onload(self.init_query_params)
-
         self.template.servable()
 
-    def load_home_page(self, event):
+    def load_correct_page(self, event):
+        if self.header_buttons.value == 'Home':
+            self.load_home_page()
+        else:
+            self.load_help_page()
+
+    def load_home_page(self):
         self.main_container.clear()
         self.main_container.append(self.main_area)
 
-    def load_help_page(self, event):
+    def load_help_page(self):
         self.main_container.clear()
         self.main_container.append(self.help_area)
 
