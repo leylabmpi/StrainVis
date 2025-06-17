@@ -33,8 +33,6 @@ diff_color = "#47A3E1"
 nodes_default_color = 'gray'
 conserved_color = '#E66B77'
 variable_color = '#00ffff'
-#conserved_color = '#EAED0C'
-#conserved_color = '#6AEC32'
 
 header_container_style = {
     'margin': '0 auto',
@@ -63,15 +61,18 @@ single_multi_tabs_style = {
 
 single_tabs_style = {
     'width': "1160px",
-    'font-size': "20px",
-    'background': "#f3f3f3",
-    'padding': "0px",
+    'background': "#f0f0f0",
+    'padding': "20px",
+    'margin': "0",
+    'border-top': "2px solid #0072b5",
 }
 
 main_column_style = {
     'width': "1200px",
     'background': "#f9f9f9",
     'padding': "20px",
+    'margin': "0",
+    'border-top': "2px solid #0072b5",
 }
 
 plot_card_style = {

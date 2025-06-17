@@ -258,11 +258,35 @@ class SynTrackerVisApp:
         self.show_box_plot_multi_button.on_click(self.create_multi_genomes_plots_by_APSS)
 
         # Panel layouts
-        self.single_multi_genome_tabs = pn.Tabs(dynamic=True, styles=config.single_multi_tabs_style)
+        single_multi_tabs_css = '''
+                    .bk-tab {
+                        font-size: 24px;
+                        color: #808080;
+                        background-color: #ffffff;
+                        padding: 5px 10px 5px 10px;
+                    }
+                    .bk-tab.bk-active {
+                        background-color: #0072b5;
+                        color: #ffffff;
+                    }
+        '''
+        single_tabs_css = '''
+                            .bk-tab {
+                                font-size: 20px;
+                                color: #808080;
+                                background-color: #ffffff;
+                                padding: 5px 10px 5px 10px;
+                            }
+                            .bk-tab.bk-active {
+                                background-color: #0072b5;
+                                color: #ffffff;
+                            }
+                '''
+        self.single_multi_genome_tabs = pn.Tabs(dynamic=True, stylesheets=[single_multi_tabs_css])
         self.main_single_column = pn.Column(styles=config.main_column_style)
         self.ref_genome_column = pn.Column()
-        self.single_tabs = pn.Tabs(dynamic=True, styles=config.single_tabs_style)
-        self.synteny_per_pos_plot_column = pn.Column(styles={'padding': "20px"})
+        self.single_tabs = pn.Tabs(dynamic=True, stylesheets=[single_tabs_css])
+        self.synteny_per_pos_plot_column = pn.Column(styles=config.single_tabs_style)
         self.activated_synteny_per_pos_tab = 0
         self.plots_by_size_single_column = pn.Column()
         self.main_plots_multi_column = pn.Column()
@@ -980,7 +1004,7 @@ class SynTrackerVisApp:
         ref_genome_title = "Reference Genome: " + self.ref_genome
 
         self.ref_genome_column.append(pn.pane.Markdown(ref_genome_title,
-                                                       styles={'font-size': "20px", 'color': config.title_purple_color,
+                                                       styles={'font-size': "22px", 'color': config.title_purple_color,
                                                                'margin': "0"}))
 
         synteny_per_pos_message = "Preparing the plot - please wait..."
@@ -1055,7 +1079,8 @@ class SynTrackerVisApp:
             slider_row,
             button_row,
             self.plots_by_size_single_column,
-            styles={'padding': "20px"}
+            styles=config.single_tabs_style,
+            #styles={'padding': "20px"}
         )
 
         self.single_tabs.clear()
