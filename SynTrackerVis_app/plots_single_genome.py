@@ -161,8 +161,10 @@ def create_clustermap(matrix, cmap, is_metadata, feature, cmap_metadata, custom_
         font_size = 6
     elif 80 < col_num <= 100:
         font_size = 5
-    else:
+    elif 100 < col_num <= 150:
         font_size = 4
+    else:
+        font_size = 3
 
     clustermap.ax_heatmap.set_xticklabels(clustermap.ax_heatmap.get_xticklabels(), fontsize=font_size,
                                           rotation='vertical')

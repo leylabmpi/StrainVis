@@ -634,29 +634,52 @@ class SynTrackerVisApp:
         del self.APSS_by_genome_all_sizes_dict
         del self.APSS_all_genomes_all_sizes_dict
         self.use_metadata_jitter.disabled = False
-        self.network_threshold_select.param.unwatch(self.threshold_select_watcher)
-        self.network_threshold_input.param.unwatch(self.threshold_input_watcher)
-        self.nodes_color_by.param.unwatch(self.nodes_colorby_watcher)
-        self.is_continuous.param.unwatch(self.continuous_watcher)
-        self.nodes_colormap.param.unwatch(self.colormap_watcher)
-        self.custom_colormap_input.param.unwatch(self.custom_colormap_watcher)
-        self.feature_colormap.param.unwatch(self.feature_colormap_watcher)
-        self.box_plot_feature_select.param.unwatch(self.feature_select_watcher)
-        self.genomes_select.param.unwatch(self.genomes_select_watcher)
-        self.genomes_sort_select.param.unwatch(self.genomes_sort_select_watcher)
-        self.genomes_sort_select_multi.param.unwatch(self.genomes_sort_select_multi_watcher)
-        self.contig_select.param.unwatch(self.contig_select_watcher)
-        self.avg_plot_chkbox.param.unwatch(self.avg_plot_chkbox_watcher)
-        self.avg_plot_color.param.unwatch(self.avg_plot_color_watcher)
-        self.coverage_plot_chkbox.param.unwatch(self.coverage_plot_chkbox_watcher)
-        self.coverage_plot_color.param.unwatch(self.coverage_plot_color_watcher)
-        self.hypervar_chkbox.param.unwatch(self.hypervar_chkbox_watcher)
-        self.hypervar_color.param.unwatch(self.hypervar_color_watcher)
-        self.hypercons_chkbox.param.unwatch(self.hypercons_chkbox_watcher)
-        self.hypercons_color.param.unwatch(self.hypercons_color_watcher)
-        self.alpha_slider.param.unwatch(self.alpha_slider_watcher)
-        self.synteny_per_pos_feature_select.param.unwatch(self.synteny_per_pos_feature_select_watcher)
-        self.sorting_select.param.unwatch(self.sorting_select_watcher)
+        if self.threshold_select_watcher:
+            self.network_threshold_select.param.unwatch(self.threshold_select_watcher)
+        if self.threshold_input_watcher:
+            self.network_threshold_input.param.unwatch(self.threshold_input_watcher)
+        if self.nodes_colorby_watcher:
+            self.nodes_color_by.param.unwatch(self.nodes_colorby_watcher)
+        if self.continuous_watcher:
+            self.is_continuous.param.unwatch(self.continuous_watcher)
+        if self.colormap_watcher:
+            self.nodes_colormap.param.unwatch(self.colormap_watcher)
+        if self.custom_colormap_watcher:
+            self.custom_colormap_input.param.unwatch(self.custom_colormap_watcher)
+        if self.feature_colormap_watcher:
+            self.feature_colormap.param.unwatch(self.feature_colormap_watcher)
+        if self.feature_select_watcher:
+            self.box_plot_feature_select.param.unwatch(self.feature_select_watcher)
+        if self.genomes_select_watcher:
+            self.genomes_select.param.unwatch(self.genomes_select_watcher)
+        if self.genomes_sort_select_watcher:
+            self.genomes_sort_select.param.unwatch(self.genomes_sort_select_watcher)
+        if self.genomes_sort_select_multi_watcher:
+            self.genomes_sort_select_multi.param.unwatch(self.genomes_sort_select_multi_watcher)
+        if self.contig_select_watcher:
+            self.contig_select.param.unwatch(self.contig_select_watcher)
+        if self.avg_plot_chkbox_watcher:
+            self.avg_plot_chkbox.param.unwatch(self.avg_plot_chkbox_watcher)
+        if self.avg_plot_color_watcher:
+            self.avg_plot_color.param.unwatch(self.avg_plot_color_watcher)
+        if self.coverage_plot_chkbox_watcher:
+            self.coverage_plot_chkbox.param.unwatch(self.coverage_plot_chkbox_watcher)
+        if self.coverage_plot_color_watcher:
+            self.coverage_plot_color.param.unwatch(self.coverage_plot_color_watcher)
+        if self.hypervar_chkbox_watcher:
+            self.hypervar_chkbox.param.unwatch(self.hypervar_chkbox_watcher)
+        if self.hypervar_color_watcher:
+            self.hypervar_color.param.unwatch(self.hypervar_color_watcher)
+        if self.hypercons_chkbox_watcher:
+            self.hypercons_chkbox.param.unwatch(self.hypercons_chkbox_watcher)
+        if self.hypercons_color_watcher:
+            self.hypercons_color.param.unwatch(self.hypercons_color_watcher)
+        if self.alpha_slider_watcher:
+            self.alpha_slider.param.unwatch(self.alpha_slider_watcher)
+        if self.synteny_per_pos_feature_select_watcher:
+            self.synteny_per_pos_feature_select.param.unwatch(self.synteny_per_pos_feature_select_watcher)
+        if self.sorting_select_watcher:
+            self.sorting_select.param.unwatch(self.sorting_select_watcher)
         self.network_threshold_select.options = []
         self.visited_synteny_per_pos_tab = 0
         self.finished_initial_synteny_per_pos_plot = 0
@@ -667,17 +690,12 @@ class SynTrackerVisApp:
         gc.collect()
 
     def create_new_session(self, event):
-        if self.input_file_loaded:
-            pn.state.location.unsync(self.input_file)
-        if self.genomes_select.value is not None and self.genomes_select.value != "":
-            pn.state.location.unsync(self.genomes_select)
+        #if self.input_file_loaded:
+        #    pn.state.location.unsync(self.input_file)
+        #if self.genomes_select.value is not None and self.genomes_select.value != "":
+        #    pn.state.location.unsync(self.genomes_select)
         self.init_parameters()
         pn.state.location.reload = True
-
-    def init_query_params(self):
-        query = {'': ''}
-        #pn.state.location.update_query(input_file=None)
-        pn.state.location.update_query(query)
 
     def submit_new_file_button(self):
         button_column = pn.Column(pn.Spacer(height=30), self.new_file_button)
@@ -706,13 +724,11 @@ class SynTrackerVisApp:
                 print("File name: " + self.filename)
                 self.display_results_page()
 
-                pn.state.location.update_query(input_file=self.filename)
-                pn.state.location.sync(self.input_file, {'filename': 'input_file'})
-                print("Location: " + str(pn.state.location.pathname))
-                print("Query params: " + str(pn.state.location.query_params))
+                #pn.state.location.update_query(input_file=self.filename)
+                #pn.state.location.sync(self.input_file, {'filename': 'input_file'})
+                #print("Location: " + str(pn.state.location.pathname))
+                #print("Query params: " + str(pn.state.location.query_params))
                 self.input_file_loaded = 1
-
-                #self.start_process()
 
             else:
                 title = "The requested input file does not exist, please enter again a valid file path"
@@ -742,13 +758,11 @@ class SynTrackerVisApp:
                 else:
                     self.display_results_page()
 
-                    pn.state.location.update_query(input_file=self.filename)
-                    pn.state.location.sync(self.input_file, {'filename': 'input_file'})
-                    print("Location: " + str(pn.state.location.pathname))
-                    print("Query params: " + str(pn.state.location.query_params))
+                    #pn.state.location.update_query(input_file=self.filename)
+                    #pn.state.location.sync(self.input_file, {'filename': 'input_file'})
+                    #print("Location: " + str(pn.state.location.pathname))
+                    #print("Query params: " + str(pn.state.location.query_params))
                     self.input_file_loaded = 1
-
-                    #self.start_process()
 
         # Check if the user provided a metadata file
         if self.metadata_file.filename is not None:
@@ -866,10 +880,10 @@ class SynTrackerVisApp:
                 self.ref_genomes_list_by_pairs_num = \
                     dm.create_sorted_by_pairs_genomes_list(self.score_per_region_all_genomes_df)
 
-                self.genomes_select.options = self.ref_genomes_list_by_pairs_num
-                self.genomes_select.value = self.ref_genomes_list_by_pairs_num[0]
                 self.ref_genome = self.ref_genomes_list_by_pairs_num[0]
-                pn.state.location.sync(self.genomes_select, {'value': 'ref_genome'})
+                #pn.state.location.sync(self.genomes_select, {'value': 'ref_genome'})
+                self.genomes_select.options = self.ref_genomes_list_by_pairs_num
+                self.genomes_select.value = self.ref_genome
 
                 genome_select_row = pn.Row(self.genomes_select, pn.Spacer(width=20), self.genomes_sort_select)
                 self.main_single_column.append(genome_select_row)
@@ -987,18 +1001,30 @@ class SynTrackerVisApp:
         self.filter_plot_by_metadata = 0
 
         # Stop watching the contig-related widgets
-        self.contig_select.param.unwatch(self.contig_select_watcher)
-        self.sorting_select.param.unwatch(self.sorting_select_watcher)
-        self.avg_plot_chkbox.param.unwatch(self.avg_plot_chkbox_watcher)
-        self.avg_plot_color.param.unwatch(self.avg_plot_color_watcher)
-        self.coverage_plot_chkbox.param.unwatch(self.coverage_plot_chkbox_watcher)
-        self.coverage_plot_color.param.unwatch(self.coverage_plot_color_watcher)
-        self.hypervar_chkbox.param.unwatch(self.hypervar_chkbox_watcher)
-        self.hypervar_color.param.unwatch(self.hypervar_color_watcher)
-        self.hypercons_chkbox.param.unwatch(self.hypercons_chkbox_watcher)
-        self.hypercons_color.param.unwatch(self.hypercons_color_watcher)
-        self.alpha_slider.param.unwatch(self.alpha_slider_watcher)
-        self.synteny_per_pos_feature_select.param.unwatch(self.synteny_per_pos_feature_select_watcher)
+        if self.contig_select_watcher:
+            self.contig_select.param.unwatch(self.contig_select_watcher)
+        if self.sorting_select_watcher:
+            self.sorting_select.param.unwatch(self.sorting_select_watcher)
+        if self.avg_plot_chkbox_watcher:
+            self.avg_plot_chkbox.param.unwatch(self.avg_plot_chkbox_watcher)
+        if self.avg_plot_color_watcher:
+            self.avg_plot_color.param.unwatch(self.avg_plot_color_watcher)
+        if self.coverage_plot_chkbox_watcher:
+            self.coverage_plot_chkbox.param.unwatch(self.coverage_plot_chkbox_watcher)
+        if self.coverage_plot_color_watcher:
+            self.coverage_plot_color.param.unwatch(self.coverage_plot_color_watcher)
+        if self.hypervar_chkbox_watcher:
+            self.hypervar_chkbox.param.unwatch(self.hypervar_chkbox_watcher)
+        if self.hypervar_color_watcher:
+            self.hypervar_color.param.unwatch(self.hypervar_color_watcher)
+        if self.hypercons_chkbox_watcher:
+            self.hypercons_chkbox.param.unwatch(self.hypercons_chkbox_watcher)
+        if self.hypercons_color_watcher:
+            self.hypercons_color.param.unwatch(self.hypercons_color_watcher)
+        if self.alpha_slider_watcher:
+            self.alpha_slider.param.unwatch(self.alpha_slider_watcher)
+        if self.synteny_per_pos_feature_select_watcher:
+            self.synteny_per_pos_feature_select.param.unwatch(self.synteny_per_pos_feature_select_watcher)
 
         gc.collect()
 
@@ -1212,14 +1238,21 @@ class SynTrackerVisApp:
         self.metadata_colorby_card.clear()
         self.metadata_jitter_card.clear()
         self.network_iterations.value = config.network_iterations_options[0]
-        self.network_threshold_select.param.unwatch(self.threshold_select_watcher)
-        self.network_threshold_input.param.unwatch(self.threshold_input_watcher)
+        if self.threshold_select_watcher:
+            self.network_threshold_select.param.unwatch(self.threshold_select_watcher)
+        if self.threshold_input_watcher:
+            self.network_threshold_input.param.unwatch(self.threshold_input_watcher)
         if self.is_metadata:
-            self.is_continuous.param.unwatch(self.continuous_watcher)
-            self.nodes_colormap.param.unwatch(self.colormap_watcher)
-            self.custom_colormap_input.param.unwatch(self.custom_colormap_watcher)
-            self.nodes_color_by.param.unwatch(self.nodes_colorby_watcher)
-            self.feature_colormap.param.unwatch(self.feature_colormap_watcher)
+            if self.continuous_watcher:
+                self.is_continuous.param.unwatch(self.continuous_watcher)
+            if self.colormap_watcher:
+                self.nodes_colormap.param.unwatch(self.colormap_watcher)
+            if self.custom_colormap_watcher:
+                self.custom_colormap_input.param.unwatch(self.custom_colormap_watcher)
+            if self.nodes_colorby_watcher:
+                self.nodes_color_by.param.unwatch(self.nodes_colorby_watcher)
+            if self.feature_colormap_watcher:
+                self.feature_colormap.param.unwatch(self.feature_colormap_watcher)
         self.network_threshold_input.value = config.APSS_connections_threshold_default
         self.is_continuous.value = False
         self.nodes_colormap.options = config.categorical_colormap_dict
@@ -1518,8 +1551,9 @@ class SynTrackerVisApp:
                                            custom_cmap=self.custom_colormap_input_clustermap,
                                            metadata_dict=self.metadata_dict)
 
-            self.clustermap_pane = pn.pane.Matplotlib(self.clustermap_plot, height=600, dpi=300, tight=True, format='png')
-            clustermap_row = pn.Row(controls_col, pn.Spacer(width=50), self.clustermap_pane, styles={'padding': "15px"})
+            self.clustermap_pane = pn.pane.Matplotlib(self.clustermap_plot, height=600, dpi=300, tight=True,
+                                                      format='png')
+            clustermap_row = pn.Row(controls_col, pn.Spacer(width=30), self.clustermap_pane, styles={'padding': "15px"})
 
             self.clustermap_card.append(clustermap_row)
 
@@ -2044,16 +2078,17 @@ class SynTrackerVisApp:
         print("\nChanged_contig, contig name: " + self.contig_name)
 
         # Unwatch all contig-specific widgets
-        self.avg_plot_chkbox.param.unwatch(self.avg_plot_chkbox_watcher)
-        self.avg_plot_color.param.unwatch(self.avg_plot_color_watcher)
-        self.coverage_plot_chkbox.param.unwatch(self.coverage_plot_chkbox_watcher)
-        self.coverage_plot_color.param.unwatch(self.coverage_plot_color_watcher)
-        self.hypervar_chkbox.param.unwatch(self.hypervar_chkbox_watcher)
-        self.hypervar_color.param.unwatch(self.hypervar_color_watcher)
-        self.hypercons_chkbox.param.unwatch(self.hypercons_chkbox_watcher)
-        self.hypercons_color.param.unwatch(self.hypercons_color_watcher)
-        self.alpha_slider.param.unwatch(self.alpha_slider_watcher)
-        self.synteny_per_pos_feature_select.param.unwatch(self.synteny_per_pos_feature_select_watcher)
+        if self.avg_plot_chkbox_watcher:
+            self.avg_plot_chkbox.param.unwatch(self.avg_plot_chkbox_watcher)
+            self.avg_plot_color.param.unwatch(self.avg_plot_color_watcher)
+            self.coverage_plot_chkbox.param.unwatch(self.coverage_plot_chkbox_watcher)
+            self.coverage_plot_color.param.unwatch(self.coverage_plot_color_watcher)
+            self.hypervar_chkbox.param.unwatch(self.hypervar_chkbox_watcher)
+            self.hypervar_color.param.unwatch(self.hypervar_color_watcher)
+            self.hypercons_chkbox.param.unwatch(self.hypercons_chkbox_watcher)
+            self.hypercons_color.param.unwatch(self.hypercons_color_watcher)
+            self.alpha_slider.param.unwatch(self.alpha_slider_watcher)
+            self.synteny_per_pos_feature_select.param.unwatch(self.synteny_per_pos_feature_select_watcher)
 
         self.coverage_plot = ""
         self.line_avg_plot = ""
@@ -2837,7 +2872,8 @@ class SynTrackerVisApp:
             'Number_of_species'].values[0]
         print("Number of species at this sampling size: " + str(self.species_num_at_sampling_size))
 
-        self.box_plot_feature_select.param.unwatch(self.feature_select_watcher)
+        if self.feature_select_watcher:
+            self.box_plot_feature_select.param.unwatch(self.feature_select_watcher)
         self.plots_by_size_multi_column.clear()
         self.box_plot_card.clear()
         self.metadata_box_plot_card.clear()
