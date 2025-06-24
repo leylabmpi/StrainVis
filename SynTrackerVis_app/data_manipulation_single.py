@@ -112,27 +112,13 @@ def return_sorted_contigs_lists(score_per_region_df):
 
     after = time.time()
     duration = after - before
-    print("Extract position from region took " + str(duration) + " seconds.\n")
-
-    # Get a list of contigs, sorted by name
-    # If the contig names contain numbers, sort them numerically
-    #if re.search(r"^\S+_\d+$", score_per_region_df.iloc[0]['Contig_name']):
-
-        # Create a temporary column 'contigs_sort' to sort the contig names numericlly
-    #    score_per_region_df['Contig_number'] = score_per_region_df['Contig_name'].str.extract(r'\S+_(\d+)')\
-    #        .astype(int)
-
-    #    contigs_list_by_name = list(score_per_region_df.sort_values('Contig_number').groupby(['Contig_name'],
-    #                                                                                         sort=False).groups)
-
-    #else:
-    #    contigs_list_by_name = list(score_per_region_df.groupby(['Contig_name']).groups)
+    #print("Extract position from region took " + str(duration) + " seconds.\n")
 
     before = time.time()
     contigs_list_by_name = list(score_per_region_df.groupby(['Contig_name']).groups)
     after = time.time()
     duration = after - before
-    print("Sort by name took " + str(duration) + " seconds.\n")
+    #print("Sort by name took " + str(duration) + " seconds.\n")
 
     # Get a list of contigs, sorted by length
     before = time.time()
@@ -141,7 +127,7 @@ def return_sorted_contigs_lists(score_per_region_df):
                                   groups)
     after = time.time()
     duration = after - before
-    print("Sort by length took " + str(duration) + " seconds.\n")
+    #print("Sort by length took " + str(duration) + " seconds.\n")
   
     return contigs_list_by_name, contigs_list_by_length
 

@@ -711,7 +711,7 @@ class SynTrackerVisApp:
         self.ref_genomes_list = list(self.score_per_region_all_genomes_df.groupby(['Ref_genome']).groups)
 
     def load_input_file(self, event):
-        print("\nIn load_input_file")
+        #print("\nIn load_input_file")
 
         # File path was given - read directly
         if self.text_input.value != "":
@@ -719,9 +719,9 @@ class SynTrackerVisApp:
 
             # Verify that the input is an existing file path
             if os.path.exists(self.text_input.value):
-                print("File path: " + self.text_input.value)
+                print("Input file path: " + self.text_input.value)
                 self.filename = os.path.basename(self.text_input.value)
-                print("File name: " + self.filename)
+                print("Input file name: " + self.filename)
                 self.display_results_page()
 
                 #pn.state.location.update_query(input_file=self.filename)
@@ -738,7 +738,7 @@ class SynTrackerVisApp:
         else:
             # Filename is None - usually because of server problems
             if self.input_file.filename is None:
-                print("File name: None")
+                print("Input file name: None")
                 title = "Cannot upload the requested file (probably server problems) - please try again by entering " \
                         "the file's full path"
                 self.display_error_page(title)
@@ -767,8 +767,8 @@ class SynTrackerVisApp:
         # Check if the user provided a metadata file
         if self.metadata_file.filename is not None:
             content_length = len(self.metadata_file.value) / 1000
-            print("\nUploaded metadata file")
-            print("Content length of metadata file in Kb: " + str(content_length))
+            print("\nUploaded metadata file: " + self.metadata_file.filename)
+            #print("Content length of metadata file in Kb: " + str(content_length))
 
             # There is filename but no content - usually happens when the file is too big
             if content_length == 0:
@@ -820,7 +820,7 @@ class SynTrackerVisApp:
                                                                usecols=lambda c: c in set(config.col_set))
         after = time.time()
         duration = after - before
-        print("\nReading input file took " + str(duration) + " seconds.\n")
+        #print("\nReading input file took " + str(duration) + " seconds.\n")
 
         # Extract the number of genomes from the input file
         self.get_number_of_genomes()
@@ -833,9 +833,9 @@ class SynTrackerVisApp:
             metadata_df = pd.read_table(io.BytesIO(self.metadata_file.value))
             after = time.time()
             duration = after - before
-            print("\nReading metadata file took " + str(duration) + " seconds.\n")
-            print("\nMetadata before validation:")
-            print(metadata_df)
+            #print("\nReading metadata file took " + str(duration) + " seconds.\n")
+            #print("\nMetadata before validation:")
+            #print(metadata_df)
 
             # Check if the provided metadata is valid and match the sample-IDs.
             # If some samples are missing from the metadata - fill them with np.nan values
@@ -850,8 +850,8 @@ class SynTrackerVisApp:
                 self.display_error_page(error)
                 self.valid_metadata = 0
 
-            else:
-                print("\nFilling missing metadata took " + str(duration) + " seconds.\n")
+            #else:
+            #    print("\nFilling missing metadata took " + str(duration) + " seconds.\n")
 
         # Initialize the dictionaries that save the dataframes for all the combinations of ref_genomes and sizes
         # and whether they have already been calculated
@@ -881,6 +881,7 @@ class SynTrackerVisApp:
                     dm.create_sorted_by_pairs_genomes_list(self.score_per_region_all_genomes_df)
 
                 self.ref_genome = self.ref_genomes_list_by_pairs_num[0]
+                print("\nReference genome = " + self.ref_genome)
                 #pn.state.location.sync(self.genomes_select, {'value': 'ref_genome'})
                 self.genomes_select.options = self.ref_genomes_list_by_pairs_num
                 self.genomes_select.value = self.ref_genome
@@ -897,9 +898,8 @@ class SynTrackerVisApp:
                 self.genomes_select_watcher = self.genomes_select.param.watch(partial(self.select_ref_genome,
                                                                               self.genomes_select), 'value',
                                                                               onlychanged=True)
-                self.genomes_sort_select_watcher = self.genomes_sort_select.param.watch(self.changed_genomes_sorting,
-
-                                                                                        'value', onlychanged=True)
+                self.genomes_sort_select_watcher = self.genomes_sort_select.param.watch(
+                    self.changed_genomes_sorting, 'value', onlychanged=True)
                 self.genomes_sort_select_multi_watcher = self.genomes_sort_select_multi.param.watch(
                     self.changed_multi_genomes_sorting, 'value', onlychanged=True)
 
@@ -927,7 +927,7 @@ class SynTrackerVisApp:
             self.create_multi_genome_column()
             after = time.time()
             duration = after - before
-            print("\ncreate_multi_genome_column took " + str(duration) + " seconds.\n")
+            #print("\ncreate_multi_genome_column took " + str(duration) + " seconds.\n")
 
             self.visited_multi_genome_tab = 1
 
@@ -1123,19 +1123,19 @@ class SynTrackerVisApp:
 
         after = time.time()
         duration = after - before
-        print("\ncreate_single_genome_column took " + str(duration) + " seconds.\n")
+        #print("\ncreate_single_genome_column took " + str(duration) + " seconds.\n")
 
     def create_initial_synteny_per_pos_plot_tab(self):
 
         # Get the sorted contigs lists
-        print("\nCalling return_sorted_contigs_lists to sort the contigs")
+        #print("\nCalling return_sorted_contigs_lists to sort the contigs")
         before = time.time()
         self.contigs_list_by_name, self.contigs_list_by_length = \
             ds.return_sorted_contigs_lists(self.score_per_region_selected_genome_df)
         after = time.time()
         duration = after - before
-        print("return_sorted_contigs_lists took " + str(duration) + " seconds.\n")
-        print(self.score_per_region_selected_genome_df)
+        #print("return_sorted_contigs_lists took " + str(duration) + " seconds.\n")
+        #print(self.score_per_region_selected_genome_df)
 
         # Calculate the average score and std for the whole genome (all contigs)
         self.avg_score_genome = self.score_per_region_selected_genome_df['Synteny_score'].mean()
@@ -1150,8 +1150,8 @@ class SynTrackerVisApp:
             groupby(['Contig_name', 'Position']).\
             agg(Count=('Synteny_score', 'size'), Avg_synteny_score=('Synteny_score', 'mean')).\
             sort_values(['Count'], ascending=False).reset_index()
-        print("\nAvg. score per region df for all the regions of all the contigs:")
-        print(avg_score_per_region)
+        #print("\nAvg. score per region df for all the regions of all the contigs:")
+        #print(avg_score_per_region)
 
         self.median_counts = avg_score_per_region['Count'].median()
         self.bottom_percentile_counts = avg_score_per_region['Count'].quantile(0.1)
@@ -1399,8 +1399,8 @@ class SynTrackerVisApp:
                 plot = sns.catplot(data=self.df_for_jitter, x="Category", y="APSS", color=color, edgecolor="dimgray",
                                    linewidth=0.1)
 
-        print("\nDF for jitter plot:")
-        print(self.df_for_jitter)
+        #print("\nDF for jitter plot:")
+        #print(self.df_for_jitter)
 
         plt.close(plot.figure)
 
@@ -1505,12 +1505,12 @@ class SynTrackerVisApp:
         self.scores_matrix = pivoted_df.combine_first(pivoted_df.T)
         np.fill_diagonal(self.scores_matrix.values, 1.0)
         self.scores_matrix = self.scores_matrix.fillna(100.0)
-        print("\nScores matrix:")
-        print(self.scores_matrix)
+        #print("\nScores matrix:")
+        #print(self.scores_matrix)
 
         # Check the number of columns in the matrix
         col_num = len(self.scores_matrix.columns)
-        print("\ncreate_clustermap_pane: number of columns = " + str(col_num))
+        #print("\ncreate_clustermap_pane: number of columns = " + str(col_num))
 
         # If the num of columns exceeds the defined maximum, do not create the clustermap plot
         # and display a message + a possibility to download the matrix
@@ -1744,8 +1744,8 @@ class SynTrackerVisApp:
         self.APSS_connections_threshold = mean_APSS
         self.df_for_network['weight'] = np.where(self.df_for_network['APSS'] >= self.APSS_connections_threshold,
                                                  np.negative(np.log(1 - self.df_for_network['APSS'])), 0)
-        print("\nDF for network:")
-        print(self.df_for_network)
+        #print("\nDF for network:")
+        #print(self.df_for_network)
         print("\nMean APSS: " + str(mean_APSS))
         print("Standard deviation APSS: " + str(std_APSS) + "\n")
 
@@ -1762,13 +1762,15 @@ class SynTrackerVisApp:
                                                edge_attr='weight')
         self.nodes_list = list(self.network.nodes)
         nodes_num = len(self.nodes_list)
-        print("\nNumber of nodes in the network = " + str(nodes_num))
+        #print("\nNumber of nodes in the network = " + str(nodes_num))
 
         # If the number of nodes in the network exceeds the defined maximum, do not create the plot
         # and display only a message + a possibility to download the network data in tsv format
         if nodes_num > config.max_network_nodes:
-            error = "The number of samples exceeds the limit of 300, so the network cannot be presented with all its interactive features."
-            suggestion = "It ia possible to download the network data in tsv format and visualize it using another program."
+            error = "The number of samples exceeds the limit of 300, so the network cannot be presented with all its " \
+                    "interactive features."
+            suggestion = "It ia possible to download the network data in tsv format and visualize it using another " \
+                         "program."
             network_col = pn.Column(
                 pn.pane.Markdown(error, styles={'font-size': "16px",
                                                 'color': config.title_red_color,
@@ -2319,13 +2321,13 @@ class SynTrackerVisApp:
 
     def create_synteny_per_pos_plot(self):
         before = time.time()
-        print("\ncreate_synteny_per_pos_plot:\nContig name: " + self.contig_name)
+        #print("\ncreate_synteny_per_pos_plot:\nContig name: " + self.contig_name)
 
         # Set the requested positions range
         start_pos = self.start_pos_input.value
         end_pos = self.end_pos_input.value
-        print("Start position: " + start_pos)
-        print("End position: " + end_pos)
+        #print("Start position: " + start_pos)
+        #print("End position: " + end_pos)
 
         # The user requested to filter the data by a metadata feature - use the filtered tables
         if self.filter_plot_by_metadata:
@@ -2346,10 +2348,10 @@ class SynTrackerVisApp:
                 self.avg_score_per_pos_contig['Position'] >= int(start_pos)]
             avg_score_per_pos_contig = avg_score_per_pos_contig[avg_score_per_pos_contig['Position'] < int(end_pos)]
 
-        print("\nscore_per_pos_contig table:")
-        print(score_per_pos_contig)
-        print("\navg_score_per_pos_contig table:")
-        print(avg_score_per_pos_contig)
+        #print("\nscore_per_pos_contig table:")
+        #print(score_per_pos_contig)
+        #print("\navg_score_per_pos_contig table:")
+        #print(avg_score_per_pos_contig)
 
         # Prepare data for plotting the avg scores as lines
         avg_score_per_pos_contig_end_pos = avg_score_per_pos_contig.copy()
@@ -2396,8 +2398,8 @@ class SynTrackerVisApp:
         if min_score < 0:
             height += abs(min_score) + 0.05
             bottom_val = min_score - 0.05
-        print("\nMin score = " + str(min_score))
-        print("Height = " + str(height))
+        #print("\nMin score = " + str(min_score))
+        #print("Height = " + str(height))
 
         avg_score_per_pos_contig['Hypervariable'] = np.where(avg_score_per_pos_contig['Hypervariable'] == 0, 0, height)
         avg_score_per_pos_contig['Hyperconserved'] = np.where(avg_score_per_pos_contig['Hyperconserved'] == 0, 0, height)
@@ -2443,7 +2445,7 @@ class SynTrackerVisApp:
 
         after = time.time()
         duration = after - before
-        print("Create/update the synteny_per_pos plot took " + str(duration) + " seconds")
+        #print("Create/update the synteny_per_pos plot took " + str(duration) + " seconds")
 
         return fig
 
@@ -2581,7 +2583,7 @@ class SynTrackerVisApp:
             row['Sample2']] in groups
 
     def filter_synteny_per_pos_plot(self, event):
-        print("\nIn filter_synteny_per_pos_plot")
+        #print("\nIn filter_synteny_per_pos_plot")
         self.filter_plot_by_metadata = 1
 
         feature = self.synteny_per_pos_feature_select.value
@@ -3012,10 +3014,12 @@ class SynTrackerVisApp:
     def calculate_metadata_for_box_plot(self):
 
         presented_genomes_list = self.genomes_subset_selected_size_APSS_df['Ref_genome'].unique()
-        print("\ncalculate_metadata_for_box_plot: Number of genomes to present = " +
-              str(self.species_num_at_sampling_size))
-
         feature = self.box_plot_feature_select.value
+
+        print("\ncalculate_metadata_for_box_plot:")
+        print("Number of genomes to present: " + str(self.species_num_at_sampling_size))
+        print("Compared feature: " + feature)
+
         if self.species_num_at_sampling_size == self.number_of_genomes:
             box_plot_file = "Boxplot_all_genomes_"
             boxplot_table = "Data_for_boxplot_all_genomes_"
@@ -3034,8 +3038,8 @@ class SynTrackerVisApp:
 
         self.genomes_subset_selected_size_APSS_df['Category'] = self.genomes_subset_selected_size_APSS_df.apply(
             lambda row: category_by_feature(row, feature, self.metadata_dict), axis=1)
-        print("\nDF for box_plot with category:")
-        print(self.genomes_subset_selected_size_APSS_df)
+        #print("\nDF for box_plot with category:")
+        #print(self.genomes_subset_selected_size_APSS_df)
 
         same_feature = 'Same ' + feature
         diff_feature = 'Different ' + feature
@@ -3045,7 +3049,7 @@ class SynTrackerVisApp:
         genome_pval_dict = {}
         pval_corrected = []
         for genome in presented_genomes_list:
-            print("\nGenome: " + genome + ", Feature: " + feature)
+            #print("\nGenome: " + genome + ", Feature: " + feature)
             same_array = self.genomes_subset_selected_size_APSS_df[
                 (self.genomes_subset_selected_size_APSS_df['Ref_genome'] == genome) &
                 (self.genomes_subset_selected_size_APSS_df['Category'] == same_feature)]['APSS']
@@ -3056,15 +3060,15 @@ class SynTrackerVisApp:
             if str(p_val) != "nan":
                 valid_pval_list.append(p_val)
             genome_pval_dict[genome] = p_val
-            print("P-value = " + str(p_val))
+            #print("P-value = " + str(p_val))
 
         #print("\nOriginal p-values:")
         #print(valid_pval_list)
 
         if len(valid_pval_list) >= 2:
             reject, pval_corrected, _, q_values = multipletests(valid_pval_list, method='fdr_bh')
-            print("Corrected p-values:")
-            print(pval_corrected)
+            #print("Corrected p-values:")
+            #print(pval_corrected)
 
         valid_counter = 0
         if len(pval_corrected) > 0:

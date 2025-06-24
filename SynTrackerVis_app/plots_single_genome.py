@@ -91,7 +91,7 @@ def create_clustermap(matrix, cmap, is_metadata, feature, cmap_metadata, custom_
     col_num = len(matrix.columns)
     mask_array = np.full((col_num, col_num), np.where(matrix == 100, True, False))
 
-    print("\ncreate_clustermap: selected cmap: " + cmap)
+    #print("\ncreate_clustermap: selected cmap: " + cmap)
     colmap = plt.get_cmap(cmap)
     colmap.set_bad("lightgrey")
 
@@ -105,15 +105,15 @@ def create_clustermap(matrix, cmap, is_metadata, feature, cmap_metadata, custom_
         if 'nan' in unique_groups:
             unique_groups.remove('nan')
             unique_groups.append('nan')
-        print(unique_groups)
+        #print(unique_groups)
 
         # If the user defined a custom cmap - process it and turn it into a cmap
         if cmap_metadata == 'Define custom colormap':
             custom_colors_list = custom_cmap
             cmap_metadata_mpl = re.split(r'\s*,\s*', custom_colors_list)
             cmap_length = len(cmap_metadata_mpl)
-            print("Custom cmap:")
-            print(cmap_metadata_mpl)
+            #print("Custom cmap:")
+            #print(cmap_metadata_mpl)
 
             # Assign each group with a color, according to the colormap order
             group_to_color = {group: cmap_metadata_mpl[i % cmap_length] for i, group in enumerate(unique_groups)}
@@ -126,12 +126,12 @@ def create_clustermap(matrix, cmap, is_metadata, feature, cmap_metadata, custom_
             # Assign each group with a color, according to the colormap order
             group_to_color = {group: cmap_metadata_mpl(i % cmap_length) for i, group in enumerate(unique_groups)}
 
-        print("cmap length: " + str(cmap_length))
+        #print("cmap length: " + str(cmap_length))
 
         # Create a colors dataframe, with sample names as indices
         colors = [group_to_color[str(metadata_dict[feature][sample])] for sample in matrix.iloc[:, 0].index]
         colors_df = pd.DataFrame({feature: colors}, index=matrix.index)
-        print(colors_df)
+        #print(colors_df)
 
         clustermap = sns.clustermap(matrix, cmap=colmap, row_cluster=True, linewidths=.5,
                                     cbar_pos=(0.04, 0.82, 0.02, 0.15), xticklabels=1, yticklabels=1,
@@ -196,7 +196,7 @@ def cretae_network_plot(network, is_metadata, nodes_feature, is_continuous, cmap
                         is_edge_colorby, edges_feature, within_edge_color, between_edge_color, iterations, pos_dict,
                         show_labels, metadata_dict):
     iter_num = int(iterations)
-    print("\nIn cretae_network_plot.\nIterations number = " + str(iter_num) + "\nFeature: " + nodes_feature)
+    #print("\nIn cretae_network_plot.\nIterations number = " + str(iter_num) + "\nFeature: " + nodes_feature)
 
     pos = nx.layout.fruchterman_reingold_layout(network, iterations=iter_num, pos=pos_dict, k=2)
 
@@ -221,7 +221,7 @@ def cretae_network_plot(network, is_metadata, nodes_feature, is_continuous, cmap
 
         # In case of numeric continuous feature:
         if is_continuous:
-            print("Continuous feature")
+            #print("Continuous feature")
 
             # Step 1: Extract non-missing values (only if the values are not strings)
             non_missing_values = [network.nodes[node][nodes_feature] for node in network.nodes
@@ -230,8 +230,8 @@ def cretae_network_plot(network, is_metadata, nodes_feature, is_continuous, cmap
             # Step 2: Define min and max values based only on non-missing values
             min_value = min(non_missing_values)
             max_value = max(non_missing_values)
-            print("Min value: " + str(min_value))
-            print("Max value: " + str(max_value))
+            #print("Min value: " + str(min_value))
+            #print("Max value: " + str(max_value))
 
             # Step 3: Create a colormap for non-missing values and normalize
             cmap = cmap
@@ -253,7 +253,7 @@ def cretae_network_plot(network, is_metadata, nodes_feature, is_continuous, cmap
 
         # Feature is categorical
         else:
-            print("Categorical feature")
+            #print("Categorical feature")
 
             # Prepare the colors mapping for the legend
             unique_groups = sorted(list(set([str(network.nodes[node][nodes_feature]) for node in network.nodes()])))
@@ -262,19 +262,19 @@ def cretae_network_plot(network, is_metadata, nodes_feature, is_continuous, cmap
             if 'nan' in unique_groups:
                 unique_groups.remove('nan')
                 unique_groups.append('nan')
-            print(unique_groups)
+            #print(unique_groups)
 
             cmap_length = len(cmap)
-            print("Cmap length = " + str(cmap_length))
+            #print("Cmap length = " + str(cmap_length))
 
             # If the user defined a custom cmap - process it and turn it into a cmap
             if cmap_length == 1:
                 custom_colors_list = custom_cmap
                 cmap = re.split(r'\s*,\s*', custom_colors_list)
                 cmap_length = len(cmap)
-                print("Custom cmap:")
-                print(cmap)
-                print("custom cmap length: " + str(cmap_length))
+                #print("Custom cmap:")
+                #print(cmap)
+                #print("custom cmap length: " + str(cmap_length))
 
             group_to_color = {group: cmap[i % cmap_length] for i, group in enumerate(unique_groups)}
             colors = [group_to_color[str(network.nodes[node][nodes_feature])] for node in network.nodes()]
@@ -334,8 +334,8 @@ def cretae_network_plot_matplotlib(network, is_metadata, nodes_feature, is_conti
                                    edge_color, is_edge_colorby, edges_feature, within_edge_color, between_edge_color,
                                    iterations, pos_dict, show_labels, metadata_dict):
     iter_num = int(iterations)
-    print("\nIn cretae_network_plot_matplotlib. Iterations number = " + str(iter_num))
-    print("cmap: " + str(cmap))
+    #print("\nIn cretae_network_plot_matplotlib. Iterations number = " + str(iter_num))
+    #print("cmap: " + str(cmap))
 
     # Preparing network drawing also with matplotlib for better image production
     fig, ax1 = plt.subplots(figsize=(8, 7))
@@ -361,7 +361,7 @@ def cretae_network_plot_matplotlib(network, is_metadata, nodes_feature, is_conti
 
         # In case of numeric continuous feature:
         if is_continuous:
-            print("Continuous feature")
+            #print("Continuous feature")
 
             # Extract non-missing values
             non_missing_values = [network.nodes[node][nodes_feature] for node in network.nodes
@@ -370,8 +370,8 @@ def cretae_network_plot_matplotlib(network, is_metadata, nodes_feature, is_conti
             # Define min and max values based only on non-missing values
             min_value = min(non_missing_values)
             max_value = max(non_missing_values)
-            print("Min value: " + str(min_value))
-            print("Max value: " + str(max_value))
+            #print("Min value: " + str(min_value))
+            #print("Max value: " + str(max_value))
 
             nodes_feature_array = np.array([network.nodes[node][nodes_feature] for node in network.nodes()])
             normalized_values = (nodes_feature_array - min_value) / (max_value - min_value)
@@ -421,15 +421,15 @@ def cretae_network_plot_matplotlib(network, is_metadata, nodes_feature, is_conti
             if 'nan' in unique_groups:
                 unique_groups.remove('nan')
                 unique_groups.append('nan')
-            print(unique_groups)
+            #print(unique_groups)
 
             # If the user defined a custom cmap - process it and turn it into a cmap
             if cmap == 'Define custom colormap':
                 custom_colors_list = custom_cmap
                 cmap_mpl = re.split(r'\s*,\s*', custom_colors_list)
                 cmap_length = len(cmap_mpl)
-                print("Custom cmap:")
-                print(cmap_mpl)
+                #print("Custom cmap:")
+                #print(cmap_mpl)
 
                 # Assign each group with a color, according to the colormap order
                 group_to_color = {group: cmap_mpl[i % cmap_length] for i, group in enumerate(unique_groups)}
@@ -440,7 +440,7 @@ def cretae_network_plot_matplotlib(network, is_metadata, nodes_feature, is_conti
                 # Assign each group with a color, according to the colormap order
                 group_to_color = {group: cmap_mpl(i % cmap_length) for i, group in enumerate(unique_groups)}
 
-            print("cmap length: " + str(cmap_length))
+            #print("cmap length: " + str(cmap_length))
 
             # Get a list of colors for all the nodes
             colors = [group_to_color[str(network.nodes[node][nodes_feature])] for node in network.nodes()]

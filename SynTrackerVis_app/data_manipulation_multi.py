@@ -47,8 +47,8 @@ def complete_metadata(score_per_region_df, metadata_df):
                 #new_row.append("NaN")
             metadata_df.loc[len(metadata_df)] = new_row
 
-    print("\nMetadata after filling missing samples:")
-    print(metadata_df)
+    #print("\nMetadata after filling missing samples:")
+    #print(metadata_df)
 
     # Go over the features
     for feature in metadata_features_list:
