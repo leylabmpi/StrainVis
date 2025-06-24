@@ -45,7 +45,7 @@ It is also possible to launch more than several server processes simultaneously 
 
 **Stop the server**: In order to stop the Bokeh server, its running process should be killed.
 
-## Run SynTrackerVis on a remote server and open it in the local browser
+## Run SynTrackerVis on a remote server and open it in a local browser
 
 It is possible to run SynTrackerVis on a remote server or cloud service in cases of large datasets, in order to improve the performance.
 This can be done according to the following steps:
