@@ -45,6 +45,23 @@ It is also possible to launch more than several server processes simultaneously 
 
 **Stop the server**: In order to stop the Bokeh server, its running process should be killed.
 
+## Run SynTrackerVis on a remote server and open it in the local browser
+
+It is possible to run SynTrackerVis on a remote server or cloud service in cases of large datasets, in order to improve the performance.
+This can be done according to the following steps:
+
+1. **Installing SynTrackerVis:** SynTrackerVis shoul be installed on the remote server as explained above.
+
+2. **Open SSH-tunnel:** Create an SSH tunnel from your local machine to the remote server:  
+`ssh -L 5006:localhost:5006 user@remote-server`
+
+3. **Start the Bokeh server on the remote server:**  
+From within the activated conda SynTracker_Vis environment, run the following command:   
+`panel serve syntracker_vis.py --port 5006 --websocket-max-message-size 524288000 &`  
+Note that it is important not to use the --show option when SynTracker runs on a remote machine.
+
+4. **Open the application in the local browser:** SynTrackerVis should be accessible under: http://localhost:5006/syntracker_vis .
+
 ## Input
 
 #### Mandatory input:

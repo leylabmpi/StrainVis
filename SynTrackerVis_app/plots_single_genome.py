@@ -512,7 +512,7 @@ def create_coverage_plot(contig_name, score_per_pos_contig, avg_score_per_pos_co
 
     after = time.time()
     duration = after - before
-    print("Setting the correct range took " + str(duration) + " seconds")
+    #print("Setting the correct range took " + str(duration) + " seconds")
 
     # Prepare data for plotting the avg scores as lines
     avg_score_per_pos_contig_end_pos = avg_score_per_pos_contig.copy()

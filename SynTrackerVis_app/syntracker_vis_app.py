@@ -12,7 +12,7 @@ import threading
 from functools import partial
 import networkx as nx
 import random
-from scipy.stats import mannwhitneyu, ranksums
+from scipy.stats import ranksums
 from statsmodels.stats.multitest import multipletests
 import seaborn as sns
 import SynTrackerVis_app.config as config
@@ -820,7 +820,7 @@ class SynTrackerVisApp:
                                                                usecols=lambda c: c in set(config.col_set))
         after = time.time()
         duration = after - before
-        #print("\nReading input file took " + str(duration) + " seconds.\n")
+        print("\nReading input file took " + str(duration) + " seconds.\n")
 
         # Extract the number of genomes from the input file
         self.get_number_of_genomes()
@@ -833,7 +833,7 @@ class SynTrackerVisApp:
             metadata_df = pd.read_table(io.BytesIO(self.metadata_file.value))
             after = time.time()
             duration = after - before
-            #print("\nReading metadata file took " + str(duration) + " seconds.\n")
+            print("\nReading metadata file took " + str(duration) + " seconds.\n")
             #print("\nMetadata before validation:")
             #print(metadata_df)
 
@@ -850,8 +850,8 @@ class SynTrackerVisApp:
                 self.display_error_page(error)
                 self.valid_metadata = 0
 
-            #else:
-            #    print("\nFilling missing metadata took " + str(duration) + " seconds.\n")
+            else:
+                print("\nFilling missing metadata took " + str(duration) + " seconds.\n")
 
         # Initialize the dictionaries that save the dataframes for all the combinations of ref_genomes and sizes
         # and whether they have already been calculated
@@ -927,7 +927,7 @@ class SynTrackerVisApp:
             self.create_multi_genome_column()
             after = time.time()
             duration = after - before
-            #print("\ncreate_multi_genome_column took " + str(duration) + " seconds.\n")
+            print("\ncreate_multi_genome_column took " + str(duration) + " seconds.\n")
 
             self.visited_multi_genome_tab = 1
 
@@ -1123,7 +1123,7 @@ class SynTrackerVisApp:
 
         after = time.time()
         duration = after - before
-        #print("\ncreate_single_genome_column took " + str(duration) + " seconds.\n")
+        print("\ncreate_single_genome_column took " + str(duration) + " seconds.\n")
 
     def create_initial_synteny_per_pos_plot_tab(self):
 
@@ -1134,7 +1134,7 @@ class SynTrackerVisApp:
             ds.return_sorted_contigs_lists(self.score_per_region_selected_genome_df)
         after = time.time()
         duration = after - before
-        #print("return_sorted_contigs_lists took " + str(duration) + " seconds.\n")
+        print("return_sorted_contigs_lists took " + str(duration) + " seconds.\n")
         #print(self.score_per_region_selected_genome_df)
 
         # Calculate the average score and std for the whole genome (all contigs)
@@ -2020,7 +2020,7 @@ class SynTrackerVisApp:
         # Recalculate the weights
         self.df_for_network['weight'] = np.where(self.df_for_network['APSS'] >= self.APSS_connections_threshold,
                                                  np.negative(np.log(1 - self.df_for_network['APSS'])), 0)
-        print(self.df_for_network)
+        #print(self.df_for_network)
 
         before = time.time()
         # Create a new network from the updated df using networkx
@@ -2039,7 +2039,7 @@ class SynTrackerVisApp:
 
         after = time.time()
         duration = after - before
-        print("Creating a new network took " + str(duration) + " seconds.\n")
+        #print("Creating a new network took " + str(duration) + " seconds.\n")
 
         before = time.time()
         self.update_network_plot()
@@ -2049,7 +2049,7 @@ class SynTrackerVisApp:
 
     # Update the network plot using the selected parameters and the new positions dict
     def update_network_plot(self):
-        print("\nIn update_network_plot")
+        #print("\nIn update_network_plot")
         self.network_plot_hv = pn.bind(ps.cretae_network_plot, network=self.network,
                                        is_metadata=self.use_metadata_network, nodes_feature=self.nodes_color_by.value,
                                        is_continuous=self.is_continuous.value, cmap=self.nodes_colormap.value,
@@ -2445,7 +2445,7 @@ class SynTrackerVisApp:
 
         after = time.time()
         duration = after - before
-        #print("Create/update the synteny_per_pos plot took " + str(duration) + " seconds")
+        print("Create/update the synteny_per_pos plot took " + str(duration) + " seconds")
 
         return fig
 
