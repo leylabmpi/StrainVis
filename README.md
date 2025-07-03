@@ -45,7 +45,16 @@ It is also possible to launch more than several server processes simultaneously 
 
 **Stop the server**: In order to stop the Bokeh server, its running process should be killed.  
 
-### Start more than one instance of the Bokeh server:
+### Open several SynTrackerVis sessions
+
+- **Several user-sessions using the same web-server instance:** It is possible to open as many user sessions as needed under the same server instance that was started using the 'panel serve...' command.
+All sessions will be accessible under the same URL (for example: http://localhost:5005/syntracker_vis). 
+Each session works separately and can process a different dataset, but since all of them are executed by the same process, 
+if one session is busy processing a heavy-duty task, it will affect all the other user sessions.
+- **Several web-server instances:** In order to process different datasets at the same time using separated computational resources, 
+it is needed to start several web-server instances listening to different ports.
+It simply means to run the 'panel serve...' command using a different port number for each SynTrackerVis instance.
+Each web-server instance will be accessible under: http://localhost:<port_number>/syntracker_vis.
 
 ## Run SynTrackerVis on a remote server and open it in a local browser
 
