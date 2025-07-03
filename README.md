@@ -1,15 +1,15 @@
 # SynTrackerVis: a Python-based web application for interactive visual analysis of SynTracker's results
 
-### Version 1.0.6
+### Version 1.0.7
 
 ## Overview
 
 SynTrackerVis is a Python-based web application, designated for visual analyses and interactive exploration of the results obtained by the SynTracker pipeline.  
 
-SynTrackerVis accepts a 'synteny_scores_per_region.csv' file, containing either one reference genome or multiple reference genomes.
-It presents accordingly analyses for each genome separately and for multiple genomes together.  
+SynTrackerVis accepts a 'synteny_scores_per_region.csv' file, containing either one reference genome or multiple reference genomes (usually, one reference genome per species).
+It presents accordingly analyses for each species separately and for multiple species together.  
 A metadata file (matches to the samples that were previously compared by SynTracker) may also be provided
-in order to enable a deeper analaysis of SynTracker's redults.  
+in order to enable a deeper analysis of SynTracker's results.  
 
 SynTrackerVis allows the user to interactively select the plots that he would like to present and to change visual parameters in each plot.
 It also enables to interactively select the metadata feature by which the samples should be grouped and coloured (for each plot separately).  
@@ -36,14 +36,16 @@ The web-application is served using the Bokeh server.
 To launch the server from the command-line and open the application in the browser, type the following command
 (from within the activated conda SynTracker_Vis environment):
 
-`panel serve syntracker_vis.py --port 5005 --websocket-max-message-size 524288000 --show &`
+`panel serve syntracker_vis.py --port 5005 --websocket-max-message-size 524288000 &`
 
 The appplication should be opened in the browser under the URL: http://localhost:5005/syntracker_vis.  
 As long as the Bokeh server is running, SynTrackerVis application can be accessed using the above URL.  
 Please note that several instances of SynTrackerVis can be opened simultaneously in different browser windows/tabs.  
 It is also possible to launch more than several server processes simultaneously using different ports. 
 
-**Stop the server**: In order to stop the Bokeh server, its running process should be killed.
+**Stop the server**: In order to stop the Bokeh server, its running process should be killed.  
+
+### Start more than one instance of the Bokeh server:
 
 ## Run SynTrackerVis on a remote server and open it in a local browser
 
@@ -58,14 +60,13 @@ This can be done according to the following steps:
 3. **Start the Bokeh server on the remote server:**  
 From within the activated conda SynTracker_Vis environment, run the following command:   
 `panel serve syntracker_vis.py --port 5006 --websocket-max-message-size 524288000 &`  
-Note that it is important not to use the --show option when SynTracker runs on a remote machine.
 
 4. **Open the application in the local browser:** SynTrackerVis should be accessible under: http://localhost:5006/syntracker_vis .
 
 ## Input
 
 #### Mandatory input:
-SynTracker's output file 'synteny_scores_per_region.csv' for one or multiple genomes.  
+SynTracker's output file 'synteny_scores_per_region.csv' for one or multiple species.  
 Note that if the file is bigger than 300 Mb, it cannot be selected via the FileInput widget, but it's full path should
 be typed into the TextInput field.
 
@@ -75,16 +76,16 @@ in the uploaded SynTracker output file. The metadata may contain an unlimited nu
 
 ## Visualization
 
-When uploading a summary file which contains SynTracker's results for more than one reference genome, SynTrackerVis 
-presents both Single Genome Visualization and Multiple Genomes Visualization in separate tabs. 
+When uploading a summary file which contains SynTracker's results for more than one species, SynTrackerVis 
+presents both Single Species Visualization and Multiple Species Visualization in separate tabs. 
 
-#### A. Single Genome Visualization
-The analysis is performed for one reference genome at a time. The reference genome can be selected from a drop-down menu, 
-containing all the genomes in the input file. The list of genomes may be sorted by the number of compared sample-pairs 
-(in order to display the more abundant species first), or by the genome names.
+#### A. Single Species Visualization
+The analysis is performed for one species at a time. The species can be selected from a drop-down menu, 
+containing all the species in the input file. The list of species may be sorted by the number of compared sample-pairs 
+(in order to display the more abundant species first), or by the species names.
 
-#### B. Multiple Genomes Visualization
-The analysis is performed for all the reference genomes together or for a selected set.
+#### B. Multiple Species Visualization
+The analysis is performed for all the species together or for a selected set.
 
 ### Customizing the plots
 

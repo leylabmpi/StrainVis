@@ -4,7 +4,7 @@ import colorcet as cc
 col_set = ['Ref_genome', 'Sample1', 'Sample2', 'Region', 'Synteny_score']
 sampling_sizes = ['All', '40', '60', '80', '100', '125', '150', '175', '200', '250', '300', '350', '400']
 sampling_sizes_wo_all = ['40', '60', '80', '100', '125', '150', '175', '200', '250', '300', '350', '400']
-genomes_sorting_options = ['Number of compared pairs', 'Genome name']
+genomes_sorting_options = ['Number of compared pairs', 'Species name']
 contig_sorting_options = ['Contig length', 'Contig name']
 catplot_types = ['Scatter (jitter) plot', 'Boxplot']
 min_pairs_for_all_regions = 100

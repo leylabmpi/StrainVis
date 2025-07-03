@@ -40,7 +40,7 @@ def change_disabled_state_straight(chkbox_state):
 
 
 def change_collapse_state(selection_val):
-    if selection_val == 'All genomes':
+    if selection_val == 'All species':
         return True
     else:
         return False
@@ -186,20 +186,20 @@ class SynTrackerVisApp:
         self.header_buttons = pn.widgets.ToggleGroup(name='header_buttons', options=['Home', 'Help'], behavior="radio",
                                                      button_type='primary', stylesheets=[button_css])
         self.header_buttons.param.watch(self.load_correct_page, 'value')
-        self.menu_row = pn.Row(self.header_buttons, styles=config.menu_row_style, sizing_mode='fixed')
+        self.menu_row = pn.Row(self.header_buttons, styles=config.menu_row_style)
         self.header_container = pn.Column(
             self.menu_row,
-            styles=config.header_container_style, sizing_mode='fixed')
+            styles=config.header_container_style)
         self.template.header.append(self.header_container)
 
         self.main_container = pn.Column(sizing_mode='stretch_width')
-        self.main_area = pn.Column(styles=config.main_area_style, sizing_mode='fixed')
+        self.main_area = pn.Column(styles=config.main_area_style)
         
         # Reading the manual.md into a variable and display it in a markdown pane
         manual_file_path = self.working_directory + config.manual_file
         with open(manual_file_path, 'r') as manual:
             manual_content = manual.read()
-        self.help_area = pn.Column(styles=config.main_area_style, sizing_mode='fixed')
+        self.help_area = pn.Column(styles=config.main_area_style)
         self.help_area.append(pn.pane.Markdown(manual_content, styles={'font-size': "16px"}))
 
         self.main_container.append(self.main_area)
@@ -219,7 +219,7 @@ class SynTrackerVisApp:
         self.new_file_button = pn.widgets.Button(name='Process a new input file', button_type='primary')
         self.new_file_button.on_click(self.create_new_session)
 
-        self.genomes_select = pn.widgets.Select(name='Select a reference genome to process:', value=None,
+        self.genomes_select = pn.widgets.Select(name='Select a species to process:', value=None,
                                                 options=[], styles={'margin': "0"})
         self.genomes_sort_select = pn.widgets.Select(name='Sort by:', value=config.genomes_sorting_options[0],
                                                      options=config.genomes_sorting_options, styles={'margin': "0"})
@@ -230,22 +230,22 @@ class SynTrackerVisApp:
         self.show_single_plots_button.on_click(self.create_single_genome_plots_by_APSS)
 
         self.all_or_subset_radio = pn.widgets.RadioBoxGroup(name='all_or_subset',
-                                                            options=['All genomes', 'Select a subset of genomes'],
+                                                            options=['All species', 'Select a subset of species'],
                                                             inline=False, styles={'font-size': "16px"})
-        self.genomes_select_card = pn.Card(title='Genomes subset selection',
+        self.genomes_select_card = pn.Card(title='Species subset selection',
                                            collapsed=pn.bind(change_collapse_state,
                                                              selection_val=self.all_or_subset_radio, watch=True),
                                            styles={'margin': "5px 0 5px 10px", 'width': "600px"}
                                            )
-        self.genomes_subset_select = pn.widgets.MultiSelect(options=[],
+        self.genomes_subset_select = pn.widgets.MultiSelect(options=[], height=300,
                                                             disabled=pn.bind(change_collapse_state,
                                                                              selection_val=self.all_or_subset_radio,
                                                                              watch=True))
-        self.genomes_sort_select_multi = pn.widgets.Select(name='Sort genomes by:',
+        self.genomes_sort_select_multi = pn.widgets.Select(name='Sort species by:',
                                                            value=config.genomes_sorting_options[0],
                                                            options=config.genomes_sorting_options, width=200,
                                                            styles={'margin': "0"})
-        self.update_genomes_selection_button = pn.widgets.Button(name='Update genomes selection',
+        self.update_genomes_selection_button = pn.widgets.Button(name='Update species selection',
                                                                  button_type='primary',
                                                                  styles={'margin': "12px 0 12px 10px"})
         self.update_genomes_selection_button.on_click(self.update_genomes_selection)
@@ -547,7 +547,7 @@ class SynTrackerVisApp:
                                                styles={'margin': "5px 0 5px 10px", 'width': "1000px"})
         self.synteny_per_pos_feature_select = pn.widgets.Select(options=['Select feature'], width=200,
                                                                 name="Filter plot by the following feature:")
-        self.synteny_per_pos_groups_select = pn.widgets.MultiSelect(options=[], width=350,
+        self.synteny_per_pos_groups_select = pn.widgets.MultiSelect(options=[], width=350, height=200, size=5,
                                                                     name='Include the following groups in the plot:')
         self.filter_synteny_per_pos_button = pn.widgets.Button(name='Filter plot', button_type='primary')
         self.filter_synteny_per_pos_button.on_click(self.filter_synteny_per_pos_plot)
@@ -560,7 +560,7 @@ class SynTrackerVisApp:
                                                styles={'font-size': "20px", 'color': config.title_purple_color,
                                                        'margin-bottom': "0"}))
 
-        file_upload_title = "Upload SynTracker's output table 'synteny_scores_per_region.csv' for one or multiple genomes:"
+        file_upload_title = "Upload SynTracker's output table 'synteny_scores_per_region.csv' for one or multiple species:"
         text_input_title = "Or, if the file size is bigger than 300 Mb, enter it's full path here:"
         self.main_area.append(pn.pane.Markdown(file_upload_title, styles={'font-size': "17px", 'margin-bottom': "0",
                                                                           'margin-top': "0"}))
@@ -575,7 +575,7 @@ class SynTrackerVisApp:
                                                styles={'font-size': "20px", 'color': config.title_purple_color,
                                                        'margin-bottom': "0"}))
 
-        metadata_upload_title = "Upload a metadata file for the compared genomes (in tab delimited format):"
+        metadata_upload_title = "Upload a metadata file for the compared samples (in tab delimited format):"
         self.main_area.append(pn.pane.Markdown(metadata_upload_title, styles={'font-size': "17px", 'margin-bottom': "0",
                                                                               'margin-top': "0"}))
         self.main_area.append(self.metadata_file)
@@ -633,59 +633,6 @@ class SynTrackerVisApp:
         del self.groups_per_feature_dict
         del self.APSS_by_genome_all_sizes_dict
         del self.APSS_all_genomes_all_sizes_dict
-        self.use_metadata_jitter.disabled = False
-        if self.threshold_select_watcher:
-            self.network_threshold_select.param.unwatch(self.threshold_select_watcher)
-        if self.threshold_input_watcher:
-            self.network_threshold_input.param.unwatch(self.threshold_input_watcher)
-        if self.nodes_colorby_watcher:
-            self.nodes_color_by.param.unwatch(self.nodes_colorby_watcher)
-        if self.continuous_watcher:
-            self.is_continuous.param.unwatch(self.continuous_watcher)
-        if self.colormap_watcher:
-            self.nodes_colormap.param.unwatch(self.colormap_watcher)
-        if self.custom_colormap_watcher:
-            self.custom_colormap_input.param.unwatch(self.custom_colormap_watcher)
-        if self.feature_colormap_watcher:
-            self.feature_colormap.param.unwatch(self.feature_colormap_watcher)
-        if self.feature_select_watcher:
-            self.box_plot_feature_select.param.unwatch(self.feature_select_watcher)
-        if self.genomes_select_watcher:
-            self.genomes_select.param.unwatch(self.genomes_select_watcher)
-        if self.genomes_sort_select_watcher:
-            self.genomes_sort_select.param.unwatch(self.genomes_sort_select_watcher)
-        if self.genomes_sort_select_multi_watcher:
-            self.genomes_sort_select_multi.param.unwatch(self.genomes_sort_select_multi_watcher)
-        if self.contig_select_watcher:
-            self.contig_select.param.unwatch(self.contig_select_watcher)
-        if self.avg_plot_chkbox_watcher:
-            self.avg_plot_chkbox.param.unwatch(self.avg_plot_chkbox_watcher)
-        if self.avg_plot_color_watcher:
-            self.avg_plot_color.param.unwatch(self.avg_plot_color_watcher)
-        if self.coverage_plot_chkbox_watcher:
-            self.coverage_plot_chkbox.param.unwatch(self.coverage_plot_chkbox_watcher)
-        if self.coverage_plot_color_watcher:
-            self.coverage_plot_color.param.unwatch(self.coverage_plot_color_watcher)
-        if self.hypervar_chkbox_watcher:
-            self.hypervar_chkbox.param.unwatch(self.hypervar_chkbox_watcher)
-        if self.hypervar_color_watcher:
-            self.hypervar_color.param.unwatch(self.hypervar_color_watcher)
-        if self.hypercons_chkbox_watcher:
-            self.hypercons_chkbox.param.unwatch(self.hypercons_chkbox_watcher)
-        if self.hypercons_color_watcher:
-            self.hypercons_color.param.unwatch(self.hypercons_color_watcher)
-        if self.alpha_slider_watcher:
-            self.alpha_slider.param.unwatch(self.alpha_slider_watcher)
-        if self.synteny_per_pos_feature_select_watcher:
-            self.synteny_per_pos_feature_select.param.unwatch(self.synteny_per_pos_feature_select_watcher)
-        if self.sorting_select_watcher:
-            self.sorting_select.param.unwatch(self.sorting_select_watcher)
-        self.network_threshold_select.options = []
-        self.visited_synteny_per_pos_tab = 0
-        self.finished_initial_synteny_per_pos_plot = 0
-        self.visited_multi_genome_tab = 0
-        self.network = ""
-        self.filter_plot_by_metadata = 0
 
         gc.collect()
 
@@ -694,6 +641,7 @@ class SynTrackerVisApp:
         #    pn.state.location.unsync(self.input_file)
         #if self.genomes_select.value is not None and self.genomes_select.value != "":
         #    pn.state.location.unsync(self.genomes_select)
+
         self.init_parameters()
         pn.state.location.reload = True
 
@@ -719,7 +667,7 @@ class SynTrackerVisApp:
 
             # Verify that the input is an existing file path
             if os.path.exists(self.text_input.value):
-                print("Input file path: " + self.text_input.value)
+                print("\n\nInput file path: " + self.text_input.value)
                 self.filename = os.path.basename(self.text_input.value)
                 print("Input file name: " + self.filename)
                 self.display_results_page()
@@ -903,12 +851,12 @@ class SynTrackerVisApp:
                 self.genomes_sort_select_multi_watcher = self.genomes_sort_select_multi.param.watch(
                     self.changed_multi_genomes_sorting, 'value', onlychanged=True)
 
-                self.single_multi_genome_tabs.append(('Single genome visualization', self.main_single_column))
+                self.single_multi_genome_tabs.append(('Single species visualization', self.main_single_column))
 
-                multi_message = "Preparing the multiple genomes visualization - please wait..."
+                multi_message = "Preparing the multiple species visualization - please wait..."
                 self.main_multi_column.append(pn.pane.Markdown(multi_message, styles={'font-size': "20px",
                                                                                       'margin': "0"}))
-                self.single_multi_genome_tabs.append(('Multiple genomes visualization', self.main_multi_column))
+                self.single_multi_genome_tabs.append(('Multiple species visualization', self.main_multi_column))
 
                 self.single_multi_genome_tabs.param.watch(self.changed_single_multi_tabs, 'active')
 
@@ -923,7 +871,7 @@ class SynTrackerVisApp:
         # Create the multiple-genome visualization layout when the user selects the multi-genome tab for the first time
         if self.single_multi_genome_tabs.active == 1 and self.visited_multi_genome_tab == 0:
             before = time.time()
-            print("\nCalling create_multi_genome_column to create the multiple-genomes visualization")
+            print("\nCalling create_multi_genome_column to create the multiple-species visualization")
             self.create_multi_genome_column()
             after = time.time()
             duration = after - before
@@ -933,10 +881,10 @@ class SynTrackerVisApp:
 
     def changed_genomes_sorting(self, event):
         sorting_method = self.genomes_sort_select.value
-        print("\nChanged genomes sorting method. Sort by: " + sorting_method)
+        print("\nChanged species sorting method. Sort by: " + sorting_method)
 
         # Change the order of the contigs selection and present the first one in the new order
-        if sorting_method == "Genome name":
+        if sorting_method == "Species name":
             self.genomes_select.options = self.ref_genomes_list
             self.genomes_select.value = self.ref_genomes_list[0]
         else:
@@ -945,16 +893,16 @@ class SynTrackerVisApp:
 
     def changed_multi_genomes_sorting(self, event):
         sorting_method = self.genomes_sort_select_multi.value
-        print("\nChanged sorting method for genomes subset selection. Sort by: " + sorting_method)
+        print("\nChanged sorting method for species subset selection. Sort by: " + sorting_method)
 
-        if sorting_method == "Genome name":
+        if sorting_method == "Species name":
             self.genomes_subset_select.options = self.ref_genomes_list
         else:
             self.genomes_subset_select.options = self.ref_genomes_list_by_pairs_num
 
     def select_ref_genome(self, ref_genome, event):
         self.ref_genome = ref_genome.value
-        print("\n\nSelected ref genome = " + self.ref_genome)
+        print("\n\nSelected species = " + self.ref_genome)
 
         self.init_ref_genome()
 
@@ -969,13 +917,29 @@ class SynTrackerVisApp:
         self.selected_contig_column.clear()
         self.synteny_per_pos_plot_column.clear()
 
+        # Stop watching the contig-related widgets
+        if self.visited_synteny_per_pos_tab and self.finished_initial_synteny_per_pos_plot and len(self.contigs_list_by_name) > 1:
+            # print("\nUnwatching contig_select and sorting_select widgets")
+            self.contig_select.param.unwatch(self.contig_select_watcher)
+            self.sorting_select.param.unwatch(self.sorting_select_watcher)
+            self.avg_plot_chkbox.param.unwatch(self.avg_plot_chkbox_watcher)
+            self.avg_plot_color.param.unwatch(self.avg_plot_color_watcher)
+            self.coverage_plot_chkbox.param.unwatch(self.coverage_plot_chkbox_watcher)
+            self.coverage_plot_color.param.unwatch(self.coverage_plot_color_watcher)
+            self.hypervar_chkbox.param.unwatch(self.hypervar_chkbox_watcher)
+            self.hypervar_color.param.unwatch(self.hypervar_color_watcher)
+            self.hypercons_chkbox.param.unwatch(self.hypercons_chkbox_watcher)
+            self.hypercons_color.param.unwatch(self.hypercons_color_watcher)
+            self.alpha_slider.param.unwatch(self.alpha_slider_watcher)
+            self.synteny_per_pos_feature_select.param.unwatch(self.synteny_per_pos_feature_select_watcher)
+
         # Initialize variables
         self.contigs_list_by_length = []
         self.contigs_list_by_name = []
         self.visited_synteny_per_pos_tab = 0
         self.finished_initial_synteny_per_pos_plot = 0
         self.single_tabs.active = 0
-        del self.score_per_region_selected_genome_df
+
         del self.score_per_pos_contig
         del self.score_per_pos_contig_filtered
         del self.df_for_jitter
@@ -1000,38 +964,12 @@ class SynTrackerVisApp:
         self.hypercons_chkbox.value = True
         self.filter_plot_by_metadata = 0
 
-        # Stop watching the contig-related widgets
-        if self.contig_select_watcher:
-            self.contig_select.param.unwatch(self.contig_select_watcher)
-        if self.sorting_select_watcher:
-            self.sorting_select.param.unwatch(self.sorting_select_watcher)
-        if self.avg_plot_chkbox_watcher:
-            self.avg_plot_chkbox.param.unwatch(self.avg_plot_chkbox_watcher)
-        if self.avg_plot_color_watcher:
-            self.avg_plot_color.param.unwatch(self.avg_plot_color_watcher)
-        if self.coverage_plot_chkbox_watcher:
-            self.coverage_plot_chkbox.param.unwatch(self.coverage_plot_chkbox_watcher)
-        if self.coverage_plot_color_watcher:
-            self.coverage_plot_color.param.unwatch(self.coverage_plot_color_watcher)
-        if self.hypervar_chkbox_watcher:
-            self.hypervar_chkbox.param.unwatch(self.hypervar_chkbox_watcher)
-        if self.hypervar_color_watcher:
-            self.hypervar_color.param.unwatch(self.hypervar_color_watcher)
-        if self.hypercons_chkbox_watcher:
-            self.hypercons_chkbox.param.unwatch(self.hypercons_chkbox_watcher)
-        if self.hypercons_color_watcher:
-            self.hypercons_color.param.unwatch(self.hypercons_color_watcher)
-        if self.alpha_slider_watcher:
-            self.alpha_slider.param.unwatch(self.alpha_slider_watcher)
-        if self.synteny_per_pos_feature_select_watcher:
-            self.synteny_per_pos_feature_select.param.unwatch(self.synteny_per_pos_feature_select_watcher)
-
         gc.collect()
 
     def create_single_genome_column(self):
         before = time.time()
 
-        ref_genome_title = "Reference Genome: " + self.ref_genome
+        ref_genome_title = "Species: " + self.ref_genome
 
         self.ref_genome_column.append(pn.pane.Markdown(ref_genome_title,
                                                        styles={'font-size': "22px", 'color': config.title_purple_color,
@@ -1039,7 +977,7 @@ class SynTrackerVisApp:
 
         synteny_per_pos_message = "Preparing the plot - please wait..."
         self.synteny_per_pos_plot_column.append(pn.pane.Markdown(synteny_per_pos_message, styles={'font-size': "20px",
-                                                                                    'margin': "0"}))
+                                                                                                  'margin': "0"}))
 
         # Get the score-per-region table for the selected genome only
         self.score_per_region_selected_genome_df = ds.return_selected_genome_table(self.score_per_region_all_genomes_df,
@@ -1128,13 +1066,13 @@ class SynTrackerVisApp:
     def create_initial_synteny_per_pos_plot_tab(self):
 
         # Get the sorted contigs lists
-        #print("\nCalling return_sorted_contigs_lists to sort the contigs")
+        print("\n\nStart create_initial_synteny_per_pos_plot_tab in another thread.")
         before = time.time()
         self.contigs_list_by_name, self.contigs_list_by_length = \
             ds.return_sorted_contigs_lists(self.score_per_region_selected_genome_df)
         after = time.time()
         duration = after - before
-        print("return_sorted_contigs_lists took " + str(duration) + " seconds.\n")
+        #print("return_sorted_contigs_lists took " + str(duration) + " seconds.\n")
         #print(self.score_per_region_selected_genome_df)
 
         # Calculate the average score and std for the whole genome (all contigs)
@@ -1178,18 +1116,6 @@ class SynTrackerVisApp:
             self.sorting_select.options = config.contig_sorting_options
             self.sorting_select.value = config.contig_sorting_options[0]
 
-            # When the selection of contig is changed, a new column is created for the selected contig
-            self.contig_select_watcher = self.contig_select.param.watch(partial(self.changed_contig,
-                                                                                self.contig_select),
-                                                                        'value', onlychanged=True)
-
-            # When the selection of sorting method is changed, sort the contigs in the contigs-select drop-down menu
-            # accordingly
-            self.sorting_select_watcher = self.sorting_select.param.watch(partial(self.changed_contig_sorting,
-                                                                                  self.sorting_select,
-                                                                                  self.contig_select),
-                                                                          'value', onlychanged=True)
-
             contig_select_row = pn.Row(self.contig_select, pn.Spacer(width=20), self.sorting_select)
 
             self.synteny_per_pos_plot_column.clear()
@@ -1202,33 +1128,50 @@ class SynTrackerVisApp:
             self.synteny_per_pos_plot_column.append(self.selected_contig_column)
 
         self.finished_initial_synteny_per_pos_plot = 1
+        print("\nFinished creating initial synteny_per_pos display")
 
     def changed_single_tabs(self, event):
 
         # The synteny_per_pos plots tab is selected for the first time for the current reference genome
         if self.single_tabs.active == 1 and self.visited_synteny_per_pos_tab == 0:
 
+            # In case calculating the initial tab (running in a different thread) hasn't finished yet,
+            # wait for it to finish
+            while self.finished_initial_synteny_per_pos_plot == 0:
+                time.sleep(1)
+
             # Building the initial synteny_per_pos plots tab has finished
-            if self.finished_initial_synteny_per_pos_plot:
+            #if self.finished_initial_synteny_per_pos_plot:
 
-                contigs_num = len(self.contigs_list_by_name)
+            contigs_num = len(self.contigs_list_by_name)
 
-                # If there is more than one contig -
-                # trigger changed_contig to create the synteny_per_pos plot for the selected contig
-                if contigs_num > 1:
-                    self.contig_select.param.trigger('value')
+            # If there is more than one contig -
+            # trigger changed_contig to create the synteny_per_pos plot for the selected contig
+            if contigs_num > 1:
+                # When the selection of contig is changed, a new column is created for the selected contig
+                self.contig_select_watcher = self.contig_select.param.watch(partial(self.changed_contig,
+                                                                                    self.contig_select),
+                                                                            'value', onlychanged=True)
 
-                # Create the synteny_per_pos plot for the Ref-genome
-                else:
-                    self.contig_name = self.contigs_list_by_name[0]
-                    self.create_selected_contig_column()
+                # When the selection of sorting method is changed, sort the contigs in the contigs-select drop-down
+                # menu accordingly
+                self.sorting_select_watcher = self.sorting_select.param.watch(partial(self.changed_contig_sorting,
+                                                                                      self.sorting_select,
+                                                                                      self.contig_select),
+                                                                              'value', onlychanged=True)
+                self.contig_select.param.trigger('value')
 
-                self.visited_synteny_per_pos_tab = 1
+            # Create the synteny_per_pos plot for the Ref-genome
+            else:
+                self.contig_name = self.contigs_list_by_name[0]
+                self.create_selected_contig_column()
+
+            self.visited_synteny_per_pos_tab = 1
 
     def create_single_genome_plots_by_APSS(self, event):
 
         self.sampling_size = self.sample_sizes_slider.value
-        print("\nSingle genome visualization. Selected subsampling size = " + self.sampling_size)
+        print("\nSingle species visualization. Selected subsampling size = " + self.sampling_size)
 
         self.plots_by_size_single_column.clear()
         self.jitter_card.clear()
@@ -1238,20 +1181,20 @@ class SynTrackerVisApp:
         self.metadata_colorby_card.clear()
         self.metadata_jitter_card.clear()
         self.network_iterations.value = config.network_iterations_options[0]
-        if self.threshold_select_watcher:
+        if self.threshold_select_watcher in self.network_threshold_select.param.watchers:
             self.network_threshold_select.param.unwatch(self.threshold_select_watcher)
-        if self.threshold_input_watcher:
+        if self.threshold_input_watcher in self.network_threshold_input.param.watchers:
             self.network_threshold_input.param.unwatch(self.threshold_input_watcher)
         if self.is_metadata:
-            if self.continuous_watcher:
+            if self.continuous_watcher in self.is_continuous.param.watchers:
                 self.is_continuous.param.unwatch(self.continuous_watcher)
-            if self.colormap_watcher:
+            if self.colormap_watcher in self.nodes_colormap.param.watchers:
                 self.nodes_colormap.param.unwatch(self.colormap_watcher)
-            if self.custom_colormap_watcher:
+            if self.custom_colormap_watcher in self.custom_colormap_input.param.watchers:
                 self.custom_colormap_input.param.unwatch(self.custom_colormap_watcher)
-            if self.nodes_colorby_watcher:
+            if self.nodes_colorby_watcher in self.nodes_color_by.param.watchers:
                 self.nodes_color_by.param.unwatch(self.nodes_colorby_watcher)
-            if self.feature_colormap_watcher:
+            if self.feature_colormap_watcher in self.feature_colormap.param.watchers:
                 self.feature_colormap.param.unwatch(self.feature_colormap_watcher)
         self.network_threshold_input.value = config.APSS_connections_threshold_default
         self.is_continuous.value = False
@@ -1568,8 +1511,7 @@ class SynTrackerVisApp:
                                        feature=self.color_by_feature,
                                        cmap_metadata=self.feature_colormap.value_name,
                                        custom_cmap=self.custom_colormap_input_clustermap,
-                                       metadata_dict=self.metadata_dict,
-                                       groups_per_feature_dict=self.groups_per_feature_dict)
+                                       metadata_dict=self.metadata_dict)
 
         self.clustermap_pane.object = self.clustermap_plot
 
@@ -2080,16 +2022,25 @@ class SynTrackerVisApp:
         print("\nChanged_contig, contig name: " + self.contig_name)
 
         # Unwatch all contig-specific widgets
-        if self.avg_plot_chkbox_watcher:
+        if self.avg_plot_chkbox_watcher in self.avg_plot_chkbox.param.watchers:
             self.avg_plot_chkbox.param.unwatch(self.avg_plot_chkbox_watcher)
+        if self.avg_plot_color_watcher in self.avg_plot_color.param.watchers:
             self.avg_plot_color.param.unwatch(self.avg_plot_color_watcher)
+        if self.coverage_plot_chkbox_watcher in self.coverage_plot_chkbox.param.watchers:
             self.coverage_plot_chkbox.param.unwatch(self.coverage_plot_chkbox_watcher)
+        if self.coverage_plot_color_watcher in self.coverage_plot_color.param.watchers:
             self.coverage_plot_color.param.unwatch(self.coverage_plot_color_watcher)
+        if self.hypervar_chkbox_watcher in self.hypervar_chkbox.param.watchers:
             self.hypervar_chkbox.param.unwatch(self.hypervar_chkbox_watcher)
+        if self.hypervar_color_watcher in self.hypervar_color.param.watchers:
             self.hypervar_color.param.unwatch(self.hypervar_color_watcher)
+        if self.hypercons_chkbox_watcher in self.hypercons_chkbox.param.watchers:
             self.hypercons_chkbox.param.unwatch(self.hypercons_chkbox_watcher)
+        if self.hypercons_color_watcher in self.hypercons_color.param.watchers:
             self.hypercons_color.param.unwatch(self.hypercons_color_watcher)
+        if self.alpha_slider_watcher in self.alpha_slider.param.watchers:
             self.alpha_slider.param.unwatch(self.alpha_slider_watcher)
+        if self.synteny_per_pos_feature_select_watcher in self.synteny_per_pos_feature_select.param.watchers:
             self.synteny_per_pos_feature_select.param.unwatch(self.synteny_per_pos_feature_select_watcher)
 
         self.coverage_plot = ""
@@ -2170,6 +2121,8 @@ class SynTrackerVisApp:
 
         # There is metadata
         if self.is_metadata:
+
+            self.filter_by_metadata_card.clear()
 
             # Update the synteny_per_pos_feature_select drop-down menu with the available metadata features
             feature = self.metadata_features_list[0]
@@ -2315,9 +2268,10 @@ class SynTrackerVisApp:
 
         self.synteny_per_pos_groups_select.options = unique_groups
 
-        # Reset filteration
-        self.filter_plot_by_metadata = 0
-        self.update_synteny_per_pos_plot()
+        # Reset filteration if needed
+        if self.filter_plot_by_metadata:
+            self.filter_plot_by_metadata = 0
+            self.update_synteny_per_pos_plot()
 
     def create_synteny_per_pos_plot(self):
         before = time.time()
@@ -2745,10 +2699,12 @@ class SynTrackerVisApp:
         self.sample_sizes_slider_multi.value = config.sampling_sizes[0]
 
         self.genomes_subset_select.options = self.ref_genomes_list_by_pairs_num
-        if self.number_of_genomes > 20:
-            self.genomes_subset_select.size = 20
-        else:
-            self.genomes_subset_select.size = self.number_of_genomes
+
+        # Doesn't work
+        #if self.number_of_genomes > 20:
+        #    self.genomes_subset_select.size = 20
+        #else:
+        #    self.genomes_subset_select.size = self.number_of_genomes
 
         genomes_select_col = pn.Column(pn.Spacer(height=12), self.genomes_subset_select)
         genomes_select_row = pn.Row(genomes_select_col, pn.Spacer(width=10), self.genomes_sort_select_multi,
@@ -2756,7 +2712,7 @@ class SynTrackerVisApp:
         self.genomes_select_card.append(genomes_select_row)
 
         # Build the two bar-plots for subsampled regions based on the selected list of genomes
-        if self.all_or_subset_radio.value == 'All genomes':
+        if self.all_or_subset_radio.value == 'All species':
             self.selected_genomes_subset = self.ref_genomes_list
         else:
             self.selected_genomes_subset = self.genomes_subset_select.value
@@ -2778,14 +2734,14 @@ class SynTrackerVisApp:
 
     def update_genomes_selection(self, event):
         # Build the two bar-plots for subsampled regions based on the selected list of genomes
-        if self.all_or_subset_radio.value == 'All genomes':
+        if self.all_or_subset_radio.value == 'All species':
             self.selected_genomes_subset = self.ref_genomes_list
         else:
             self.selected_genomes_subset = self.genomes_subset_select.value
 
         self.selected_subset_species_num = len(self.selected_genomes_subset)
 
-        print("\nupdate_genomes_selection:\nNumber of selected genomes: " + str(self.selected_subset_species_num))
+        print("\nupdate_genomes_selection:\nNumber of selected species: " + str(self.selected_subset_species_num))
         print(self.selected_genomes_subset)
 
         self.create_multi_genomes_plots_initial_column()
@@ -2867,14 +2823,14 @@ class SynTrackerVisApp:
     def create_multi_genomes_plots_by_APSS(self, event):
 
         self.sampling_size_multi = self.sample_sizes_slider_multi.value
-        print("\nMulti genomes visualization. Selected subsampling size = " + self.sampling_size_multi)
+        print("\nMulti species visualization. Selected subsampling size = " + self.sampling_size_multi)
 
         self.species_num_at_sampling_size = self.pairs_num_per_sampling_size_multi_genomes_df.loc[
             self.pairs_num_per_sampling_size_multi_genomes_df['Subsampled_regions'] == self.sampling_size_multi,
             'Number_of_species'].values[0]
         print("Number of species at this sampling size: " + str(self.species_num_at_sampling_size))
 
-        if self.feature_select_watcher:
+        if self.feature_select_watcher in self.box_plot_feature_select.param.watchers:
             self.box_plot_feature_select.param.unwatch(self.feature_select_watcher)
         self.plots_by_size_multi_column.clear()
         self.box_plot_card.clear()
@@ -2904,7 +2860,7 @@ class SynTrackerVisApp:
             after = time.time()
             duration = after - before
             print("Calculating APSS with " + str(self.sampling_size_multi ) + " regions for " +
-                  str(self.number_of_genomes) + " genomes took " + str(duration) + " seconds.\n")
+                  str(self.number_of_genomes) + " species took " + str(duration) + " seconds.\n")
             # Save the dataframe in the main dictionary
             self.APSS_all_genomes_all_sizes_dict[self.sampling_size_multi] = all_genomes_selected_size_APSS_df
             self.calculated_APSS_all_genomes_size_dict[self.sampling_size_multi] = 1
@@ -2945,15 +2901,15 @@ class SynTrackerVisApp:
         download_button.on_click(self.download_box_plot)
 
         if self.species_num_at_sampling_size == self.number_of_genomes:
-            box_plot_file = "Boxplot_all_genomes_" + self.sampling_size_multi
-            boxplot_table = "Data_for_boxplot_all_genomes_" + self.sampling_size_multi
-            pvalues_table = "P-values_all_genomes_" + self.sampling_size_multi
+            box_plot_file = "Boxplot_all_species_" + self.sampling_size_multi
+            boxplot_table = "Data_for_boxplot_all_species_" + self.sampling_size_multi
+            pvalues_table = "P-values_all_species_" + self.sampling_size_multi
         else:
-            box_plot_file = "Boxplot_" + str(self.species_num_at_sampling_size) + "_genomes_" + \
+            box_plot_file = "Boxplot_" + str(self.species_num_at_sampling_size) + "_species_" + \
                             self.sampling_size_multi + "_regions"
-            boxplot_table = "Data_for_boxplot_" + str(self.species_num_at_sampling_size) + "_genomes_" + \
+            boxplot_table = "Data_for_boxplot_" + str(self.species_num_at_sampling_size) + "_species_" + \
                             self.sampling_size_multi + "_regions"
-            pvalues_table = "P-values_" + str(self.species_num_at_sampling_size) + "_genomes_" + \
+            pvalues_table = "P-values_" + str(self.species_num_at_sampling_size) + "_species_" + \
                             self.sampling_size_multi + "_regions"
         self.save_box_plot_file_path.placeholder = box_plot_file
         self.save_boxplot_table_path.placeholder = boxplot_table
@@ -3017,17 +2973,17 @@ class SynTrackerVisApp:
         feature = self.box_plot_feature_select.value
 
         print("\ncalculate_metadata_for_box_plot:")
-        print("Number of genomes to present: " + str(self.species_num_at_sampling_size))
+        print("Number of species to present: " + str(self.species_num_at_sampling_size))
         print("Compared feature: " + feature)
 
         if self.species_num_at_sampling_size == self.number_of_genomes:
-            box_plot_file = "Boxplot_all_genomes_"
-            boxplot_table = "Data_for_boxplot_all_genomes_"
-            pvalues_table = "P-values_all_genomes_"
+            box_plot_file = "Boxplot_all_species_"
+            boxplot_table = "Data_for_boxplot_all_species_"
+            pvalues_table = "P-values_all_species_"
         else:
-            box_plot_file = "Boxplot_" + str(self.species_num_at_sampling_size) + "_genomes_"
-            boxplot_table = "Data_for_boxplot_" + str(self.species_num_at_sampling_size) + "_genomes_"
-            pvalues_table = "P-values_" + str(self.species_num_at_sampling_size) + "_genomes_"
+            box_plot_file = "Boxplot_" + str(self.species_num_at_sampling_size) + "_species_"
+            boxplot_table = "Data_for_boxplot_" + str(self.species_num_at_sampling_size) + "_species_"
+            pvalues_table = "P-values_" + str(self.species_num_at_sampling_size) + "_species_"
 
         self.save_box_plot_file_path.placeholder = box_plot_file + self.sampling_size_multi + "_regions_feature_" + \
                                                    feature

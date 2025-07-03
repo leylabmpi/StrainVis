@@ -1,15 +1,15 @@
 # SynTrackerVis: a Python-based web application for interactive visual analysis of SynTracker's results
 
-### Version 1.0.6
+### Version 1.0.7
 
 ## Overview
 
 SynTrackerVis is a Python-based web application, designated for visual analyses and interactive exploration of the results obtained by the SynTracker pipeline.  
 
-SynTrackerVis accepts a 'synteny_scores_per_region.csv' file, containing either one reference genome or multiple reference genomes.
-It presents accordingly analyses for each genome separately and for multiple genomes together.  
+SynTrackerVis accepts a 'synteny_scores_per_region.csv' file, containing either one reference genome or multiple reference genomes (usually, one reference genome per species).
+It presents accordingly analyses for each species separately and for multiple species together.  
 A metadata file (matches to the samples that were previously compared by SynTracker) may also be provided
-in order to enable a deeper analaysis of SynTracker's redults.  
+in order to enable a deeper analysis of SynTracker's results.  
 
 SynTrackerVis allows the user to interactively select the plots that he would like to present and to change visual parameters in each plot.
 It also enables to interactively select the metadata feature by which the samples should be grouped and coloured (for each plot separately).  
@@ -38,12 +38,24 @@ To launch the server from the command-line and open the application in the brows
 
 `panel serve syntracker_vis.py --port 5005 --websocket-max-message-size 524288000 --show &`
 
-The appplication should be opened in the browser under the URL: http://localhost:5005/syntracker_vis.  
+The application should be opened in the browser under the URL: http://localhost:5005/syntracker_vis.  
 As long as the Bokeh server is running, SynTrackerVis application can be accessed using the above URL.  
 Please note that several instances of SynTrackerVis can be opened simultaneously in different browser windows/tabs.  
 It is also possible to launch more than several server processes simultaneously using different ports. 
 
 **Stop the server**: In order to stop the Bokeh server, its running process should be killed.
+
+### Open several SynTrackerVis sessions
+
+- **Several user-sessions using the same web-server instance:** It is possible to open as many user sessions as needed under the same server instance that was started using the 'panel serve...' command.
+All sessions will be accessible under the same URL (for example: http://localhost:5005/syntracker_vis). 
+Each session works separately and can process a different dataset, but since all of them are executed by the same process, 
+if one session is busy processing a heavy-duty task, it will affect all the other user sessions.
+- **Several web-server instances:** In order to process different datasets at the same time using separated computational resources, 
+it is needed to start several web-server instances listening to different ports.
+It simply means to run the 'panel serve...' command using a different port number for each SynTrackerVis instance.
+Each web-server instance will be accessible under: http://localhost:<port_number>/syntracker_vis.
+
 
 ## Run SynTrackerVis on a remote server and open it in a local browser
 
@@ -65,7 +77,7 @@ Note that it is important not to use the --show option when SynTracker runs on a
 ## Input
 
 #### Mandatory input:
-SynTracker's output file 'synteny_scores_per_region.csv' for one or multiple genomes.  
+SynTracker's output file 'synteny_scores_per_region.csv' for one or multiple species.  
 Note that if the file is bigger than 300 Mb, it cannot be selected via the FileInput widget, but it's full path should
 be typed into the TextInput field.
 
@@ -75,16 +87,16 @@ in the uploaded SynTracker output file. The metadata may contain an unlimited nu
 
 ## Visualization
 
-When uploading a summary file which contains SynTracker's results for more than one reference genome, SynTrackerVis 
-presents both Single Genome Visualization and Multiple Genomes Visualization in separate tabs. 
+When uploading a summary file which contains SynTracker's results for more than one species, SynTrackerVis 
+presents both Single Species Visualization and Multiple Species Visualization in separate tabs. 
 
-#### A. Single Genome Visualization
-The analysis is performed for one reference genome at a time. The reference genome can be selected from a drop-down menu, 
-containing all the genomes in the input file. The list of genomes may be sorted by the number of compared sample-pairs 
-(in order to display the more abundant species first), or by the genome names.
+#### A. Single Species Visualization
+The analysis is performed for one species at a time. The species can be selected from a drop-down menu, 
+containing all the species in the input file. The list of species may be sorted by the number of compared sample-pairs 
+(in order to display the more abundant species first), or by the species names.
 
-#### B. Multiple Genomes Visualization
-The analysis is performed for all the reference genomes together or for a selected set.
+#### B. Multiple Species Visualization
+The analysis is performed for all the species together or for a selected set.
 
 ### Customizing the plots
 
@@ -106,9 +118,9 @@ The user may enter the name of the file (including full path), or use the defaul
 
 2. **Save data table:** The data table that was used to create the plot can be saved as text in a delimited format.
 
-## Single Genome Visualization
+## Single Species Visualization
 
-The single genome visualization is combined of two types of analyses:
+The single species visualization is combined of two types of analyses:
 
 1. **APSS-based analyses:** Analyses based on the APSS (Average Pairwise Synteny Scores) that are calculated 
 using N sub-sampled regions (according to the user's choice). 
@@ -252,16 +264,16 @@ They appear in at least 50% of the compared sample-pairs.
 - **Filter plot button:** Clicking this button updates the plot, so that only pairwise comparisons, originating from the selected groups of the selected feature, will be included in the plot.
 - **Reset filteration button:** Clicking this button resets the filtering and updates the plot so that all data is shown.
 
-## Multiple Genomes Visualization
+## Multiple Species Visualization
 
-The multiple genomes visualisation tab is active when the input file contains more than one reference genomes. 
-It presents APSS-based analysis for all the reference genomes or for a selected subset.
+The multiple Species visualisation tab is active when the input file contains more than one species. 
+It presents APSS-based analysis for all the species or for a selected subset.
 
-### Setting the genomes that will be included in the analysis
-- **All genomes:** Include all available reference genomes.
-- **Select a subset of genomes:** Using the multi-select widget, it is possible to select specific genomes to be included in the analysis.
-By default, the genomes are sorted by their abundance (the number of compared pairs), but they can be sorted alphabetically by their names as well.
-- **Update genome selection button:** Clicking this button updates the set of genomes that are included in the analysis.
+### Setting the species that will be included in the analysis
+- **All species:** Include all available species.
+- **Select a subset of species:** Using the multi-select widget, it is possible to select specific species to be included in the analysis.
+By default, the species are sorted by their abundance (the number of compared pairs), but they can be sorted alphabetically by their names as well.
+- **Update species selection button:** Clicking this button updates the set of species that are included in the analysis.
 
 ### Initial bar-plots
 The initial presented bar-plots allow the user to interactively change the number of sub-sampled regions
@@ -276,7 +288,7 @@ By clicking the 'Display plots using the selected number of regions' button, the
 
 ### APSS distribution among species plot
 
-This plot shows the APSS distribution among all the compared sample-pairs of each included reference genome as a boxplot.  
+This plot shows the APSS distribution among all the compared sample-pairs of each included species as a boxplot.  
 The plot color can be changed using the color-picker widget.  
 
 **Including metadata:** When checking the 'Use metadata in plot' checkbox, it is possible to select a feature, 

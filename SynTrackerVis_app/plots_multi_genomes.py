@@ -95,7 +95,7 @@ def create_box_plot(avg_df, pvalues_df, color, use_metadata, feature, same_color
     box_plot.yaxis.grid(True)  # Hide the horizontal gridlines
     box_plot.xaxis.grid(True)  # Show the vertical gridlines
     box_plot.set_xlabel('APSS', fontsize=14)
-    box_plot.set_ylabel('Genome', fontsize=14)
+    box_plot.set_ylabel('Species', fontsize=14)
 
     fig = box_plot.figure
     plt.close()

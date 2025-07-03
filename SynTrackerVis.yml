@@ -1,11 +1,11 @@
-name: SynTracker_Vis
+name: SynTracker_Vis_1_0_7_try
 
 channels:
   - conda-forge
 
 dependencies:
   - python
-  - panel
+  - panel>=1.6.1
   - hvplot
   - seaborn
   - scipy

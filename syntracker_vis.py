@@ -4,11 +4,6 @@ from SynTrackerVis_app.syntracker_vis_app import SynTrackerVisApp
 
 MAX_SIZE_MB = 500
 
-#pn.extension(
-#    disconnect_notification='Connection lost, try reloading the page!'
-#)
-
-
 def get_user_page():
     app = SynTrackerVisApp()
     template = app.template
