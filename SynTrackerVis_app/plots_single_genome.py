@@ -265,7 +265,6 @@ def cretae_network_plot(network, is_metadata, nodes_feature, is_continuous, cmap
             #print(unique_groups)
 
             cmap_length = len(cmap)
-            #print("Cmap length = " + str(cmap_length))
 
             # If the user defined a custom cmap - process it and turn it into a cmap
             if cmap_length == 1:
@@ -274,7 +273,6 @@ def cretae_network_plot(network, is_metadata, nodes_feature, is_continuous, cmap
                 cmap_length = len(cmap)
                 #print("Custom cmap:")
                 #print(cmap)
-                #print("custom cmap length: " + str(cmap_length))
 
             group_to_color = {group: cmap[i % cmap_length] for i, group in enumerate(unique_groups)}
             colors = [group_to_color[str(network.nodes[node][nodes_feature])] for node in network.nodes()]
