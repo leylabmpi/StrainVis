@@ -324,7 +324,8 @@ class SynTrackerVisApp:
         self.save_matrix_file_path = pn.widgets.TextInput(name=download_matrix_text)
         self.download_matrix_column = pn.Column()
 
-        self.use_metadata_clustermap = pn.widgets.Checkbox(name='Use metadata for coloring', value=False)
+        self.use_metadata_clustermap = pn.widgets.Checkbox(name='Use metadata for coloring', value=False,
+                                                           styles={'font-size': "14px"})
         self.metadata_clustermap_card = pn.Card(title='', header_background="#ffffff",
                                                 styles={'background': "#ffffff", 'margin': "10px", 'width': "335px"},
                                                 hide_header=True,
@@ -343,7 +344,8 @@ class SynTrackerVisApp:
         # Jitter plot elements
         self.jitter_plot = ""
         self.df_for_jitter = pd.DataFrame()
-        self.use_metadata_jitter = pn.widgets.Checkbox(name='Use metadata in plot', value=False)
+        self.use_metadata_jitter = pn.widgets.Checkbox(name='Use metadata in plot', value=False,
+                                                       styles={'font-size': "14px"})
         self.jitter_color = pn.widgets.ColorPicker(name='Select color', value='#3b89be',
                                                    disabled=pn.bind(change_disabled_state_straight,
                                                                     chkbox_state=self.use_metadata_jitter,
@@ -380,10 +382,15 @@ class SynTrackerVisApp:
         self.network_plot_hv = ""
         self.network_plot_matplotlib = ""
         self.df_for_network = pd.DataFrame()
-        self.use_metadata_network = pn.widgets.Checkbox(name='Use metadata for coloring', value=False)
+        self.use_metadata_network = pn.widgets.Checkbox(name='Or, use metadata for coloring', value=False,
+                                                        styles={'font-size': "14px"})
         self.color_edges_by_feature = pn.widgets.Checkbox(name='Color edges by feature (same/different)', value=False)
+        self.layout_parameters_card = pn.Card(title='Layout parameters', header_background="#ffffff",
+                                              styles={'background': "#ffffff", 'margin': "5px 0 5px 10px",
+                                                      'width': "350px", 'padding': "7px"})
         self.metadata_colorby_card = pn.Card(title='Set the coloring by metadata', header_background="#ffffff",
-                                             styles={'background': "#ffffff", 'margin': "10px", 'width': "335px"},
+                                             styles={'background': "#ffffff", 'margin': "5px 0 5px 10px",
+                                                     'width': "350px"},
                                              hide_header=True, collapsed=pn.bind(change_disabled_state_inverse,
                                                                                  chkbox_state=self.use_metadata_network,
                                                                                  watch=True))
@@ -422,7 +429,8 @@ class SynTrackerVisApp:
                                                                              chkbox_state=self.color_edges_by_feature,
                                                                              watch=True)
                                                             )
-        self.show_labels_chkbox = pn.widgets.Checkbox(name='Show sample names', value=False)
+        self.show_labels_chkbox = pn.widgets.Checkbox(name='Show sample names', value=False,
+                                                      styles={'font-size': "14px"})
         self.network_threshold_select = pn.widgets.Select(name="Threshold for network connections:", width=200,
                                                           options=[])
         self.network_threshold_input = pn.widgets.FloatInput(name='Define threshold:',
@@ -451,7 +459,8 @@ class SynTrackerVisApp:
         # Box-plot elements
         self.box_plot = ""
         self.box_plot_pane = ""
-        self.use_metadata_box_plot = pn.widgets.Checkbox(name='Use metadata in plot', value=False)
+        self.use_metadata_box_plot = pn.widgets.Checkbox(name='Use metadata in plot', value=False,
+                                                         styles={'font-size': "14px"})
         self.box_plot_color = pn.widgets.ColorPicker(name='Select color', value=config.diff_color,
                                                      disabled=pn.bind(change_disabled_state_straight,
                                                                       chkbox_state=self.use_metadata_box_plot,
@@ -1178,6 +1187,7 @@ class SynTrackerVisApp:
         self.clustermap_card.clear()
         self.metadata_clustermap_card.clear()
         self.network_card.clear()
+        self.layout_parameters_card.clear()
         self.metadata_colorby_card.clear()
         self.metadata_jitter_card.clear()
         self.network_iterations.value = config.network_iterations_options[0]
@@ -1623,6 +1633,8 @@ class SynTrackerVisApp:
         mean_std_only = 0
         init_button = pn.widgets.Button(name='Initialize nodes positions', button_type='primary',
                                         button_style='outline')
+        init_button.on_click(self.init_positions)
+        init_button_row = pn.Row(init_button, align='center')
 
         styling_title = "Network customization options:"
         no_metadata_colors_row = pn.Row(self.network_node_color, pn.Spacer(width=10), self.network_edge_color)
@@ -1639,18 +1651,24 @@ class SynTrackerVisApp:
                                           styles={'padding': "10x"})
         self.metadata_colorby_card.append(metadata_coloring_col)
         network_threshold_row = pn.Row(self.network_threshold_select, self.network_threshold_input)
+        params_col = pn.Column(network_threshold_row,
+                               self.network_iterations,
+                               init_button_row)
+        self.layout_parameters_card.append(params_col)
         styling_col = pn.Column(pn.pane.Markdown(styling_title, styles={'font-size': "15px", 'font-weight': "bold",
                                                                         'color': config.title_blue_color,
                                                                         'margin': "0"}),
+                                self.layout_parameters_card,
                                 no_metadata_colors_row,
                                 pn.Spacer(height=5),
                                 self.use_metadata_network,
                                 self.metadata_colorby_card,
                                 self.show_labels_chkbox,
-                                pn.Spacer(height=10),
-                                network_threshold_row,
-                                self.network_iterations,
-                                init_button)
+                                #pn.Spacer(height=10),
+                                #network_threshold_row,
+                                #self.network_iterations,
+                                #init_button
+                                )
 
         save_file_title = "Plot download options:"
         download_button = pn.widgets.Button(name='Download high-resolution image', button_type='primary')
@@ -1812,8 +1830,6 @@ class SynTrackerVisApp:
                                            iterations=self.network_iterations, pos_dict=self.pos_dict,
                                            show_labels=self.show_labels_chkbox, metadata_dict=self.metadata_dict)
             self.network_pane = pn.pane.HoloViews(self.network_plot_hv, height=600, width=700, sizing_mode="fixed")
-
-            init_button.on_click(self.init_positions)
 
             network_row = pn.Row(controls_col, pn.Spacer(width=15), self.network_pane, styles={'padding': "15px"})
             self.network_card.append(network_row)
@@ -2758,15 +2774,18 @@ class SynTrackerVisApp:
         self.score_per_region_genomes_subset_df = dm.return_genomes_subset_table(self.score_per_region_all_genomes_df,
                                                                                  self.selected_genomes_subset)
 
+        # Get the number of selected species
+        self.selected_subset_species_num = len(self.selected_genomes_subset)
+
         # Create the df for plot presenting the number of pairs vs. subsampled regions
         self.pairs_num_per_sampling_size_multi_genomes_df = \
             dm.create_pairs_num_per_sampling_size(self.score_per_region_genomes_subset_df)
 
-        # If the number of genomes with 40 sampled regions is smaller than the maximum,
+        # If the number of species with 40 sampled regions is smaller than the selected requested of species,
         # present also the 'All regions' bar.
         # If not, do not present this bar (and remove this option from the slider)
         species_at_40 = self.pairs_num_per_sampling_size_multi_genomes_df['Number_of_species'].iloc[1]
-        if species_at_40 == self.number_of_genomes:
+        if species_at_40 == self.selected_subset_species_num:
             self.sample_sizes_slider_multi.options = config.sampling_sizes_wo_all
             self.sample_sizes_slider_multi.value = config.sampling_sizes_wo_all[0]
             is_all_regions = 0
@@ -2774,8 +2793,6 @@ class SynTrackerVisApp:
             self.sample_sizes_slider_multi.options = config.sampling_sizes
             self.sample_sizes_slider_multi.value = config.sampling_sizes[0]
             is_all_regions = 1
-
-        self.selected_subset_species_num = len(self.selected_genomes_subset)
 
         # Create the number of pairs vs. subsampled regions bar plot
         pairs_vs_sampling_size_bar_plot = pn.bind(pm.plot_pairs_vs_sampling_size_bar,

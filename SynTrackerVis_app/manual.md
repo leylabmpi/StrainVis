@@ -228,6 +228,15 @@ than the edges between the nodes that belong to a different country.
 - **Color edges by:** Select the feature, by which the edges are divided into two categories.
 - **Same color / Different color:** Select the color that will be applied on each category of edges.
 
+#### Saving the network
+
+- **Save as image:** When using the 'Plot download options' and selecting one of the four available image formats, 
+the network graph area is saved in its initial presentation (without considering interactions such as zoom-in/out, etc.).  
+In order to save the exact current view (including graph interactive modifications), it is possible to use the Bokeh interface 'Save' button,
+ which exports the graph in png format only (it is then saved in the browser's default Downloads location).
+- **Save data table:** The network data is saved as a tab-delimited format file, containing the following columns: Sample1, Sample2, APSS, weight.  
+The weight column reflects the score of each pair of samples after applying the APSS connections threshold. 
+
 ### *Synteny per position analyses*
 
 These analyses are presented for each contig of the selected reference genome. If there is more than one contig, 

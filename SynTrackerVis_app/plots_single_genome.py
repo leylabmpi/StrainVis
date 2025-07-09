@@ -314,7 +314,8 @@ def cretae_network_plot(network, is_metadata, nodes_feature, is_continuous, cmap
     network_plot.opts(tools=[hover])
 
     if show_labels:
-        labels = hv.Labels(network_plot.nodes, ['x', 'y'], 'index').opts(text_font_size='8pt', text_color='black')
+        labels = hv.Labels(network_plot.nodes, ['x', 'y'], 'index').opts(text_font_size='8pt', text_color='black',
+                                                                         yoffset=-0.04)
 
         # Display legend and sample names
         if is_legend:
@@ -484,95 +485,6 @@ def cretae_network_plot_matplotlib(network, is_metadata, nodes_feature, is_conti
                     width=list(widths), with_labels=False, linewidths=0.5, edgecolors='black')
 
     plt.close(fig)
-
-    return fig
-
-
-def create_coverage_plot(contig_name, score_per_pos_contig, avg_score_per_pos_contig,
-                         start_pos, end_pos,
-                         show_avg, avg_color, show_scores, scores_color,
-                         show_hyper_var, hyper_var_color, hyper_var_alpha,
-                         show_hyper_cons, hyper_cons_color, hyper_cons_alpha, bottom_val):
-
-    before = time.time()
-    print("\ncreate_coverage_plot:\nContig name: " + contig_name)
-    print("Start position: " + start_pos)
-    print("End position: " + end_pos)
-
-    # Consider only the positions within the requested range
-    score_per_pos_contig = score_per_pos_contig[score_per_pos_contig['Position'] >= int(start_pos)]
-    score_per_pos_contig = score_per_pos_contig[score_per_pos_contig['Position'] < int(end_pos)]
-    avg_score_per_pos_contig = avg_score_per_pos_contig[avg_score_per_pos_contig['Position'] >= int(start_pos)]
-    avg_score_per_pos_contig = avg_score_per_pos_contig[avg_score_per_pos_contig['Position'] < int(end_pos)]
-
-    #print("\nScore per position table:")
-    #print(score_per_pos_contig)
-    #print("\nAVG score per position table:")
-    #print(avg_score_per_pos_contig)
-
-    after = time.time()
-    duration = after - before
-    #print("Setting the correct range took " + str(duration) + " seconds")
-
-    # Prepare data for plotting the avg scores as lines
-    avg_score_per_pos_contig_end_pos = avg_score_per_pos_contig.copy()
-    avg_score_per_pos_contig_end_pos['Position'] = avg_score_per_pos_contig['Position'] + config.region_length - 100
-    #print(avg_score_per_pos_contig_end_pos)
-    #print("\nAfter creating the second df:")
-    #print(avg_score_per_pos_contig)
-
-    avg_score_per_pos_contig_for_line_plot = pd.concat([avg_score_per_pos_contig, avg_score_per_pos_contig_end_pos],
-                                                       ignore_index=True).sort_values(by='Position')
-
-    #print("\nAverage data for line plot after concatenating:")
-    #print(avg_score_per_pos_contig_for_line_plot)
-
-    pos_array = np.full((2, len(score_per_pos_contig.index)), 0)
-    pos_array[1, :] = config.region_length - 100
-
-    avg_pos_array = np.full((2, len(avg_score_per_pos_contig.index)), 0)
-    avg_pos_array[1, :] = config.region_length
-
-    fig, ax1 = plt.subplots(figsize=(11, 5))
-
-    if show_scores:
-        coverage_plot = plt.errorbar(score_per_pos_contig['Position'], score_per_pos_contig['Synteny_score'],
-                                     xerr=pos_array, color=scores_color, fmt='none', elinewidth=0.7, zorder=1,
-                                     label='Synteny scores')
-
-    if show_avg:
-        line_avg = plt.plot(avg_score_per_pos_contig_for_line_plot['Position'],
-                            avg_score_per_pos_contig_for_line_plot['Avg_synteny_score'],
-                            color=avg_color, zorder=2, label='Average synteny scores')
-
-    plt.xticks(avg_score_per_pos_contig['Position'], fontsize=6, rotation=90)
-    ax1.locator_params(axis='x', tight=True, nbins=40)
-    plt.xlabel("Position in reference genome/contig", labelpad=8)
-
-    if show_scores:
-        plt.ylabel("Synteny Score")
-    else:
-        plt.ylabel("Average synteny Score")
-
-    if show_hyper_var:
-        hypervar_bars = plt.bar(avg_score_per_pos_contig['Position'],
-                        avg_score_per_pos_contig['Hypervariable'], align='edge',
-                        width=config.region_length, bottom=bottom_val, color=hyper_var_color, alpha=hyper_var_alpha,
-                        label='Hypervariable regions')
-
-    if show_hyper_cons:
-        hypercons_bars = plt.bar(avg_score_per_pos_contig['Position'],
-                         avg_score_per_pos_contig['Hyperconserved'], align='edge',
-                         width=config.region_length, bottom=bottom_val, color=hyper_cons_color, alpha=hyper_cons_alpha,
-                         label='Hyperconserved regions')
-
-    plt.legend(fontsize='small', loc=(0, 1.02))
-
-    plt.close(fig)
-
-    after = time.time()
-    duration = after - before
-    print("Create/update the coverage plot took " + str(duration) + " seconds")
 
     return fig
 
