@@ -4,7 +4,7 @@
 
 ## Overview
 
-SynTrackerVis is a Python-based web application, designated for visual analyses and interactive exploration of the results obtained by the SynTracker pipeline.  
+SynTrackerVis is a Python-based web application for visual analyses and interactive exploration of the results obtained by the SynTracker pipeline.  
 
 SynTrackerVis accepts a 'synteny_scores_per_region.csv' file, containing either one reference genome or multiple reference genomes (usually, one reference genome per species).
 It presents accordingly analyses for each species separately and for multiple species together.  
