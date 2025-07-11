@@ -1,6 +1,6 @@
 # SynTrackerVis: a Python-based web application for interactive visual analysis of SynTracker's results
 
-### Version 1.0.7
+### Version 1.0.8
 
 ## Overview
 

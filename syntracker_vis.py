@@ -1,12 +1,17 @@
 import panel as pn
-import asyncio
 from SynTrackerVis_app.syntracker_vis_app import SynTrackerVisApp
 
 MAX_SIZE_MB = 500
 
+
+def destroyed(session_context):
+    print("\n\n\nThe session is closed from syntracker_vis.py...")
+
+
 def get_user_page():
     app = SynTrackerVisApp()
     template = app.template
+    pn.state.on_session_destroyed(destroyed)
     return template
 
 

@@ -25,6 +25,10 @@ pn.extension(disconnect_notification='Connection lost, try reloading the page!')
 pn.extension('floatpanel')
 
 
+def destroyed(session_context):
+    print("\n\n\nThe session is closed...")
+
+
 def change_disabled_state_inverse(chkbox_state):
     if chkbox_state:
         return False
@@ -598,6 +602,8 @@ class SynTrackerVisApp:
         self.main_area.append(pn.Spacer(height=30))
 
         self.main_area.append(self.submit_button)
+
+        pn.state.on_session_destroyed(destroyed)
 
         self.template.servable()
 

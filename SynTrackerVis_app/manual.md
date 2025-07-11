@@ -1,6 +1,6 @@
 # SynTrackerVis: a Python-based web application for interactive visual analysis of SynTracker's results
 
-### Version 1.0.7
+### Version 1.0.8
 
 ## Overview
 
@@ -188,8 +188,6 @@ The network plot is created using the Bokeh backend. The Bokeh interface allows 
 
 #### Customization options of the network (unrelated to metadata):
 
-- **Nodes / Edges color:** Enable to set a unified color for the nodes or for the edges of the network, using a color-picker widget.
-- **Show sample names:** When checked, the sample names are displayed on top of the network nodes.
 - **Threshold for network connections:** Enables to set the APSS threshold to define whether two nodes (samples) are 
 connected in the network or not (If the APSS of a comparison between two samples is equals to or greater than the threshold, 
 the samples are connected in the network). The threshold affects the clustering of the network when increasing the number of iterations.
@@ -205,6 +203,8 @@ With each iteration, the nodes that have higher APSS score, become closer to eac
 The slider widget allows to select the number of iterations between 50 and 500.
 - **Initialize nodes positions:** Clicking this button assigns the nodes new initial positions in the 2D space (by random) 
 and starts the clustering process from the beginning, performing the selected number of iterations.
+- **Nodes / Edges color:** Enable to set a unified color for the nodes or for the edges of the network, using a color-picker widget.
+- **Show sample names:** When checked, the sample names are displayed on top of the network nodes.
 
 #### Customization options when metadata is provided:
 
