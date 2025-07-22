@@ -1,0 +1,16 @@
+name: StrainVis
+
+channels:
+  - conda-forge
+
+dependencies:
+  - python
+  - panel>=1.6.1
+  - hvplot
+  - seaborn
+  - scipy
+  - networkx
+  - fastcluster
+  - selenium
+  - firefox
+  - geckodriver
