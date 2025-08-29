@@ -2,6 +2,10 @@
 
 ### Version 1.0.0
 
+- [Overview](#overview)
+- [Installation](#installation)
+- [Open StrainVis web-application](#open-strainvis-web-application)
+
 ## Overview
 
 StrainVis is a Python-based web application for visual analyses and interactive exploration of the results obtained by 
