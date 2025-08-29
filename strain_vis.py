@@ -5,7 +5,7 @@ MAX_SIZE_MB = 500
 
 
 def destroyed(session_context):
-    print("\n\n\nThe session is closed from syntracker_vis.py...")
+    print("\n\n\nThe session is closed from strain_vis.py...")
 
 
 def get_user_page():

@@ -75,7 +75,6 @@ def create_box_plot(avg_df, pvalues_df, color, use_metadata, feature, same_color
 
         # Get the y-axis tick positions (corresponding to the groups)
         y_ticks = box_plot.get_yticks()
-        space_y = y_ticks[1] - y_ticks[0]
         x_ticks = box_plot.get_xticks()
         space_x = x_ticks[1] - x_ticks[0]
         x_range = box_plot.get_xlim()
@@ -83,7 +82,7 @@ def create_box_plot(avg_df, pvalues_df, color, use_metadata, feature, same_color
         x_pos_for_stars = x_upper_limit + space_x * 0.1
         for i, row in pvalues_df.iterrows():
             if row['Significance'] != "NS":
-                y_pos = y_ticks[i] + space_y * 0.2  # This gives the y-position of the i-th group
+                y_pos = y_ticks[i]  # This gives the y-position of the i-th group
                 box_plot.text(x=x_pos_for_stars, y=y_pos, s=row['Significance'], fontsize=14)
 
         box_plot.legend(title="", loc='lower left', bbox_to_anchor=(0, 1), fontsize=13)
@@ -94,11 +93,66 @@ def create_box_plot(avg_df, pvalues_df, color, use_metadata, feature, same_color
 
     box_plot.yaxis.grid(True)  # Hide the horizontal gridlines
     box_plot.xaxis.grid(True)  # Show the vertical gridlines
-    box_plot.set_xlabel('APSS', fontsize=14)
-    box_plot.set_ylabel('Species', fontsize=14)
+    box_plot.set_xlabel('APSS', fontsize=14, labelpad=7)
+    box_plot.set_ylabel('Species', fontsize=14, labelpad=7)
 
     fig = box_plot.figure
     plt.close()
 
     return fig
 
+
+def create_box_plot_ani(ani_df, pvalues_df, color, use_metadata, feature, same_color, different_color):
+
+    #print("\create_box_plot_ani: Feature is " + feature)
+    #print("\nANI dataframe:")
+    #print(ani_df)
+
+    presented_genomes_list = ani_df['Ref_genome'].unique()
+    genomes_num = len(presented_genomes_list)
+
+    if genomes_num <= 8:
+        fig_height = 4
+    else:
+        fig_height = 0.5 * genomes_num
+    plt.figure(figsize=(7, fig_height))
+
+    # Use metadata to separate plot to same/different feature
+    if use_metadata:
+
+        same_feature = 'Same ' + feature
+        diff_feature = 'Different ' + feature
+
+        box_plot = sns.boxplot(data=ani_df, x="ANI", y="Ref_genome", hue="Category",
+                               width=0.8, showcaps=False, gap=0.1,
+                               hue_order=[same_feature, diff_feature],
+                               palette=[same_color, different_color]
+        )
+
+        # Get the y-axis tick positions (corresponding to the groups)
+        y_ticks = box_plot.get_yticks()
+        x_ticks = box_plot.get_xticks()
+        space_x = x_ticks[1] - x_ticks[0]
+        x_range = box_plot.get_xlim()
+        x_upper_limit = x_range[1]
+        x_pos_for_stars = x_upper_limit + space_x * 0.1
+        for i, row in pvalues_df.iterrows():
+            if row['Significance'] != "NS":
+                y_pos = y_ticks[i]  # This gives the y-position of the i-th group
+                box_plot.text(x=x_pos_for_stars, y=y_pos, s=row['Significance'], fontsize=14)
+
+        box_plot.legend(title="", loc='lower left', bbox_to_anchor=(0, 1), fontsize=13)
+
+    # Do not use metadata in plot - show all the comparisons together
+    else:
+        box_plot = sns.boxplot(data=ani_df, x="ANI", y="Ref_genome", color=color, width=0.5, showcaps=False)
+
+    box_plot.yaxis.grid(True)  # Hide the horizontal gridlines
+    box_plot.xaxis.grid(True)  # Show the vertical gridlines
+    box_plot.set_xlabel('ANI', fontsize=14, labelpad=7)
+    box_plot.set_ylabel('Species', fontsize=14, labelpad=7)
+
+    fig = box_plot.figure
+    plt.close()
+
+    return fig

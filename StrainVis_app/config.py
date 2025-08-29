@@ -2,6 +2,7 @@ import bokeh.palettes as bp
 import colorcet as cc
 
 col_set = ['Ref_genome', 'Sample1', 'Sample2', 'Region', 'Synteny_score']
+ANI_col_names = ['Ref_genome', 'Sample1', 'Sample2', 'ANI']
 sampling_sizes = ['All', '40', '60', '80', '100', '125', '150', '175', '200', '250', '300', '350', '400']
 sampling_sizes_wo_all = ['40', '60', '80', '100', '125', '150', '175', '200', '250', '300', '350', '400']
 genomes_sorting_options = ['Number of compared pairs', 'Species name']
@@ -19,7 +20,7 @@ bottom_percentile = 0.1
 
 file_upload_timeout = 20
 downloads_dir = "/Downloads/"
-manual_file = "/SynTrackerVis_app/manual.md"
+manual_file = "/StrainVis_app/manual.md"
 
 ## CSS Styles ##
 header_color = "#0072b5"
@@ -37,7 +38,7 @@ variable_color = '#00ffff'
 header_container_style = {
     'margin': '0 auto',
     'padding': '0',
-    'width': "1350px",
+    'width': "1300px",
 }
 
 menu_row_style = {
@@ -54,25 +55,48 @@ main_area_style = {
     'width': "1200px",
 }
 
-single_multi_tabs_style = {
-    'font-size': "24px",
-    'background': "#f9f9f9",
+main_column_style = {
+    'width': "1200px",
+    'background': "#f6f6f6",
+    'padding': "20px",
+    'margin': "0",
+    'border-top': "2px solid #0072b5",
+}
+
+ani_or_multi_style = {
+    'width': "1160px",
+    'background': "#eaeaea",
+    'margin': "0",
+    'padding': "20px",
+}
+
+synteny_only_single_style = {
+    'width': "1160px",
+    'background': "#eaeaea",
+    'margin': "0",
+}
+
+both_mode_SynTracker_single_style = {
+    'width': "1160px",
+    'background': "#eaeaea",
+    'padding-top': "7px",
+    'margin': "0",
+    'border-top': "2px solid #0072b5",
+}
+
+both_mode_other_style = {
+    'width': "1160px",
+    'background': "#eaeaea",
+    'margin': "0",
+    'padding': "20px",
+    'border-top': "2px solid #0072b5",
 }
 
 single_tabs_style = {
     'width': "1160px",
-    'background': "#f0f0f0",
     'padding': "20px",
     'margin': "0",
-    'border-top': "2px solid #0072b5",
-}
-
-main_column_style = {
-    'width': "1200px",
-    'background': "#f9f9f9",
-    'padding': "20px",
-    'margin': "0",
-    'border-top': "2px solid #0072b5",
+    'border-top': "2px solid #800080",
 }
 
 plot_card_style = {

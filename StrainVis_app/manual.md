@@ -4,21 +4,23 @@
 
 ## Overview
 
-StrainVis is a Python-based web application for visual analyses and interactive exploration of the results obtained by the SynTracker pipeline or other ANI-based strain tracking methods.
+StrainVis is a Python-based web application for visual analyses and interactive exploration of the results obtained by 
+the SynTracker pipeline or by other ANI-based strain tracking methods.  
 
-StrainVis accepts a 'synteny_scores_per_region.csv' file, containing either one reference genome or multiple reference genomes (usually, one reference genome per species).
+StrainVis accepts either SynTracker's output file 'synteny_scores_per_region.csv' or an ANI file, obtained by another method, 
+containing either one reference genome or multiple reference genomes (usually, one reference genome per species).
 It presents accordingly analyses for each species separately and for multiple species together.  
 A metadata file (matches to the samples that were previously compared by SynTracker) may also be provided
 in order to enable a deeper analysis of SynTracker's results.  
 
-StrainVis allows the user to interactively select the plots that he would like to present and to change visual parameters in each plot.
+StrainVis allows the user to interactively select the presented plots and to change visual parameters in each plot.
 It also enables to interactively select the metadata feature by which the samples should be grouped and coloured (for each plot separately).  
 
-Each of the presented plots can be downloaded and saved as a high-resolution image, in several common file formats.
+Each of the presented plots can be downloaded and saved as a high-resolution image, in several common image formats.
 
 ## Installation
 
-Download StrainVis's latest release from: https://github.com/leylabmpi/StrainVis/releases.
+Download the latest release of StrainVis from: https://github.com/leylabmpi/StrainVis/releases.
 
 Extract the tar.gz file into the desired working-directory.
 
@@ -77,26 +79,37 @@ Note that it is important not to use the --show option when SynTracker runs on a
 ## Input
 
 #### Mandatory input:
-SynTracker's output file 'synteny_scores_per_region.csv' for one or multiple species.  
-Note that if the file is bigger than 300 Mb, it cannot be selected via the FileInput widget, but it's full path should
+
+StrainVis accepts two types of input files:
+- SynTracker's output file 'synteny_scores_per_region.csv' for one or multiple species.
+- A tab-delimited ANI file for one or multiple species in the following format:  
+  'Ref_genome', 'Sample1', 'Sample2', 'ANI'
+
+The user should select one of the following three modes of execution, depending on the available input data:
+- **SynTracker output file**: Analyse the results obtained by the SynTracker pipeline only.
+- **ANI file**: Analyse the ANI results obtained by another strain-tracking method.
+- **Both SynTracker and ANI files**: Analyse both types of input data (each one separately and combined).  
+In this case, the names of the analysed species and the sample IDs must be identical between the two input files.
+  
+Note that if the input files are bigger than 300 Mb, they cannot be selected via the FileInput widget, but their full path should
 be typed into the TextInput field.
 
 #### Optional input:
 A metadata file in tab-delimited format. The first column must contain the sample IDs, that should match the sample IDs
-in the uploaded SynTracker output file. The metadata may contain an unlimited number of columns (features).
+in the uploaded input file(s). The metadata file may contain an unlimited number of columns (features).
 
-## Visualization
+## Visual analyses
 
-When uploading a summary file which contains SynTracker's results for more than one species, StrainVis 
-presents both Single Species Visualization and Multiple Species Visualization in separate tabs. 
+When uploading an input file containing more than one species, StrainVis 
+presents both single species analyses and multiple species analyses in separate tabs. 
 
-#### A. Single Species Visualization
-The analysis is performed for one species at a time. The species can be selected from a drop-down menu, 
+- **Single species analyses**:
+The analyses are performed on one species at a time. The species can be selected from a drop-down menu, 
 containing all the species in the input file. The list of species may be sorted by the number of compared sample-pairs 
 (in order to display the more abundant species first), or by the species names.
 
-#### B. Multiple Species Visualization
-The analysis is performed for all the species together or for a selected set.
+- **Multiple species analyses**:
+The analyses are performed on all the species together or for a selected subset.
 
 ### Customizing the plots
 
@@ -105,20 +118,27 @@ In some of the plots it is possible to show/hide elements and to set other param
 
 #### Including metadata in the plots
 
-When a metadata file is uploaded, it is possible to incorporate it into most of the APSS-based plots. The user 
-can interactively select a feature from the provided metadata features, by which the presented data will be grouped and colored.  
+When a metadata file is uploaded, the metadata can be incorporated into the plots. The user 
+can interactively select a feature, by which the presented data will be colored, grouped or filtered.  
 
 ### Saving the plots
 
 The plots can be saved either as images or as text files, containing the underlying data of the plots.  
 The user may enter the name of the file (including full path), or use the default name and path provided by StrainVis 
-(under the 'StrainVis/Downloads/' directory).
+(by default the files are saved under the 'StrainVis/Downloads/' directory).
 
 1. **Save as image:** Each one of the plots can be saved as a high-resolution image in one of the following formats: png, pdf, svg, eps.
 
 2. **Save data table:** The data table that was used to create the plot can be saved as text in a delimited format.
 
-## Single Species Visualization
+## Single species analyses
+
+When providing both SynTracker and ANI results, it is possible to move between three available views:
+  - **SynTracker**: Presents the single-species analyses of the synteny scores.
+  - **ANI**: Presents the single-species analyses of the ANI results.
+  - **Combined**: Presents a combined APSS and ANI based analysis.
+
+### SynTracker results analyses
 
 The single species visualization is combined of two types of analyses:
 

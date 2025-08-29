@@ -1,6 +1,7 @@
 import gc
 
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 import panel as pn
 import pandas as pd
 import numpy as np
@@ -12,7 +13,7 @@ import threading
 from functools import partial
 import networkx as nx
 import random
-from scipy.stats import ranksums
+from scipy.stats import ranksums, spearmanr
 from statsmodels.stats.multitest import multipletests
 import seaborn as sns
 import StrainVis_app.config as config
@@ -64,8 +65,8 @@ def change_disabled_state_custom_colormap(value):
         return True
 
 
-def enable_submit(file_input, text_input):
-    if file_input is not None or text_input != "":
+def enable_submit(syn_file_input, syn_text_input, ani_file_input, ani_text_input):
+    if syn_file_input is not None or syn_text_input != "" or ani_file_input is not None or ani_text_input != "":
         return False
     else:
         return True
@@ -107,26 +108,40 @@ class StrainVisApp:
     def __init__(self):
 
         # Variables
-        self.is_file_path = 0
-        self.filename = ""
+        self.is_syntracker_file_path = 0
+        self.is_ani_file_path = 0
+        self.input_mode = "SynTracker"  # Options: SynTracker / ANI / both
+        self.active_input_mode = "SynTracker"  # In case of both, can be: SynTracker / ANI
+        self.score_type = "APSS"  # Options: APSS / ANI
+        self.syntracker_filename = ""
+        self.ani_filename = ""
         self.input_file_loaded = 0
+        self.syntracker_loaded = 0
+        self.ani_loaded = 0
         self.is_metadata = 0
         self.valid_metadata = 1
         self.metadata_dict = dict()
         self.groups_per_feature_dict = dict()
         self.metadata_features_list = []
         self.number_of_genomes = 0
+        self.number_of_genomes_ani = 0
         self.ref_genomes_list = []
         self.ref_genomes_list_by_pairs_num = []
+        self.ref_genomes_list_ani = []
+        self.ref_genomes_list_by_pairs_num_ani = []
         self.selected_genomes_subset = []
         self.selected_subset_species_num = 0
         self.species_num_at_sampling_size = 0
+        self.species_num_in_subset_ani = 0
         self.ref_genome = ""
         self.sampling_size = ""
         self.sampling_size_multi = ""
         self.score_per_region_all_genomes_df = pd.DataFrame()
         self.score_per_region_genomes_subset_df = pd.DataFrame()
         self.score_per_region_selected_genome_df = pd.DataFrame()
+        self.ani_scores_all_genomes_df = pd.DataFrame()
+        self.ani_scores_genomes_subset_df = pd.DataFrame()
+        self.ani_scores_selected_genome_df = pd.DataFrame()
         self.score_per_pos_contig = pd.DataFrame()
         self.score_per_pos_contig_filtered = pd.DataFrame()
         self.avg_score_per_pos_contig = pd.DataFrame()
@@ -134,6 +149,7 @@ class StrainVisApp:
         self.genomes_subset_selected_size_APSS_df = pd.DataFrame()
         self.pairs_num_per_sampling_size_multi_genomes_df = pd.DataFrame()
         self.boxplot_p_values_df = pd.DataFrame()
+        self.boxplot_p_values_df_ani = pd.DataFrame()
         self.APSS_by_genome_all_sizes_dict = dict()
         self.APSS_all_genomes_all_sizes_dict = dict()
         self.calculated_APSS_genome_size_dict = dict()
@@ -157,18 +173,21 @@ class StrainVisApp:
         self.threshold_select_watcher = ""
         self.threshold_input_watcher = ""
         self.feature_select_watcher = ""
+        self.feature_select_watcher_ani = ""
         self.continuous_watcher = ""
         self.colormap_watcher = ""
         self.custom_colormap_watcher = ""
         self.nodes_colorby_watcher = ""
         self.feature_colormap_watcher = ""
+        self.feature_colormap_ani_watcher = ""
         self.synteny_per_pos_feature_select_watcher = ""
         self.visited_multi_genome_tab = 0
+        self.activated_synteny_per_pos_tab = 0
 
         # Bootstrap template
         self.template = pn.template.VanillaTemplate(
-            title='SynTrackerVis',
-            site_url="syntracker_vis",
+            title='StrainVis',
+            site_url="strain_vis",
         )
 
         # Apply custom CSS to adjust button font size in the header
@@ -209,15 +228,37 @@ class StrainVisApp:
         self.main_container.append(self.main_area)
         self.template.main.append(self.main_container)
 
+        # Homepage layouts
+        self.input_card = pn.Card(hide_header=True, styles={'margin': "10px", 'padding': "10px"})
+
         # Widgets
-        self.text_input = pn.widgets.TextInput(name='', placeholder='Enter the file path here...')
-        self.input_file = pn.widgets.FileInput(accept='.csv, .tab, .txt')
+        radio_group_css = '''
+            .bk-input-group.bk-inline > * {
+                margin-right: 20px;  /* Adjust spacing between buttons */
+                font-size: 16px;
+            }
+        '''
+        self.input_type_radio_group = pn.widgets.ToggleGroup(name='RadioBoxGroup',
+                                                             options=['SynTracker output file',
+                                                                      'ANI file',
+                                                                      'Both SynTracker and ANI files (for the same species)'],
+                                                             behavior="radio", widget_type="box", inline=True,
+                                                             stylesheets=[radio_group_css])
+        self.input_type_radio_group.param.watch(self.update_input_card, 'value', onlychanged=True)
+        self.SynTracker_text_input = pn.widgets.TextInput(name='', placeholder='Enter SynTracker file path here...')
+        self.SynTracker_input_file = pn.widgets.FileInput(accept='.csv, .tab, .txt')
+        self.ANI_text_input = pn.widgets.TextInput(name='', placeholder='Enter ANI file path here...')
+        self.ANI_input_file = pn.widgets.FileInput(accept='.tsv, .tab, .txt')
         self.metadata_file = pn.widgets.FileInput(accept='.csv, .tsv, .tab, .txt')
         self.gene_annotation_file = pn.widgets.FileInput()
 
         self.submit_button = pn.widgets.Button(name='Submit', button_type='primary',
-                                               disabled=pn.bind(enable_submit, file_input=self.input_file,
-                                                                text_input=self.text_input, watch=True))
+                                               disabled=pn.bind(enable_submit,
+                                                                syn_file_input=self.SynTracker_input_file,
+                                                                syn_text_input=self.SynTracker_text_input,
+                                                                ani_file_input=self.ANI_input_file,
+                                                                ani_text_input=self.ANI_text_input,
+                                                                watch=True))
         self.submit_button.on_click(self.load_input_file)
 
         self.new_file_button = pn.widgets.Button(name='Process a new input file', button_type='primary')
@@ -266,8 +307,9 @@ class StrainVisApp:
                     .bk-tab {
                         font-size: 24px;
                         color: #808080;
-                        background-color: #ffffff;
+                        background-color: #f9f9f9;
                         padding: 5px 10px 5px 10px;
+                        margin-right: 5px;
                     }
                     .bk-tab.bk-active {
                         background-color: #0072b5;
@@ -278,25 +320,45 @@ class StrainVisApp:
                             .bk-tab {
                                 font-size: 20px;
                                 color: #808080;
-                                background-color: #ffffff;
+                                background-color: #f9f9f9;
                                 padding: 5px 10px 5px 10px;
+                                margin-right: 5px;
+                            }
+                            .bk-tab.bk-active {
+                                background-color: #800080;
+                                color: #ffffff;
+                            }
+        '''
+        syntracker_ani_tabs = '''
+                            .bk-tab {
+                                font-size: 20px;
+                                color: #808080;
+                                background-color: #fdfdfd;
+                                padding: 5px 10px 5px 10px;
+                                margin-right: 5px;
                             }
                             .bk-tab.bk-active {
                                 background-color: #0072b5;
                                 color: #ffffff;
                             }
-                '''
+        '''
+
         self.single_multi_genome_tabs = pn.Tabs(dynamic=True, stylesheets=[single_multi_tabs_css])
+        self.synteny_ani_single_tabs = pn.Tabs(dynamic=True, stylesheets=[syntracker_ani_tabs])
+        self.synteny_ani_multi_tabs = pn.Tabs(dynamic=True, stylesheets=[syntracker_ani_tabs])
         self.main_single_column = pn.Column(styles=config.main_column_style)
-        self.ref_genome_column = pn.Column()
-        self.single_tabs = pn.Tabs(dynamic=True, stylesheets=[single_tabs_css])
-        self.synteny_per_pos_plot_column = pn.Column(styles=config.single_tabs_style)
-        self.activated_synteny_per_pos_tab = 0
-        self.plots_by_size_single_column = pn.Column()
-        self.main_plots_multi_column = pn.Column()
-        self.plots_by_size_multi_column = pn.Column()
         self.main_multi_column = pn.Column(styles=config.main_column_style)
-        self.plots_by_ref_column = pn.Column(styles={'padding': "20px"})
+        self.ref_genome_column = pn.Column()
+        self.synteny_single_initial_plots_column = pn.Column(styles=config.synteny_only_single_style)
+        self.ani_single_plots_column = pn.Column(styles=config.ani_or_multi_style)
+        self.combined_single_plots_column = pn.Column(styles=config.both_mode_other_style)
+        self.synteny_single_tabs = pn.Tabs(dynamic=True, stylesheets=[single_tabs_css])
+        self.APSS_analyses_single_column = pn.Column(styles=config.single_tabs_style)
+        self.synteny_per_pos_plot_column = pn.Column(styles=config.single_tabs_style)
+        self.plots_by_size_single_column = pn.Column()
+        self.synteny_multi_initial_plots_column = pn.Column(styles=config.ani_or_multi_style)
+        self.ani_multi_plots_column = pn.Column(styles=config.ani_or_multi_style)
+        self.plots_by_size_multi_column = pn.Column()
         self.selected_contig_column = pn.Column(styles={'padding': "10px 0 0 0"})
 
         # Plots cards
@@ -304,10 +366,18 @@ class StrainVisApp:
                                        header_background="#2e86c1", header_color="#ffffff")
         self.jitter_card = pn.Card(title='APSS distribution', styles=config.plot_card_style,
                                    header_background="#2e86c1", header_color="#ffffff")
+        self.clustermap_card_ani = pn.Card(title='Clustered heatmap', styles=config.plot_card_style,
+                                       header_background="#2e86c1", header_color="#ffffff")
+        self.jitter_card_ani = pn.Card(title='ANI distribution', styles=config.plot_card_style,
+                                   header_background="#2e86c1", header_color="#ffffff")
         self.network_card = pn.Card(title='Network', styles=config.plot_card_style, header_background="#2e86c1",
                                     header_color="#ffffff")
+        self.combined_scatter_card = pn.Card(title='APSS/ANI distribution', styles=config.plot_card_style,
+                                             header_background="#2e86c1", header_color="#ffffff")
         self.box_plot_card = pn.Card(title='APSS distribution among species', styles=config.plot_card_style,
                                      header_background="#2e86c1", header_color="#ffffff")
+        self.box_plot_card_ani = pn.Card(title='ANI distribution among species', styles=config.plot_card_style,
+                                         header_background="#2e86c1", header_color="#ffffff")
 
         download_image_text = 'Save image as: (if no full path, the file is saved under \'Downloads/\')'
         download_table_text = 'Save data table as: (if no full path, the file is saved under \'Downloads/\')'
@@ -327,7 +397,6 @@ class StrainVisApp:
         download_matrix_text = 'Save matrix as: (if no full path, the file is saved under \'Downloads/\')'
         self.save_matrix_file_path = pn.widgets.TextInput(name=download_matrix_text)
         self.download_matrix_column = pn.Column()
-
         self.use_metadata_clustermap = pn.widgets.Checkbox(name='Use metadata for coloring', value=False,
                                                            styles={'font-size': "14px"})
         self.metadata_clustermap_card = pn.Card(title='', header_background="#ffffff",
@@ -344,6 +413,37 @@ class StrainVisApp:
             name='Custom colormap: enter a list of colors separated by comma:',
             placeholder='color1, color2, color3, etc...',
             disabled=pn.bind(change_disabled_state_custom_colormap, value=self.feature_colormap, watch=True))
+
+        # Clustermap ANI elements
+        self.clustermap_plot_ani = ""
+        self.clustermap_pane_ani = ""
+        self.scores_matrix_ani = pd.DataFrame()
+        self.clustermap_cmap_ani = pn.widgets.Select(value=config.clustermap_colormaps_list[0],
+                                                     options=config.clustermap_colormaps_list,
+                                                     name="Select colormap from the following list:")
+        self.clustermap_image_format_ani = pn.widgets.Select(value=config.matplotlib_file_formats[0],
+                                                             options=config.matplotlib_file_formats,
+                                                             name="Select image format:")
+        self.save_clustermap_file_path_ani = pn.widgets.TextInput(name=download_image_text)
+        self.download_clustermap_column_ani = pn.Column()
+        self.save_matrix_file_path_ani = pn.widgets.TextInput(name=download_matrix_text)
+        self.download_matrix_column_ani = pn.Column()
+        self.use_metadata_clustermap_ani = pn.widgets.Checkbox(name='Use metadata for coloring', value=False,
+                                                               styles={'font-size': "14px"})
+        self.metadata_clustermap_card_ani = pn.Card(title='', header_background="#ffffff",
+                                                    styles={'background': "#ffffff", 'margin': "10px", 'width': "335px"},
+                                                    hide_header=True,
+                                                    collapsed=pn.bind(change_disabled_state_inverse,
+                                                                      chkbox_state=self.use_metadata_clustermap_ani,
+                                                                      watch=True))
+        self.color_by_feature_ani = pn.widgets.Select(options=['Select feature'], name="Color rows by:", width=150)
+        self.feature_colormap_ani = pn.widgets.ColorMap(name="Select colormap:",
+                                                        options=config.categorical_colormap_dict,
+                                                        value=config.categorical_colormap_dict['cet_glasbey'])
+        self.custom_colormap_input_clustermap_ani = pn.widgets.TextInput(
+            name='Custom colormap: enter a list of colors separated by comma:',
+            placeholder='color1, color2, color3, etc...',
+            disabled=pn.bind(change_disabled_state_custom_colormap, value=self.feature_colormap_ani, watch=True))
 
         # Jitter plot elements
         self.jitter_plot = ""
@@ -379,6 +479,82 @@ class StrainVisApp:
         self.download_jitter_column = pn.Column()
         self.save_jitter_table_path = pn.widgets.TextInput(name=download_table_text)
         self.download_jitter_table_column = pn.Column()
+
+        # Jitter plot ANI elements
+        self.jitter_plot_ani = ""
+        self.df_for_jitter_ani = pd.DataFrame()
+        self.use_metadata_jitter_ani = pn.widgets.Checkbox(name='Use metadata in plot', value=False,
+                                                           styles={'font-size': "14px"})
+        self.jitter_color_ani = pn.widgets.ColorPicker(name='Select color', value='#3b89be',
+                                                       disabled=pn.bind(change_disabled_state_straight,
+                                                                        chkbox_state=self.use_metadata_jitter_ani,
+                                                                        watch=True))
+        self.jitter_type_select_ani = pn.widgets.Select(options=config.catplot_types, width=150,
+                                                        name="Select plot type:")
+        self.metadata_jitter_card_ani = pn.Card(styles={'background': "#ffffff", 'margin': "10px", 'width': "300px"},
+                                                hide_header=True,
+                                                collapsed=pn.bind(change_disabled_state_inverse,
+                                                                  chkbox_state=self.use_metadata_jitter_ani,
+                                                                  watch=True))
+        self.jitter_feature_select_ani = pn.widgets.Select(options=['Select feature'], width=150,
+                                                           name="Separate plot by following feature:",
+                                                           disabled=pn.bind(change_disabled_state_inverse,
+                                                                            chkbox_state=self.use_metadata_jitter_ani,
+                                                                            watch=True))
+        self.jitter_same_color_ani = pn.widgets.ColorPicker(name='Same color:', value=config.same_color,
+                                                            disabled=pn.bind(change_disabled_state_inverse,
+                                                                            chkbox_state=self.use_metadata_jitter_ani,
+                                                                            watch=True))
+        self.jitter_different_color_ani = pn.widgets.ColorPicker(name='Different color:', value=config.diff_color,
+                                                                 disabled=pn.bind(
+                                                                     change_disabled_state_inverse,
+                                                                     chkbox_state=self.use_metadata_jitter_ani,
+                                                                     watch=True))
+        self.jitter_image_format_ani = pn.widgets.Select(value=config.matplotlib_file_formats[0],
+                                                         options=config.matplotlib_file_formats,
+                                                         name="Select image format:")
+        self.save_jitter_file_path_ani = pn.widgets.TextInput(name=download_image_text)
+        self.download_jitter_column_ani = pn.Column()
+        self.save_jitter_table_path_ani = pn.widgets.TextInput(name=download_table_text)
+        self.download_jitter_table_column_ani = pn.Column()
+
+        # Combined scatter plot elements
+        self.sample_sizes_combined_scatter_slider = pn.widgets.DiscreteSlider(name='Subsampled regions',
+                                                                              options=config.sampling_sizes,
+                                                                              bar_color='white')
+        self.combined_scatter_plot = ""
+        self.df_for_combined_scatter = pd.DataFrame()
+        self.use_metadata_combined_scatter = pn.widgets.Checkbox(name='Use metadata in plot', value=False,
+                                                                 styles={'font-size': "14px"})
+        self.combined_scatter_color = pn.widgets.ColorPicker(name='Select color', value='#3b89be',
+                                                             disabled=pn.bind(change_disabled_state_straight,
+                                                                              chkbox_state=self.use_metadata_combined_scatter,
+                                                                              watch=True))
+        self.metadata_combined_scatter_card = pn.Card(styles={'background': "#ffffff", 'margin': "10px", 'width': "300px"},
+                                                      hide_header=True,
+                                                      collapsed=pn.bind(change_disabled_state_inverse,
+                                                                        chkbox_state=self.use_metadata_combined_scatter,
+                                                                        watch=True))
+        self.combined_scatter_feature_select = pn.widgets.Select(options=['Select feature'], width=150,
+                                                                 name="Separate plot by following feature:",
+                                                                 disabled=pn.bind(change_disabled_state_inverse,
+                                                                                  chkbox_state=self.use_metadata_combined_scatter,
+                                                                                  watch=True))
+        self.combined_scatter_same_color = pn.widgets.ColorPicker(name='Same color:', value=config.same_color,
+                                                                  disabled=pn.bind(change_disabled_state_inverse,
+                                                                                   chkbox_state=self.use_metadata_combined_scatter,
+                                                                                   watch=True))
+        self.combined_scatter_different_color = pn.widgets.ColorPicker(name='Different color:', value=config.diff_color,
+                                                                       disabled=pn.bind(change_disabled_state_inverse,
+                                                                                        chkbox_state=self.use_metadata_combined_scatter,
+                                                                                        watch=True))
+        self.combined_scatter_image_format = pn.widgets.Select(value=config.matplotlib_file_formats[0],
+                                                               options=config.matplotlib_file_formats,
+                                                               name="Select image format:")
+        self.save_combined_scatter_file_path = pn.widgets.TextInput(name=download_image_text)
+        self.download_combined_scatter_column = pn.Column()
+        self.save_combined_scatter_table_path = pn.widgets.TextInput(name=download_table_text)
+        self.download_combined_scatter_table_column = pn.Column()
 
         # Network plot elements
         self.network = ""
@@ -496,7 +672,56 @@ class StrainVisApp:
         self.save_pvalues_table_path = pn.widgets.TextInput(
             name='Save P-values table as: (if no full path, the file is saved under \'Downloads/\')')
         self.download_pvalues_table_column = pn.Column()
+        self.download_pvalues_button = pn.widgets.Button(name='Download P-values table in csv format', button_type='primary',
+                                                    disabled=pn.bind(change_disabled_state_inverse,
+                                                                     chkbox_state=self.use_metadata_box_plot,
+                                                                     watch=True))
+        self.download_pvalues_button.on_click(self.download_pvalues_table)
         self.download_multi_col = pn.Column
+
+        # Box-plot ANI elements
+        self.box_plot_ani = ""
+        self.box_plot_pane_ani = ""
+        self.use_metadata_box_plot_ani = pn.widgets.Checkbox(name='Use metadata in plot', value=False,
+                                                             styles={'font-size': "14px"})
+        self.box_plot_color_ani = pn.widgets.ColorPicker(name='Select color', value=config.diff_color,
+                                                         disabled=pn.bind(change_disabled_state_straight,
+                                                                          chkbox_state=self.use_metadata_box_plot_ani,
+                                                                          watch=True))
+        self.metadata_box_plot_card_ani = pn.Card(styles={'background': "#ffffff", 'margin': "10px", 'width': "300px"},
+                                                  hide_header=True, collapsed=pn.bind(change_disabled_state_inverse,
+                                                                                      chkbox_state=self.use_metadata_box_plot_ani,
+                                                                                      watch=True))
+        self.box_plot_feature_select_ani = pn.widgets.Select(options=['Select feature'], width=150,
+                                                             name="Separate plot by following feature:",
+                                                             disabled=pn.bind(change_disabled_state_inverse,
+                                                                              chkbox_state=self.use_metadata_box_plot_ani,
+                                                                              watch=True))
+        self.box_plot_same_color_ani = pn.widgets.ColorPicker(name='Same color:', value=config.same_color,
+                                                              disabled=pn.bind(change_disabled_state_inverse,
+                                                                               chkbox_state=self.use_metadata_box_plot_ani,
+                                                                               watch=True))
+        self.box_plot_different_color_ani = pn.widgets.ColorPicker(name='Different color:', value=config.diff_color,
+                                                                   disabled=pn.bind(change_disabled_state_inverse,
+                                                                                    chkbox_state=self.use_metadata_box_plot_ani,
+                                                                                    watch=True))
+        self.box_plot_image_format_ani = pn.widgets.Select(value=config.matplotlib_file_formats[0],
+                                                           options=config.matplotlib_file_formats,
+                                                           name="Select image format:")
+        self.save_box_plot_file_path_ani = pn.widgets.TextInput(name=download_image_text)
+        self.download_box_plot_column_ani = pn.Column()
+        self.save_boxplot_table_path_ani = pn.widgets.TextInput(name=download_table_text)
+        self.download_boxplot_table_column_ani = pn.Column()
+        self.save_pvalues_table_path_ani = pn.widgets.TextInput(
+            name='Save P-values table as: (if no full path, the file is saved under \'Downloads/\')')
+        self.download_pvalues_table_column_ani = pn.Column()
+        self.download_multi_col_ani = pn.Column()
+        self.download_pvalues_button_ani = pn.widgets.Button(name='Download P-values table in csv format',
+                                                             button_type='primary',
+                                                             disabled=pn.bind(change_disabled_state_inverse,
+                                                                              chkbox_state=self.use_metadata_box_plot_ani,
+                                                                              watch=True))
+        self.download_pvalues_button_ani.on_click(self.download_pvalues_table_ani)
 
         # synteny_per_pos plots elements
         self.visited_synteny_per_pos_tab = 0
@@ -570,22 +795,30 @@ class StrainVisApp:
         # Build the initial layout
         mandatory_input_title = "Mandatory input"
         self.main_area.append(pn.pane.Markdown(mandatory_input_title,
-                                               styles={'font-size': "20px", 'color': config.title_purple_color,
-                                                       'margin-bottom': "0"}))
+                                               styles={'font-size': "24px", 'color': config.title_purple_color,
+                                                       'margin-bottom': "0", 'padding-bottom': "0"}))
 
-        file_upload_title = "Upload SynTracker's output table 'synteny_scores_per_region.csv' for one or multiple species:"
+        input_type_title = "Select the type of input to analyse using StrainVis:"
+        self.main_area.append(pn.pane.Markdown(input_type_title, styles={'font-size': "18px", 'margin-bottom': "0",
+                                                                         'margin-top': "0", 'padding-top': "0"}))
+        self.main_area.append(self.input_type_radio_group)
+
+        file_input_title = "Upload SynTracker's output table 'synteny_scores_per_region.csv' for one or multiple " \
+                           "species:"
         text_input_title = "Or, if the file size is bigger than 300 Mb, enter it's full path here:"
-        self.main_area.append(pn.pane.Markdown(file_upload_title, styles={'font-size': "17px", 'margin-bottom': "0",
+        self.input_card.append(pn.pane.Markdown(file_input_title, styles={'font-size': "16px", 'margin-bottom': "0",
                                                                           'margin-top': "0"}))
-        self.main_area.append(self.input_file)
-        self.main_area.append(pn.pane.Markdown(text_input_title, styles={'font-size': "17px", 'margin-bottom': "0",
-                                                                         'margin-top': "0"}))
-        self.main_area.append(self.text_input)
+        self.input_card.append(self.SynTracker_input_file)
+        self.input_card.append(pn.pane.Markdown(text_input_title, styles={'font-size': "16px", 'margin-bottom': "0",
+                                                                          'margin-top': "0"}))
+        self.input_card.append(self.SynTracker_text_input)
+        self.main_area.append(self.input_card)
+
         self.main_area.append(pn.Spacer(height=20))
 
         optional_input_title = "Optional input"
         self.main_area.append(pn.pane.Markdown(optional_input_title,
-                                               styles={'font-size': "20px", 'color': config.title_purple_color,
+                                               styles={'font-size': "24px", 'color': config.title_purple_color,
                                                        'margin-bottom': "0"}))
 
         metadata_upload_title = "Upload a metadata file for the compared samples (in tab delimited format):"
@@ -594,7 +827,7 @@ class StrainVisApp:
         self.main_area.append(self.metadata_file)
         metadata_note = "Please note: the metadata file may contain an unlimited number of columns (features).  " \
                         "\nThe first column must contain the sample IDs (identical to the sample IDs that appear in " \
-                        "SynTracker's output file)."
+                        "the input file(s))."
         self.main_area.append(pn.pane.Markdown(metadata_note, styles={'font-size': "15px", 'margin-bottom': "0",
                                                                       'margin-top': "0",
                                                                       'color': config.title_red_color}))
@@ -630,17 +863,96 @@ class StrainVisApp:
             self.main_container.clear()
             self.main_container.append(self.main_area)
 
+    def update_input_card(self, event):
+        syn_file_input_title = "Upload SynTracker's output table 'synteny_scores_per_region.csv' for one or multiple " \
+                               "species:"
+        ani_file_input_title = "Upload tab-delimited ANI file for one or multiple species.  " \
+                               "The file should contain the following columns: 'Ref_genome', 'Sample1', 'Sample2', " \
+                               "'ANI'."
+        text_input_title = "Or, if the file size is bigger than 300 Mb, enter it's full path here:"
+
+        self.input_card.clear()
+        self.SynTracker_input_file.value = None
+        self.SynTracker_text_input.value = ""
+        self.ANI_input_file.value = None
+        self.ANI_text_input.value = ""
+
+        # Only SynTracker input
+        if self.input_type_radio_group.value == 'SynTracker output file':
+            self.input_card.append(pn.pane.Markdown(syn_file_input_title, styles={'font-size': "16px",
+                                                                                  'margin-bottom': "0",
+                                                                                  'margin-top': "0"}))
+            self.input_card.append(self.SynTracker_input_file)
+            self.input_card.append(pn.pane.Markdown(text_input_title, styles={'font-size': "16px", 'margin-bottom': "0",
+                                                                              'margin-top': "0"}))
+            self.input_card.append(self.SynTracker_text_input)
+
+            self.input_mode = "SynTracker"
+            self.active_input_mode = "SynTracker"
+            self.score_type = "APSS"
+
+        # Only ANI input
+        elif self.input_type_radio_group.value == 'ANI file':
+            self.input_card.append(pn.pane.Markdown(ani_file_input_title, styles={'font-size': "16px",
+                                                                                  'margin-bottom': "0",
+                                                                                  'margin-top': "0"}))
+            self.input_card.append(self.ANI_input_file)
+            self.input_card.append(pn.pane.Markdown(text_input_title, styles={'font-size': "16px", 'margin-bottom': "0",
+                                                                              'margin-top': "0"}))
+            self.input_card.append(self.ANI_text_input)
+
+            self.input_mode = "ANI"
+            self.active_input_mode = "ANI"
+            self.score_type = "ANI"
+
+        # Combined input
+        else:
+            self.input_card.append(pn.pane.Markdown(syn_file_input_title, styles={'font-size': "16px",
+                                                                                  'margin-bottom': "0",
+                                                                                  'margin-top': "0"}))
+            self.input_card.append(self.SynTracker_input_file)
+            self.input_card.append(pn.pane.Markdown(text_input_title, styles={'font-size': "16px", 'margin-bottom': "0",
+                                                                              'margin-top': "0"}))
+            self.input_card.append(self.SynTracker_text_input)
+
+            self.input_card.append(pn.Spacer(height=10))
+            self.input_card.append(pn.layout.Divider())
+
+            self.input_card.append(pn.pane.Markdown(ani_file_input_title, styles={'font-size': "16px",
+                                                                                  'margin-bottom': "0",
+                                                                                  'margin-top': "0"}))
+            self.input_card.append(self.ANI_input_file)
+            self.input_card.append(pn.pane.Markdown(text_input_title, styles={'font-size': "16px", 'margin-bottom': "0",
+                                                                              'margin-top': "0"}))
+            self.input_card.append(self.ANI_text_input)
+
+            matching_note = "Please note: the names of species and the sample IDs must be identical between both " \
+                            "input files."
+            self.input_card.append(pn.pane.Markdown(matching_note, styles={'font-size': "16px", 'margin-bottom': "0",
+                                                                           'margin-top': "0",
+                                                                           'color': config.title_red_color}))
+
+            self.input_mode = "both"
+            self.active_input_mode = "SynTracker"
+            self.score_type = "APSS"
+
     def init_parameters(self):
         del self.score_per_region_all_genomes_df
         del self.score_per_region_genomes_subset_df
         del self.score_per_region_selected_genome_df
+        del self.ani_scores_all_genomes_df
+        del self.ani_scores_genomes_subset_df
+        del self.ani_scores_selected_genome_df
         del self.score_per_pos_contig
         del self.score_per_pos_contig_filtered
         del self.genomes_subset_selected_size_APSS_df
         del self.pairs_num_per_sampling_size_multi_genomes_df
         del self.boxplot_p_values_df
+        del self.boxplot_p_values_df_ani
         del self.df_for_jitter
+        del self.df_for_jitter_ani
         del self.scores_matrix
+        del self.scores_matrix_ani
         del self.df_for_network
         del self.avg_score_per_pos_contig
         del self.avg_score_per_pos_contig_filtered
@@ -652,11 +964,6 @@ class StrainVisApp:
         gc.collect()
 
     def create_new_session(self, event):
-        #if self.input_file_loaded:
-        #    pn.state.location.unsync(self.input_file)
-        #if self.genomes_select.value is not None and self.genomes_select.value != "":
-        #    pn.state.location.unsync(self.genomes_select)
-
         self.init_parameters()
         pn.state.location.reload = True
 
@@ -664,68 +971,118 @@ class StrainVisApp:
         button_column = pn.Column(pn.Spacer(height=30), self.new_file_button)
         return button_column
 
-    def get_number_of_genomes(self):
-
-        # If the input file contains no 'Ref_genome column', add it with artificial genome name
-        if 'Ref_genome' not in self.score_per_region_all_genomes_df.columns:
-            self.score_per_region_all_genomes_df['Ref_genome'] = 'Reference Genome'
-
-        self.number_of_genomes = self.score_per_region_all_genomes_df.groupby(['Ref_genome']).ngroups
-        self.ref_genomes_list = list(self.score_per_region_all_genomes_df.groupby(['Ref_genome']).groups)
-
     def load_input_file(self, event):
-        #print("\nIn load_input_file")
+        print("\nIn load_input_file. Input mode = " + self.input_mode)
 
-        # File path was given - read directly
-        if self.text_input.value != "":
-            self.is_file_path = 1
+        # Verify that a SynTracker file was loaded
+        if self.input_mode == "SynTracker" or self.input_mode == "both":
 
-            # Verify that the input is an existing file path
-            if os.path.exists(self.text_input.value):
-                print("\n\nInput file path: " + self.text_input.value)
-                self.filename = os.path.basename(self.text_input.value)
-                print("Input file name: " + self.filename)
-                self.display_results_page()
+            # File path was given - read directly
+            if self.SynTracker_text_input.value != "":
+                self.is_syntracker_file_path = 1
 
-                #pn.state.location.update_query(input_file=self.filename)
-                #pn.state.location.sync(self.input_file, {'filename': 'input_file'})
-                #print("Location: " + str(pn.state.location.pathname))
-                #print("Query params: " + str(pn.state.location.query_params))
-                self.input_file_loaded = 1
+                # Verify that the input is an existing file path
+                if os.path.exists(self.SynTracker_text_input.value):
+                    print("\n\nSynTracker input file path: " + self.SynTracker_text_input.value)
+                    self.syntracker_filename = os.path.basename(self.SynTracker_text_input.value)
+                    print("SynTracker input file name: " + self.syntracker_filename)
+                    #self.display_results_page()
+                    self.syntracker_loaded = 1
 
+                else:
+                    title = "The requested input file does not exist, please enter again a valid file path"
+                    self.display_error_page(title)
+
+            # File was given via FileInput widget
             else:
-                title = "The requested input file does not exist, please enter again a valid file path"
-                self.display_error_page(title)
-
-        # File was given via FileInput widget
-        else:
-            # Filename is None - usually because of server problems
-            if self.input_file.filename is None:
-                print("Input file name: None")
-                title = "Cannot upload the requested file (probably server problems) - please try again by entering " \
-                        "the file's full path"
-                self.display_error_page(title)
-
-            else:
-                self.filename = self.input_file.filename
-                content_length = len(self.input_file.value) / 1000
-                print("Content length in Kb: " + str(content_length))
-
-                # There is filename but no content - usually happens when the file is too big
-                if content_length == 0:
-                    title = "Cannot upload the requested file (probably too big) - please try again by entering " \
+                # Filename is None - usually because of server problems
+                if self.SynTracker_input_file.filename is None:
+                    print("SynTracker input file name: None")
+                    title = "Cannot upload the requested file (probably server problems) - please try again by entering " \
                             "the file's full path"
                     self.display_error_page(title)
 
-                # File has content
                 else:
-                    self.display_results_page()
+                    self.syntracker_filename = self.SynTracker_input_file.filename
+                    content_length = len(self.SynTracker_input_file.value) / 1000
+                    print("Content length of SynTracker file in Kb: " + str(content_length))
 
-                    #pn.state.location.update_query(input_file=self.filename)
-                    #pn.state.location.sync(self.input_file, {'filename': 'input_file'})
-                    #print("Location: " + str(pn.state.location.pathname))
-                    #print("Query params: " + str(pn.state.location.query_params))
-                    self.input_file_loaded = 1
+                    # There is filename but no content - usually happens when the file is too big
+                    if content_length == 0:
+                        title = "Cannot upload the requested file (probably too big) - please try again by entering " \
+                                "the file's full path"
+                        self.display_error_page(title)
+
+                    # File has content
+                    else:
+                        #self.display_results_page()
+                        self.syntracker_loaded = 1
+
+        # Verify that an ANI file was loaded
+        if self.input_mode == "ANI" or self.input_mode == "both":
+
+            # File path was given - read directly
+            if self.ANI_text_input.value != "":
+                self.is_ani_file_path = 1
+
+                # Verify that the input is an existing file path
+                if os.path.exists(self.ANI_text_input.value):
+                    print("\n\nANI input file path: " + self.ANI_text_input.value)
+                    self.ani_filename = os.path.basename(self.ANI_text_input.value)
+                    print("ANI input file name: " + self.ani_filename)
+                    #self.display_results_page()
+                    self.ani_loaded = 1
+
+                else:
+                    title = "The requested input file does not exist, please enter again a valid file path"
+                    self.display_error_page(title)
+
+            # File was given via FileInput widget
+            else:
+                # Filename is None - usually because of server problems
+                if self.ANI_input_file.filename is None:
+                    print("ANI input file name: None")
+                    title = "Cannot upload the requested file (probably server problems) - " \
+                            "please try again by entering the file's full path"
+                    self.display_error_page(title)
+
+                else:
+                    self.ani_filename = self.ANI_input_file.filename
+                    content_length = len(self.ANI_input_file.value) / 1000
+                    print("Content length of ANI file in Kb: " + str(content_length))
+
+                    # There is filename but no content - usually happens when the file is too big
+                    if content_length == 0:
+                        title = "Cannot upload the requested file (probably too big) - please try again by entering " \
+                                "the file's full path"
+                        self.display_error_page(title)
+
+                    # File has content
+                    else:
+                        #self.display_results_page()
+                        self.ani_loaded = 1
+
+        ## Verify that all necessary files were loaded according to the input mode
+        # Input type: SynTracker
+        if self.input_mode == "SynTracker":
+            if self.syntracker_loaded:
+                self.display_results_page()
+                self.input_file_loaded = 1
+
+        # Input type: ANI
+        elif self.input_mode == "ANI":
+            if self.ani_loaded:
+                self.display_results_page()
+                self.input_file_loaded = 1
+
+        # Input type: both
+        else:
+            if self.syntracker_loaded and self.ani_loaded:
+                self.display_results_page()
+                self.input_file_loaded = 1
+            else:
+                title = "There is a problem uploading both input files - please try again"
+                self.display_error_page(title)
 
         # Check if the user provided a metadata file
         if self.metadata_file.filename is not None:
@@ -752,44 +1109,124 @@ class StrainVisApp:
     def display_results_page(self):
         self.main_area.clear()
 
-        title = "Loading input file: " + self.filename
+        if self.input_mode == "SynTracker":
+            title = "Loading input file: " + self.syntracker_filename
+        elif self.input_mode == "ANI":
+            title = "Loading input file: " + self.ani_filename
+        else:
+            title = "Loading input files: " + self.syntracker_filename + " and " + self.ani_filename
+
         self.main_area.append(pn.pane.Markdown(title, styles={'font-size': "20px"}))
 
     def start_process(self):
         self.ref_genomes_list = []
         self.ref_genomes_list_by_pairs_num = []
+        self.ref_genomes_list_ani = []
+        self.ref_genomes_list_by_pairs_num_ani = []
         self.selected_genomes_subset = []
         self.selected_subset_species_num = 0
         self.species_num_at_sampling_size = 0
+        self.species_num_in_subset_ani = 0
         self.single_multi_genome_tabs.clear()
         self.main_single_column.clear()
         self.ref_genome_column.clear()
+        self.synteny_single_initial_plots_column.clear()
         self.main_multi_column.clear()
-        self.single_tabs.clear()
+        self.synteny_single_tabs.clear()
+        self.synteny_ani_single_tabs.clear()
+        self.synteny_ani_multi_tabs.clear()
+        self.APSS_analyses_single_column.clear()
         self.synteny_per_pos_plot_column.clear()
         self.plots_by_size_single_column.clear()
-        self.main_plots_multi_column.clear()
+        self.ani_single_plots_column.clear()
+        self.combined_single_plots_column.clear()
+        self.synteny_multi_initial_plots_column.clear()
+        self.ani_multi_plots_column.clear()
         self.plots_by_size_multi_column.clear()
 
-        # Read the file directly from the path
-        before = time.time()
-        if self.is_file_path == 1:
-            self.score_per_region_all_genomes_df = pd.read_csv(self.text_input.value,
-                                                               usecols=lambda c: c in set(config.col_set))
+        # Read the SynTracker input
+        if self.input_mode == "SynTracker" or self.input_mode == "both":
 
-        # Read the content of the uploaded file
-        else:
-            self.score_per_region_all_genomes_df = pd.read_csv(io.BytesIO(self.input_file.value),
-                                                               usecols=lambda c: c in set(config.col_set))
-        after = time.time()
-        duration = after - before
-        print("\nReading input file took " + str(duration) + " seconds.\n")
+            # Read the file directly from the path
+            before = time.time()
+            if self.is_syntracker_file_path == 1:
+                file = self.SynTracker_text_input.value
 
-        # Extract the number of genomes from the input file
-        self.get_number_of_genomes()
-        print("\nNumber of genomes: " + str(self.number_of_genomes))
-        #print("\nGenomes list: " + str(self.ref_genomes_list))
-        
+            # Read the content of the uploaded file
+            else:
+                file = io.BytesIO(self.SynTracker_input_file.value)
+
+            self.score_per_region_all_genomes_df = pd.read_csv(file, usecols=lambda c: c in set(config.col_set))
+            after = time.time()
+            duration = after - before
+            print("\nReading SynTracker input file took " + str(duration) + " seconds.\n")
+
+            # Verify that the df is valid and contain the necessary columns
+            if 'Sample1' not in self.score_per_region_all_genomes_df.columns or \
+                'Sample2' not in self.score_per_region_all_genomes_df.columns or \
+                'Region' not in self.score_per_region_all_genomes_df.columns or \
+                'Synteny_score' not in self.score_per_region_all_genomes_df.columns:
+                error = "The format of the uploaded SynTracker file is wrong - please verify that you upload " \
+                        "SynTracker's output table 'synteny_scores_per_region.csv'."
+                self.display_error_page(error)
+
+            # If the input file contains no 'Ref_genome column', add it with artificial genome name
+            if 'Ref_genome' not in self.score_per_region_all_genomes_df.columns:
+                self.score_per_region_all_genomes_df['Ref_genome'] = 'Reference Genome'
+
+            # Extract the number of genomes from the input file
+            self.number_of_genomes = self.score_per_region_all_genomes_df.groupby(['Ref_genome']).ngroups
+            self.ref_genomes_list = list(self.score_per_region_all_genomes_df.groupby(['Ref_genome']).groups)
+            print("\nNumber of species in SynTracker file: " + str(self.number_of_genomes))
+            #print("\Species list: " + str(self.ref_genomes_list))
+
+        # Read the ANI input
+        if self.input_mode == "ANI" or self.input_mode == "both":
+
+            # Read the file directly from the path
+            before = time.time()
+            if self.is_ani_file_path == 1:
+                self.ani_scores_all_genomes_df = pd.read_table(self.ANI_text_input.value)
+
+            # Read the content of the uploaded file
+            else:
+                self.ani_scores_all_genomes_df = pd.read_table(io.BytesIO(self.ANI_input_file.value))
+
+            after = time.time()
+            duration = after - before
+            print("\nReading ANI input file took " + str(duration) + " seconds.\n")
+
+            # Verify that the file contains 4 columns
+            if self.ani_scores_all_genomes_df.shape[1] != 4:
+                error = "The format of the uploaded ANI file is wrong - " \
+                        "please verify that your file is tab-delimited and contains the following columns: " \
+                        "'Ref_genome', 'Sample1', 'Sample2', 'ANI'."
+                self.display_error_page(error)
+
+            # To make sure that the column names are unified, replace the original names
+            new_column_names = config.ANI_col_names
+            self.ani_scores_all_genomes_df.columns = new_column_names
+
+            # Mode is ANI only -> extract the species list from the ANI file
+            if self.input_mode == "ANI":
+
+                # Extract the number of genomes and genomes list from the input file and save them in the normal
+                # variables
+                self.number_of_genomes = self.ani_scores_all_genomes_df.groupby(['Ref_genome']).ngroups
+                self.ref_genomes_list = list(self.ani_scores_all_genomes_df.groupby(['Ref_genome']).groups)
+                self.ref_genomes_list_ani = self.ref_genomes_list
+                print("\nNumber of species in ANI file: " + str(self.number_of_genomes))
+                # print("\Species list: " + str(self.ref_genomes_list))
+
+            # Mode is 'both' - save the genomes list in a different variable
+            else:
+                # Extract the number of genomes and genomes list from the ANI input file and save them in the
+                # ANI-specific variables
+                self.number_of_genomes_ani = self.ani_scores_all_genomes_df.groupby(['Ref_genome']).ngroups
+                self.ref_genomes_list_ani = list(self.ani_scores_all_genomes_df.groupby(['Ref_genome']).groups)
+                print("\nNumber of species in ANI file: " + str(self.number_of_genomes_ani))
+                print("\Species list from ANI file: " + str(self.ref_genomes_list_ani))
+
         # If a metadata file was uploaded - read the file into a DF
         if self.is_metadata:
             before = time.time()
@@ -803,8 +1240,12 @@ class StrainVisApp:
             # Check if the provided metadata is valid and match the sample-IDs.
             # If some samples are missing from the metadata - fill them with np.nan values
             before = time.time()
+            if self.input_mode == "SynTracker" or self.input_mode == "both":
+                scores_df = self.score_per_region_all_genomes_df
+            elif self.input_mode == "ANI":
+                scores_df = self.ani_scores_all_genomes_df
             self.metadata_dict, self.groups_per_feature_dict, self.metadata_features_list, error = \
-                dm.complete_metadata(self.score_per_region_all_genomes_df, metadata_df)
+                dm.complete_metadata(scores_df, metadata_df)
             after = time.time()
             duration = after - before
 
@@ -816,14 +1257,16 @@ class StrainVisApp:
             else:
                 print("\nFilling missing metadata took " + str(duration) + " seconds.\n")
 
-        # Initialize the dictionaries that save the dataframes for all the combinations of ref_genomes and sizes
-        # and whether they have already been calculated
         if self.valid_metadata:
-            for genome in self.ref_genomes_list:
-                self.calculated_APSS_genome_size_dict[genome] = dict()
-                for size in config.sampling_sizes:
-                    self.APSS_all_genomes_all_sizes_dict[size] = pd.DataFrame()
-                    self.calculated_APSS_all_genomes_size_dict[size] = 0
+
+            # Initialize the dictionaries that save the dataframes for all the combinations of ref_genomes and sizes
+            # and whether they have already been calculated
+            if self.input_mode != "ANI":
+                for genome in self.ref_genomes_list:
+                    self.calculated_APSS_genome_size_dict[genome] = dict()
+                    for size in config.sampling_sizes:
+                        self.APSS_all_genomes_all_sizes_dict[size] = pd.DataFrame()
+                        self.calculated_APSS_all_genomes_size_dict[size] = 0
 
             # Input file contains only one ref-genome -> present only single genome visualization
             if self.number_of_genomes == 1:
@@ -837,11 +1280,24 @@ class StrainVisApp:
                 self.main_area.clear()
                 self.main_area.append(self.main_single_column)
 
-            # Input file contains more than one ref-genome -> display two tabs, for single- and multi-genome visualizations
+            # Input file contains more than one ref-genome -> display two tabs, for single- and multi-genome views
             else:
-                # Calculate the number of pairs at 40 regions for all the genomes and create a sorted list of genomes
-                self.ref_genomes_list_by_pairs_num = \
-                    dm.create_sorted_by_pairs_genomes_list(self.score_per_region_all_genomes_df)
+                if self.input_mode == "SynTracker":
+                    # Calculate the number of pairs at 40 regions for all the genomes and create a sorted list of
+                    # genomes
+                    self.ref_genomes_list_by_pairs_num = \
+                        dm.create_sorted_by_pairs_genomes_list(self.score_per_region_all_genomes_df)
+                elif self.input_mode == "ANI":
+                    # Return a sorted list of genomes according to the number of pairs
+                    self.ref_genomes_list_by_pairs_num = \
+                        dm.create_sorted_by_pairs_genomes_list_ani(self.ani_scores_all_genomes_df)
+                # Input mode is 'both'
+                else:
+                    # Return two sorted lists of ref-genomes, one for SynTracker and one for ANI
+                    self.ref_genomes_list_by_pairs_num = \
+                        dm.create_sorted_by_pairs_genomes_list(self.score_per_region_all_genomes_df)
+                    self.ref_genomes_list_by_pairs_num_ani = \
+                        dm.create_sorted_by_pairs_genomes_list_ani(self.ani_scores_all_genomes_df)
 
                 self.ref_genome = self.ref_genomes_list_by_pairs_num[0]
                 print("\nReference genome = " + self.ref_genome)
@@ -866,12 +1322,12 @@ class StrainVisApp:
                 self.genomes_sort_select_multi_watcher = self.genomes_sort_select_multi.param.watch(
                     self.changed_multi_genomes_sorting, 'value', onlychanged=True)
 
-                self.single_multi_genome_tabs.append(('Single species visualization', self.main_single_column))
+                self.single_multi_genome_tabs.append(('Single species analyses', self.main_single_column))
 
                 multi_message = "Preparing the multiple species visualization - please wait..."
                 self.main_multi_column.append(pn.pane.Markdown(multi_message, styles={'font-size': "20px",
                                                                                       'margin': "0"}))
-                self.single_multi_genome_tabs.append(('Multiple species visualization', self.main_multi_column))
+                self.single_multi_genome_tabs.append(('Multiple species analyses', self.main_multi_column))
 
                 self.single_multi_genome_tabs.param.watch(self.changed_single_multi_tabs, 'active')
 
@@ -898,13 +1354,24 @@ class StrainVisApp:
         sorting_method = self.genomes_sort_select.value
         print("\nChanged species sorting method. Sort by: " + sorting_method)
 
-        # Change the order of the contigs selection and present the first one in the new order
-        if sorting_method == "Species name":
-            self.genomes_select.options = self.ref_genomes_list
-            self.genomes_select.value = self.ref_genomes_list[0]
+        # Change the order of the species selection and present the first one of the new order
+        # Input mode is 'both', Active tab is 'ANI'
+        if self.input_mode == "both" and self.active_input_mode == "ANI":
+            if sorting_method == "Species name":
+                self.genomes_select.options = self.ref_genomes_list_ani
+                self.genomes_select.value = self.ref_genomes_list_ani[0]
+            else:
+                self.genomes_select.options = self.ref_genomes_list_by_pairs_num_ani
+                self.genomes_select.value = self.ref_genomes_list_by_pairs_num_ani[0]
+
+        # All other cases
         else:
-            self.genomes_select.options = self.ref_genomes_list_by_pairs_num
-            self.genomes_select.value = self.ref_genomes_list_by_pairs_num[0]
+            if sorting_method == "Species name":
+                self.genomes_select.options = self.ref_genomes_list
+                self.genomes_select.value = self.ref_genomes_list[0]
+            else:
+                self.genomes_select.options = self.ref_genomes_list_by_pairs_num
+                self.genomes_select.value = self.ref_genomes_list_by_pairs_num[0]
 
     def changed_multi_genomes_sorting(self, event):
         sorting_method = self.genomes_sort_select_multi.value
@@ -927,45 +1394,58 @@ class StrainVisApp:
 
         # Clear layouts
         self.ref_genome_column.clear()
+        self.synteny_single_initial_plots_column.clear()
         self.plots_by_size_single_column.clear()
+        self.ani_single_plots_column.clear()
+        self.combined_single_plots_column.clear()
         self.sample_sizes_slider.value = config.sampling_sizes[0]
         self.selected_contig_column.clear()
+        self.APSS_analyses_single_column.clear()
         self.synteny_per_pos_plot_column.clear()
+        self.sampling_size = ""
 
-        # Stop watching the contig-related widgets
-        if self.visited_synteny_per_pos_tab and self.finished_initial_synteny_per_pos_plot and len(self.contigs_list_by_name) > 1:
-            # print("\nUnwatching contig_select and sorting_select widgets")
-            self.contig_select.param.unwatch(self.contig_select_watcher)
-            self.sorting_select.param.unwatch(self.sorting_select_watcher)
-            self.avg_plot_chkbox.param.unwatch(self.avg_plot_chkbox_watcher)
-            self.avg_plot_color.param.unwatch(self.avg_plot_color_watcher)
-            self.coverage_plot_chkbox.param.unwatch(self.coverage_plot_chkbox_watcher)
-            self.coverage_plot_color.param.unwatch(self.coverage_plot_color_watcher)
-            self.hypervar_chkbox.param.unwatch(self.hypervar_chkbox_watcher)
-            self.hypervar_color.param.unwatch(self.hypervar_color_watcher)
-            self.hypercons_chkbox.param.unwatch(self.hypercons_chkbox_watcher)
-            self.hypercons_color.param.unwatch(self.hypercons_color_watcher)
-            self.alpha_slider.param.unwatch(self.alpha_slider_watcher)
-            self.synteny_per_pos_feature_select.param.unwatch(self.synteny_per_pos_feature_select_watcher)
+        if self.input_mode == "SynTracker" or self.input_mode == "both":
+            # Stop watching the contig-related widgets
+            if self.visited_synteny_per_pos_tab and self.finished_initial_synteny_per_pos_plot and len(self.contigs_list_by_name) > 1:
+                # print("\nUnwatching contig_select and sorting_select widgets")
+                self.contig_select.param.unwatch(self.contig_select_watcher)
+                self.sorting_select.param.unwatch(self.sorting_select_watcher)
+                self.avg_plot_chkbox.param.unwatch(self.avg_plot_chkbox_watcher)
+                self.avg_plot_color.param.unwatch(self.avg_plot_color_watcher)
+                self.coverage_plot_chkbox.param.unwatch(self.coverage_plot_chkbox_watcher)
+                self.coverage_plot_color.param.unwatch(self.coverage_plot_color_watcher)
+                self.hypervar_chkbox.param.unwatch(self.hypervar_chkbox_watcher)
+                self.hypervar_color.param.unwatch(self.hypervar_color_watcher)
+                self.hypercons_chkbox.param.unwatch(self.hypercons_chkbox_watcher)
+                self.hypercons_color.param.unwatch(self.hypercons_color_watcher)
+                self.alpha_slider.param.unwatch(self.alpha_slider_watcher)
+                self.synteny_per_pos_feature_select.param.unwatch(self.synteny_per_pos_feature_select_watcher)
 
-        # Initialize variables
-        self.contigs_list_by_length = []
-        self.contigs_list_by_name = []
-        self.visited_synteny_per_pos_tab = 0
-        self.finished_initial_synteny_per_pos_plot = 0
-        self.single_tabs.active = 0
+            # Initialize variables
+            self.contigs_list_by_length = []
+            self.contigs_list_by_name = []
+            self.visited_synteny_per_pos_tab = 0
+            self.finished_initial_synteny_per_pos_plot = 0
+            self.synteny_single_tabs.active = 0
+            if self.input_mode == "both":
+                self.synteny_ani_single_tabs.active = 0
+                #self.synteny_ani_multi_tabs.active = 0
 
         del self.score_per_pos_contig
         del self.score_per_pos_contig_filtered
         del self.df_for_jitter
+        del self.df_for_jitter_ani
         del self.scores_matrix
+        del self.scores_matrix_ani
         del self.df_for_network
         del self.avg_score_per_pos_contig
         del self.avg_score_per_pos_contig_filtered
         del self.APSS_by_genome_all_sizes_dict
 
         self.df_for_jitter = pd.DataFrame()
+        self.df_for_jitter_ani = pd.DataFrame()
         self.scores_matrix = pd.DataFrame()
+        self.scores_matrix_ani = pd.DataFrame()
         self.df_for_network = pd.DataFrame()
         self.score_per_pos_contig = pd.DataFrame()
         self.score_per_pos_contig_filtered = pd.DataFrame()
@@ -982,13 +1462,39 @@ class StrainVisApp:
         gc.collect()
 
     def create_single_genome_column(self):
-        before = time.time()
-
         ref_genome_title = "Species: " + self.ref_genome
 
         self.ref_genome_column.append(pn.pane.Markdown(ref_genome_title,
                                                        styles={'font-size': "22px", 'color': config.title_purple_color,
                                                                'margin': "0"}))
+
+        if self.input_mode == "SynTracker":
+            self.create_single_genome_column_syntracker_mode()
+            self.ref_genome_column.append(self.synteny_single_initial_plots_column)
+
+        elif self.input_mode == "ANI":
+            self.create_single_genome_column_ANI_mode()
+            self.ref_genome_column.append(self.ani_single_plots_column)
+
+        else:
+            self.create_single_genome_column_both_mode()
+            self.ref_genome_column.append(self.synteny_ani_single_tabs)
+
+    def create_single_genome_column_both_mode(self):
+        self.create_single_genome_column_syntracker_mode()
+        self.create_single_genome_column_ANI_mode()
+        self.create_single_genome_column_combined_mode()
+
+        self.synteny_single_initial_plots_column.styles = config.both_mode_SynTracker_single_style
+        self.ani_single_plots_column.styles = config.both_mode_other_style
+
+        self.synteny_ani_single_tabs.clear()
+        self.synteny_ani_single_tabs.append(('SynTracker', self.synteny_single_initial_plots_column))
+        self.synteny_ani_single_tabs.append(('ANI', self.ani_single_plots_column))
+        self.synteny_ani_single_tabs.append(('Combined', self.combined_single_plots_column))
+
+    def create_single_genome_column_syntracker_mode(self):
+        before = time.time()
 
         synteny_per_pos_message = "Preparing the plot - please wait..."
         self.synteny_per_pos_plot_column.append(pn.pane.Markdown(synteny_per_pos_message, styles={'font-size': "20px",
@@ -1012,7 +1518,8 @@ class StrainVisApp:
             ds.create_pairs_num_per_sampling_size(self.score_per_region_selected_genome_df)
 
         # If the number of pairs with 40 sampled regions is smaller than 100, present also the 'All regions' bar
-        # If not (or if it is equal to the total number of pairs), do not present this bar (and remove this option from the slider)
+        # If not (or if it is equal to the total number of pairs), do not present this bar
+        # (and remove this option from the slider)
         pairs_at_40 = pairs_num_per_sampling_size_selected_genome_df['Number_of_pairs'].iloc[1]
         self.total_pairs_genome = pairs_num_per_sampling_size_selected_genome_df['Number_of_pairs'].iloc[0]
         if pairs_at_40 >= config.min_pairs_for_all_regions or pairs_at_40 == self.total_pairs_genome:
@@ -1062,21 +1569,69 @@ class StrainVisApp:
             slider_row,
             button_row,
             self.plots_by_size_single_column,
-            styles=config.single_tabs_style,
-            #styles={'padding': "20px"}
         )
+        self.APSS_analyses_single_column.append(initial_plots_column)
 
-        self.single_tabs.clear()
-        self.single_tabs.append(('APSS-based analyses', initial_plots_column))
-        self.single_tabs.append(('Synteny per position', self.synteny_per_pos_plot_column))
+        self.synteny_single_tabs.clear()
+        self.synteny_single_tabs.append(('APSS-based analyses', self.APSS_analyses_single_column))
+        self.synteny_single_tabs.append(('Synteny per position', self.synteny_per_pos_plot_column))
 
-        self.ref_genome_column.append(self.single_tabs)
+        self.synteny_single_initial_plots_column.append(self.synteny_single_tabs)
 
-        self.single_tabs.param.watch(self.changed_single_tabs, 'active')
+        self.synteny_single_tabs.param.watch(self.changed_single_tabs, 'active')
 
         after = time.time()
         duration = after - before
         print("\ncreate_single_genome_column took " + str(duration) + " seconds.\n")
+
+    def create_single_genome_column_ANI_mode(self):
+        self.jitter_card_ani.clear()
+        self.clustermap_card_ani.clear()
+
+        # Verify that the current ref-genome is found in the ANI input
+        if self.ref_genome in self.ref_genomes_list_ani:
+
+            # Get the ANI scores table for the selected genome only
+            self.ani_scores_selected_genome_df = ds.return_selected_genome_ani_table(self.ani_scores_all_genomes_df,
+                                                                                     self.ref_genome)
+
+            # Add the plots to the layout
+            self.create_jitter_pane_ani(self.ani_scores_selected_genome_df)
+            self.create_clustermap_pane_ani(self.ani_scores_selected_genome_df)
+
+            plots_column = pn.Column(self.jitter_card_ani, pn.Spacer(height=20), self.clustermap_card_ani)
+            self.ani_single_plots_column.append(plots_column)
+
+        # Display a message that the species is not found in the ANI input file
+        else:
+            message = "Species " + self.ref_genome + " is not found in the ANI input file."
+            self.ani_single_plots_column.append(pn.pane.Markdown(message,
+                                                                 styles={'font-size': "20px",
+                                                                         'color': config.title_red_color,
+                                                                         }))
+
+    def create_single_genome_column_combined_mode(self):
+
+        # Verify that the current ref-genome is found in the ANI input. If not, display an error message
+        if self.ref_genome not in self.ref_genomes_list_ani:
+            message = "Species " + self.ref_genome + " is not found in the ANI input file - " \
+                                                     "cannot display the combined plot."
+            self.combined_single_plots_column.append(pn.pane.Markdown(message,
+                                                                      styles={'font-size': "20px",
+                                                                              'color': config.title_red_color,
+                                                                              }))
+
+        else:
+            # Verify that there is a specific subsampling size has already been selected and calculated
+            if self.sampling_size == "":
+                message = "No subsampling size for the APSS-based analyses was selected and calculated.  " \
+                          "Please return to the 'SynTracker' tab, select a subsampling size (using the slider) " \
+                          "and click the button 'Display plots using the selected number of regions'."
+
+                self.combined_single_plots_column.append(pn.pane.Markdown(message,
+                                                                          styles={'font-size': "20px",
+                                                                                  'color': config.title_red_color
+                                                                                  }))
 
     def create_initial_synteny_per_pos_plot_tab(self):
 
@@ -1148,7 +1703,7 @@ class StrainVisApp:
     def changed_single_tabs(self, event):
 
         # The synteny_per_pos plots tab is selected for the first time for the current reference genome
-        if self.single_tabs.active == 1 and self.visited_synteny_per_pos_tab == 0:
+        if self.synteny_single_tabs.active == 1 and self.visited_synteny_per_pos_tab == 0:
 
             # In case calculating the initial tab (running in a different thread) hasn't finished yet,
             # wait for it to finish
@@ -1212,6 +1767,8 @@ class StrainVisApp:
                 self.nodes_color_by.param.unwatch(self.nodes_colorby_watcher)
             if self.feature_colormap_watcher in self.feature_colormap.param.watchers:
                 self.feature_colormap.param.unwatch(self.feature_colormap_watcher)
+            if self.feature_colormap_ani_watcher in self.feature_colormap_ani.param.watchers:
+                self.feature_colormap_ani.param.unwatch(self.feature_colormap_ani_watcher)
         self.network_threshold_input.value = config.APSS_connections_threshold_default
         self.is_continuous.value = False
         self.nodes_colormap.options = config.categorical_colormap_dict
@@ -1247,7 +1804,8 @@ class StrainVisApp:
             else:
                 size_title = "Presenting plots using APSS from " + self.sampling_size + " subsampled regions:"
 
-            self.plots_by_size_single_column.append(pn.pane.Markdown(size_title, styles={'font-size': "18px",
+            self.plots_by_size_single_column.append(pn.pane.Markdown(size_title, styles={'font-size': "20px",
+                                                                                         'color': config.title_purple_color,
                                                                                          'margin': "0 0 10px 0",
                                                                                          'padding': "0"}))
 
@@ -1255,6 +1813,23 @@ class StrainVisApp:
             self.create_jitter_pane(selected_genome_and_size_avg_df)
             self.create_clustermap_pane(selected_genome_and_size_avg_df)
             self.create_network_pane(selected_genome_and_size_avg_df)
+
+            # In case of combined mode, verify that the ref-genome is found in both input files
+            # and then prepare the combined plot for the selected sampling size
+            if self.input_mode == 'both' and self.ref_genome in self.ref_genomes_list_ani:
+
+                APSS_ANI_selected_genome_df = \
+                    selected_genome_and_size_avg_df.loc[:, ['Sample1', 'Sample2', 'APSS']].copy()
+
+                # Merge the ANI df and the APSS df, based on 'Sample1' and 'Sample2' - keep only common pairs
+                APSS_ANI_selected_genome_df = APSS_ANI_selected_genome_df.merge(
+                    self.ani_scores_selected_genome_df[['Sample1', 'Sample2', 'ANI']],
+                    on=['Sample1', 'Sample2'],
+                    how='inner'  # Only keep rows where the sample pair exists in both DataFrames
+                )
+                print("\nCombined APSS and ANI df:")
+                print(APSS_ANI_selected_genome_df)
+                self.create_combined_scatter_pane(APSS_ANI_selected_genome_df)
 
             plots_column = pn.Column(self.jitter_card, pn.Spacer(height=20), self.clustermap_card, pn.Spacer(height=20),
                                      self.network_card)
@@ -1302,7 +1877,7 @@ class StrainVisApp:
             self.use_metadata_jitter.disabled = True
 
         # Create the jitter plot
-        self.jitter_plot = pn.bind(self.create_jitter_plot, avg_df=selected_genome_and_size_avg_df,
+        self.jitter_plot = pn.bind(self.create_jitter_plot_syntracker, avg_df=selected_genome_and_size_avg_df,
                                    type=self.jitter_type_select, color=self.jitter_color,
                                    use_metadata=self.use_metadata_jitter, feature=self.jitter_feature_select,
                                    same_color=self.jitter_same_color, different_color=self.jitter_different_color)
@@ -1324,13 +1899,79 @@ class StrainVisApp:
         jitter_row = pn.Row(controls_col, pn.Spacer(width=120), jitter_pane, styles={'padding': "15px"})
         self.jitter_card.append(jitter_row)
 
+    def create_jitter_pane_ani(self, ani_df):
+        styling_title = "Plot styling options:"
+        metadata_colors_row = pn.Row(self.jitter_same_color_ani, pn.Spacer(width=3), self.jitter_different_color_ani)
+        metadata_col = pn.Column(self.jitter_feature_select_ani,
+                                 metadata_colors_row,
+                                 styles={'padding': "10x"})
+        self.metadata_jitter_card_ani.append(metadata_col)
+        options_row = pn.Row(self.jitter_type_select_ani, self.jitter_color_ani)
+        styling_col = pn.Column(pn.pane.Markdown(styling_title, styles={'font-size': "15px", 'font-weight': "bold",
+                                                                        'color': config.title_blue_color,
+                                                                        'margin': "0"}),
+                                options_row,
+                                pn.Spacer(height=5),
+                                self.use_metadata_jitter_ani,
+                                self.metadata_jitter_card_ani
+        )
+
+        save_file_title = "Plot download options:"
+        download_button = pn.widgets.Button(name='Download high-resolution image', button_type='primary')
+        download_button.on_click(self.download_jitter_ani)
+
+        jitter_file = "ANI_Dist_plot_" + self.ref_genome
+        self.save_jitter_file_path_ani.placeholder = jitter_file
+
+        self.download_jitter_column_ani = pn.Column(pn.pane.Markdown(save_file_title,
+                                                                     styles={'font-size': "15px",
+                                                                             'font-weight': "bold",
+                                                                             'color': config.title_blue_color,
+                                                                             'margin': "0"}),
+                                                    self.jitter_image_format_ani, self.save_jitter_file_path_ani,
+                                                    download_button, pn.pane.Markdown())
+
+        # Use metadata in plot
+        if self.is_metadata:
+            # Update the color nodes by- drop-down menu with the available metadata features
+            self.jitter_feature_select_ani.options = self.metadata_features_list
+            self.jitter_feature_select_ani.value = self.metadata_features_list[0]
+        # No metadata
+        else:
+            self.use_metadata_jitter_ani.disabled = True
+
+        # Create the jitter plot
+        self.jitter_plot_ani = pn.bind(self.create_jitter_plot_ani, ani_df=ani_df,
+                                       type=self.jitter_type_select_ani, color=self.jitter_color_ani,
+                                       use_metadata=self.use_metadata_jitter_ani,
+                                       feature=self.jitter_feature_select_ani,
+                                       same_color=self.jitter_same_color_ani,
+                                       different_color=self.jitter_different_color_ani)
+
+        jitter_pane = pn.pane.Matplotlib(self.jitter_plot_ani, height=550, dpi=300, tight=True, format='png')
+
+        jitter_table_file = "Data_for_ANI_dist_plot_" + self.ref_genome
+        self.save_jitter_table_path_ani.placeholder = jitter_table_file
+        download_table_button = pn.widgets.Button(name='Download data table in csv format', button_type='primary')
+        download_table_button.on_click(self.download_jitter_table_ani)
+
+        self.download_jitter_table_column_ani = pn.Column(self.save_jitter_table_path_ani,
+                                                          download_table_button, pn.pane.Markdown())
+
+        controls_col = pn.Column(styling_col, pn.Spacer(height=25), self.download_jitter_column_ani,
+                                 self.download_jitter_table_column_ani)
+
+        jitter_row = pn.Row(controls_col, pn.Spacer(width=120), jitter_pane, styles={'padding': "15px"})
+        self.jitter_card_ani.append(jitter_row)
+
     def category_by_feature(self, row, feature):
         if self.metadata_dict[feature][row['Sample1']] == self.metadata_dict[feature][row['Sample2']]:
             return 'Same ' + feature
         else:
             return 'Different ' + feature
 
-    def create_jitter_plot(self, avg_df, type, color, use_metadata, feature, same_color, different_color):
+    def create_jitter_plot_syntracker(self, avg_df, type, color, use_metadata, feature, same_color, different_color):
+
         self.df_for_jitter = avg_df.loc[:, ['Sample1', 'Sample2', 'APSS']].copy()
 
         # Use metadata to separate plot to same/different feature
@@ -1355,11 +1996,56 @@ class StrainVisApp:
             if type == 'Boxplot':
                 plot = sns.catplot(data=self.df_for_jitter, kind='box', x="Category", y="APSS", color=color, width=0.5)
             else:
-                plot = sns.catplot(data=self.df_for_jitter, x="Category", y="APSS", color=color, edgecolor="dimgray",
+                plot = sns.catplot(data=self.df_for_jitter, x="Category", y="APSS", color=color, edgecolor="gray",
                                    linewidth=0.1)
+
+        # Remove the x-axis label
+        plot.set_axis_labels("", "APSS")  # Sets x-label to empty string
 
         #print("\nDF for jitter plot:")
         #print(self.df_for_jitter)
+
+        plt.close(plot.figure)
+
+        return plot.figure
+
+    def create_jitter_plot_ani(self, ani_df, type, color, use_metadata, feature, same_color, different_color):
+
+        self.df_for_jitter_ani = ani_df.loc[:, ['Sample1', 'Sample2', 'ANI']].copy()
+
+        # Use metadata to separate plot to same/different feature
+        if use_metadata:
+            self.df_for_jitter_ani['Category'] = self.df_for_jitter_ani.apply(
+                lambda row: self.category_by_feature(row, feature),
+                axis=1)
+            same_feature = 'Same ' + feature
+            diff_feature = 'Different ' + feature
+            if type == 'Boxplot':
+                plot = sns.catplot(data=self.df_for_jitter_ani, kind='box', x="Category", y="ANI",
+                                   order=[same_feature, diff_feature],
+                                   hue="Category", hue_order=[same_feature, diff_feature],
+                                   palette=[same_color, different_color], width=0.5)
+            else:
+                plot = sns.catplot(data=self.df_for_jitter_ani, x="Category", y="ANI",
+                                   order=[same_feature, diff_feature],
+                                   hue="Category", hue_order=[same_feature, diff_feature],
+                                   palette=[same_color, different_color], edgecolor="gray", linewidth=0.1)
+
+        # Do not use metadata in plot - show all the comparisons together
+        else:
+            self.df_for_jitter_ani['Category'] = 'All Comparisons'
+            if type == 'Boxplot':
+                plot = sns.catplot(data=self.df_for_jitter_ani, kind='box', x="Category", y="ANI", color=color,
+                                   width=0.5)
+            else:
+                plot = sns.catplot(data=self.df_for_jitter_ani, x="Category", y="ANI", color=color, edgecolor="gray",
+                                   linewidth=0.1)
+
+        # Remove the x-axis label
+        plot.set_axis_labels("", "ANI")  # Sets x-label to empty string
+
+        # print("\nDF for jitter plot:")
+        # print(self.df_for_jitter)
 
         plt.close(plot.figure)
 
@@ -1391,6 +2077,32 @@ class StrainVisApp:
         self.download_jitter_column.pop(4)
         self.download_jitter_column.append(download_floatpanel)
 
+    def download_jitter_ani(self, event):
+        fformat = self.jitter_image_format_ani.value
+
+        # Set the directory for saving
+        if self.save_jitter_file_path_ani.value == "":
+            jitter_file_path = self.downloads_dir_path + self.save_jitter_file_path_ani.placeholder + "." + fformat
+        else:
+            jitter_file_path = self.save_jitter_file_path_ani.value
+
+            # Add a file-format suffix if there is none
+            regex = r"^\S+\." + re.escape(fformat) + r"$"
+            if not re.search(regex, jitter_file_path, re.IGNORECASE):
+                jitter_file_path += "." + fformat
+
+            # If path is not absolute - save file basename under the downloads dir
+            if not os.path.isabs(jitter_file_path):
+                jitter_file_path = self.downloads_dir_path + jitter_file_path
+
+        self.jitter_plot_ani().savefig(jitter_file_path, format=fformat, dpi=300.0, bbox_inches='tight')
+
+        download_message = "The image is successfully saved under:\n" + jitter_file_path
+        markdown = pn.pane.Markdown(download_message, styles={'font-size': "12px", 'color': config.title_red_color})
+        download_floatpanel = pn.layout.FloatPanel(markdown, name='Download message', margin=10)
+        self.download_jitter_column_ani.pop(4)
+        self.download_jitter_column_ani.append(download_floatpanel)
+
     def download_jitter_table(self, event):
         fformat = "csv"
 
@@ -1416,6 +2128,32 @@ class StrainVisApp:
         download_floatpanel = pn.layout.FloatPanel(markdown, name='Download message', margin=10)
         self.download_jitter_table_column.pop(2)
         self.download_jitter_table_column.append(download_floatpanel)
+
+    def download_jitter_table_ani(self, event):
+        fformat = "csv"
+
+        # Set the directory for saving
+        if self.save_jitter_table_path_ani.value == "":
+            jitter_table_path = self.downloads_dir_path + self.save_jitter_table_path_ani.placeholder + "." + fformat
+        else:
+            jitter_table_path = self.save_jitter_table_path_ani.value
+
+            # Add a file-format suffix if there is none
+            regex = r"^\S+\." + re.escape(fformat) + r"$"
+            if not re.search(regex, jitter_table_path, re.IGNORECASE):
+                jitter_table_path += "." + fformat
+
+            # If path is not absolute - save file basename under the downloads dir
+            if not os.path.isabs(jitter_table_path):
+                jitter_table_path = self.downloads_dir_path + jitter_table_path
+
+        self.df_for_jitter_ani.to_csv(jitter_table_path, index=False)
+
+        download_message = "The table is successfully saved under:\n" + jitter_table_path
+        markdown = pn.pane.Markdown(download_message, styles={'font-size': "12px", 'color': config.title_red_color})
+        download_floatpanel = pn.layout.FloatPanel(markdown, name='Download message', margin=10)
+        self.download_jitter_table_column_ani.pop(2)
+        self.download_jitter_table_column_ani.append(download_floatpanel)
 
     def create_clustermap_pane(self, selected_genome_and_size_avg_df):
 
@@ -1592,6 +2330,186 @@ class StrainVisApp:
         download_floatpanel = pn.layout.FloatPanel(markdown, name='Download message', margin=10)
         self.download_matrix_column.pop(2)
         self.download_matrix_column.append(download_floatpanel)
+
+    def create_clustermap_pane_ani(self, selected_genome_ani_df):
+
+        styling_title = "Heatmap customization options:"
+        metadata_coloring_col = pn.Column(self.color_by_feature_ani,
+                                          self.feature_colormap_ani,
+                                          self.custom_colormap_input_clustermap_ani,
+                                          styles={'padding': "10x"})
+        self.metadata_clustermap_card_ani.append(metadata_coloring_col)
+        styling_col = pn.Column(pn.pane.Markdown(styling_title, styles={'font-size': "15px", 'font-weight': "bold",
+                                                                        'color': config.title_blue_color,
+                                                                        'margin': "0"}),
+                                self.clustermap_cmap_ani,
+                                pn.Spacer(height=5),
+                                self.use_metadata_clustermap_ani,
+                                self.metadata_clustermap_card_ani)
+
+        save_file_title = "Plot download options:"
+        download_button = pn.widgets.Button(name='Download high-resolution image', button_type='primary')
+        download_button.on_click(self.download_clustermap_ani)
+
+        clustermap_file = "ANI_Clustermap_" + self.ref_genome
+        self.save_clustermap_file_path_ani.placeholder = clustermap_file
+
+        self.download_clustermap_column_ani = pn.Column(pn.pane.Markdown(save_file_title,
+                                                                         styles={'font-size': "15px",
+                                                                                 'font-weight': "bold",
+                                                                                 'color': config.title_blue_color,
+                                                                                 'margin': "0"}),
+                                                        self.clustermap_image_format_ani,
+                                                        self.save_clustermap_file_path_ani,
+                                                        download_button, pn.pane.Markdown())
+        matrix_file = "Matrix_for_ANI_Clustermap_" + self.ref_genome
+        self.save_matrix_file_path_ani.placeholder = matrix_file
+        download_table_button = pn.widgets.Button(name='Download matrix', button_type='primary')
+        download_table_button.on_click(self.download_matrix_ani)
+
+        self.download_matrix_column_ani = pn.Column(self.save_matrix_file_path_ani,
+                                                    download_table_button, pn.pane.Markdown())
+
+        controls_col = pn.Column(styling_col, pn.Spacer(height=30), self.download_clustermap_column_ani,
+                                 self.download_matrix_column_ani)
+
+        # Transform the data into a scoring matrix
+        pivoted_df = selected_genome_ani_df.pivot(columns='Sample1', index='Sample2', values='ANI')
+        self.scores_matrix_ani = pivoted_df.combine_first(pivoted_df.T)
+        np.fill_diagonal(self.scores_matrix_ani.values, 1.0)
+        self.scores_matrix_ani = self.scores_matrix_ani.fillna(100.0)
+        #print("\nScores matrix:")
+        #print(self.scores_matrix_ani)
+
+        # Check the number of columns in the matrix
+        col_num = len(self.scores_matrix_ani.columns)
+        #print("\ncreate_clustermap_pane: number of columns = " + str(col_num))
+
+        # If the num of columns exceeds the defined maximum, do not create the clustermap plot
+        # and display a message + a possibility to download the matrix
+        if col_num > config.max_clustermap_cols:
+            error = "The number of samples exceeds the limit of 120 so the heatmap plot cannot be well presented."
+            suggestion = "It ia possible to download the scoring matrix and display the heatmap in another program."
+            clustermap_col = pn.Column(
+                                       pn.pane.Markdown(error, styles={'font-size': "16px",
+                                                                       'color': config.title_red_color,
+                                                                       'margin-bottom': "0"}),
+                                       pn.pane.Markdown(suggestion,
+                                                        styles={'font-size': "14px", 'margin-top': "0"}),
+                                       self.download_matrix_column_ani,
+                                       styles={'padding': "15px"})
+
+            self.clustermap_card_ani.append(clustermap_col)
+
+        # Display the full clustermap pane, including the plot
+        else:
+            # There is metadata
+            if self.is_metadata:
+                # Update the color rows by- drop-down menu with the available metadata features
+                self.color_by_feature_ani.options = self.metadata_features_list
+                self.color_by_feature_ani.value = self.metadata_features_list[0]
+
+                # Define a watcher for the colormap widget
+                self.feature_colormap_ani_watcher = \
+                    self.feature_colormap_ani.param.watch(self.change_colormap_clustermap_ani,
+                                                          'value', onlychanged=True)
+
+            # No metadata
+            else:
+                self.use_metadata_clustermap_ani.disabled = True
+
+            self.clustermap_plot_ani = pn.bind(ps.create_clustermap, matrix=self.scores_matrix_ani,
+                                               cmap=self.clustermap_cmap_ani,
+                                               is_metadata=self.use_metadata_clustermap_ani,
+                                               feature=self.color_by_feature_ani,
+                                               cmap_metadata=self.feature_colormap_ani.value_name,
+                                               custom_cmap=self.custom_colormap_input_clustermap_ani,
+                                               metadata_dict=self.metadata_dict)
+
+            self.clustermap_pane_ani = pn.pane.Matplotlib(self.clustermap_plot_ani, height=600, dpi=300, tight=True,
+                                                          format='png')
+            clustermap_row = pn.Row(controls_col, pn.Spacer(width=30), self.clustermap_pane_ani,
+                                    styles={'padding': "15px"})
+
+            self.clustermap_card_ani.append(clustermap_row)
+
+    def change_colormap_clustermap_ani(self, event):
+        self.update_clustermap_plot_ani()
+
+    # Update the clustermap plot
+    def update_clustermap_plot_ani(self):
+        print("\nIn update_clustermap_plot_ani")
+        self.clustermap_plot_ani = pn.bind(ps.create_clustermap, matrix=self.scores_matrix_ani,
+                                           cmap=self.clustermap_cmap_ani, is_metadata=self.use_metadata_clustermap_ani,
+                                           feature=self.color_by_feature_ani,
+                                           cmap_metadata=self.feature_colormap_ani.value_name,
+                                           custom_cmap=self.custom_colormap_input_clustermap_ani,
+                                           metadata_dict=self.metadata_dict)
+
+        self.clustermap_pane_ani.object = self.clustermap_plot_ani
+
+    def download_clustermap_ani(self, event):
+        fformat = self.clustermap_image_format_ani.value
+
+        # Update the placeholder of the filename for download.
+        clustermap_file = "ANI_Clustermap_" + self.ref_genome + "_" + self.clustermap_cmap.value
+        if self.use_metadata_clustermap_ani.value:
+            if self.feature_colormap_ani.value_name == 'Define custom colormap':
+                clustermap_file += "_colorby_" + self.color_by_feature_ani.value + "_custom_colormap"
+            else:
+                clustermap_file += "_colorby_" + self.color_by_feature_ani.value + "_" + \
+                                   self.feature_colormap_ani.value_name
+        self.save_clustermap_file_path_ani.placeholder = clustermap_file
+
+        # Set the directory for saving
+        if self.save_clustermap_file_path_ani.value == "":
+            clustermap_file_path = self.downloads_dir_path + self.save_clustermap_file_path_ani.placeholder + "." \
+                                   + fformat
+        else:
+            clustermap_file_path = self.save_clustermap_file_path_ani.value
+
+            # Add a .png suffix if there is none
+            regex = r"^\S+\." + re.escape(fformat) + r"$"
+            if not re.search(regex, clustermap_file_path, re.IGNORECASE):
+                clustermap_file_path += "." + fformat
+
+            # If path is not absolute - save file basename under the downloads dir
+            if not os.path.isabs(clustermap_file_path):
+                clustermap_file_path = self.downloads_dir_path + clustermap_file_path
+
+        self.clustermap_plot_ani().savefig(clustermap_file_path, format=fformat, dpi=300.0, bbox_inches='tight')
+
+        download_message = "The image is successfully saved under:\n" + clustermap_file_path
+        markdown = pn.pane.Markdown(download_message, styles={'font-size': "12px", 'color': config.title_red_color})
+        download_floatpanel = pn.layout.FloatPanel(markdown, name='Download message', margin=10)
+        self.download_clustermap_column_ani.pop(4)
+        self.download_clustermap_column_ani.append(download_floatpanel)
+
+    def download_matrix_ani(self, event):
+        fformat = "txt"
+
+        # Set the directory for saving
+        if self.save_matrix_file_path_ani.value == "":
+            matrix_path = self.downloads_dir_path + self.save_matrix_file_path_ani.placeholder + "." + fformat
+        else:
+            matrix_path = self.save_matrix_file_path_ani.value
+
+            # Add a file-format suffix if there is none
+            regex = r"^\S+\." + re.escape(fformat) + r"$"
+            if not re.search(regex, matrix_path, re.IGNORECASE):
+                matrix_path += "." + fformat
+
+            # If path is not absolute - save file basename under the downloads dir
+            if not os.path.isabs(matrix_path):
+                matrix_path = self.downloads_dir_path + matrix_path
+
+        self.scores_matrix_ani.to_csv(matrix_path, sep='\t')
+
+        download_message = "The table is successfully saved under:\n" + matrix_path
+        markdown = pn.pane.Markdown(download_message, styles={'font-size': "12px", 'color': config.title_red_color})
+        download_floatpanel = pn.layout.FloatPanel(markdown, name='Download message', margin=10)
+        self.download_matrix_column_ani.pop(2)
+        self.download_matrix_column_ani.append(download_floatpanel)
 
     def change_continuous_state(self, event):
         # Continuous feature
@@ -2026,6 +2944,211 @@ class StrainVisApp:
                                        show_labels=self.show_labels_chkbox, metadata_dict=self.metadata_dict)
 
         self.network_pane.object = self.network_plot_hv
+
+    def create_combined_scatter_pane(self, APSS_ANI_selected_genome_df):
+
+        self.combined_single_plots_column.clear()
+        self.combined_scatter_card.clear()
+        self.metadata_combined_scatter_card.clear()
+
+        combined_scatter_plot_column = pn.Column()
+
+        size_title = "Presenting plot using APSS from " + self.sampling_size + " subsampled regions:"
+
+        combined_scatter_plot_column.append(pn.pane.Markdown(size_title, styles={'font-size': "20px",
+                                                                                 'color': config.title_purple_color,
+                                                                                 'margin': "0",
+                                                                                 'padding': "0"}))
+
+        num_pairs = len(APSS_ANI_selected_genome_df)
+        print("\nNumber of common sample pairs: " + str(num_pairs))
+        pairs_title = "Number of common sample pairs: " + str(num_pairs)
+        combined_scatter_plot_column.append(pn.pane.Markdown(pairs_title, styles={'font-size': "18px",
+                                                                                  'margin': "0 0 10px 0",
+                                                                                  'padding': "0"}))
+
+        styling_title = "Plot styling options:"
+        metadata_colors_row = pn.Row(self.combined_scatter_same_color, pn.Spacer(width=3),
+                                     self.combined_scatter_different_color)
+        metadata_col = pn.Column(self.combined_scatter_feature_select,
+                                 metadata_colors_row,
+                                 styles={'padding': "10x"})
+        self.metadata_combined_scatter_card.append(metadata_col)
+        styling_col = pn.Column(pn.pane.Markdown(styling_title, styles={'font-size': "15px", 'font-weight': "bold",
+                                                                        'color': config.title_blue_color,
+                                                                        'margin': "0"}),
+                                self.combined_scatter_color,
+                                pn.Spacer(height=5),
+                                self.use_metadata_combined_scatter,
+                                self.metadata_combined_scatter_card
+                                )
+
+        save_file_title = "Plot download options:"
+        download_button = pn.widgets.Button(name='Download high-resolution image', button_type='primary')
+        download_button.on_click(self.download_combined_scatter)
+
+        combined_scatter_file = "ANI_vs_APSS_plot_" + self.ref_genome + "_" + self.sampling_size + "_regions"
+        self.save_combined_scatter_file_path.placeholder = combined_scatter_file
+
+        self.download_combined_scatter_column = pn.Column(pn.pane.Markdown(save_file_title,
+                                                                           styles={'font-size': "15px",
+                                                                                   'font-weight': "bold",
+                                                                                   'color': config.title_blue_color,
+                                                                                   'margin': "0"}),
+                                                          self.combined_scatter_image_format,
+                                                          self.save_combined_scatter_file_path,
+                                                          download_button, pn.pane.Markdown())
+
+        # Use metadata in plot
+        if self.is_metadata:
+            # Update the color nodes by- drop-down menu with the available metadata features
+            self.combined_scatter_feature_select.options = self.metadata_features_list
+            self.combined_scatter_feature_select.value = self.metadata_features_list[0]
+        # No metadata
+        else:
+            self.use_metadata_combined_scatter.disabled = True
+
+        # Create the jitter plot
+        self.combined_scatter_plot = pn.bind(self.create_combined_scatter_plot,
+                                             combined_df=APSS_ANI_selected_genome_df,
+                                             color=self.combined_scatter_color,
+                                             use_metadata=self.use_metadata_combined_scatter,
+                                             feature=self.combined_scatter_feature_select,
+                                             same_color=self.combined_scatter_same_color,
+                                             different_color=self.combined_scatter_different_color)
+
+        combined_scatter_pane = pn.pane.Matplotlib(self.combined_scatter_plot, height=550, dpi=300, tight=True,
+                                                   format='png')
+
+        combined_scatter_table_file = "Data_for_ANI_vs_APSS_plot_" + self.ref_genome + "_" + self.sampling_size + \
+                                       "_regions"
+        self.save_combined_scatter_table_path.placeholder = combined_scatter_table_file
+        download_table_button = pn.widgets.Button(name='Download data table in csv format', button_type='primary')
+        download_table_button.on_click(self.download_combined_scatter_table)
+
+        self.download_combined_scatter_table_column = pn.Column(self.save_combined_scatter_table_path,
+                                                                download_table_button,
+                                                                pn.pane.Markdown())
+
+        controls_col = pn.Column(styling_col, pn.Spacer(height=25), self.download_combined_scatter_column,
+                                 self.download_combined_scatter_table_column)
+
+        combined_scatter_row = pn.Row(controls_col, pn.Spacer(width=120), combined_scatter_pane,
+                                      styles={'padding': "15px"})
+        self.combined_scatter_card.append(combined_scatter_row)
+
+        self.combined_single_plots_column.append(self.combined_scatter_card)
+
+    def download_combined_scatter(self, event):
+        fformat = self.combined_scatter_image_format.value
+
+        # Set the directory for saving
+        if self.save_combined_scatter_file_path.value == "":
+            combined_scatter_file_path = self.downloads_dir_path + self.save_combined_scatter_file_path.placeholder \
+                                         + "." + fformat
+        else:
+            combined_scatter_file_path = self.save_combined_scatter_file_path.value
+
+            # Add a file-format suffix if there is none
+            regex = r"^\S+\." + re.escape(fformat) + r"$"
+            if not re.search(regex, combined_scatter_file_path, re.IGNORECASE):
+                combined_scatter_file_path += "." + fformat
+
+            # If path is not absolute - save file basename under the downloads dir
+            if not os.path.isabs(combined_scatter_file_path):
+                combined_scatter_file_path = self.downloads_dir_path + combined_scatter_file_path
+
+        self.combined_scatter_plot().savefig(combined_scatter_file_path, format=fformat, dpi=300.0, bbox_inches='tight')
+
+        download_message = "The image is successfully saved under:\n" + combined_scatter_file_path
+        markdown = pn.pane.Markdown(download_message, styles={'font-size': "12px", 'color': config.title_red_color})
+        download_floatpanel = pn.layout.FloatPanel(markdown, name='Download message', margin=10)
+        self.download_combined_scatter_column.pop(4)
+        self.download_combined_scatter_column.append(download_floatpanel)
+
+    def download_combined_scatter_table(self, event):
+        fformat = "csv"
+
+        # Set the directory for saving
+        if self.save_combined_scatter_table_path.value == "":
+            combined_scatter_table_path = self.downloads_dir_path + self.save_combined_scatter_table_path.placeholder \
+                                          + "." + fformat
+        else:
+            combined_scatter_table_path = self.save_combined_scatter_table_path.value
+
+            # Add a file-format suffix if there is none
+            regex = r"^\S+\." + re.escape(fformat) + r"$"
+            if not re.search(regex, combined_scatter_table_path, re.IGNORECASE):
+                combined_scatter_table_path += "." + fformat
+
+            # If path is not absolute - save file basename under the downloads dir
+            if not os.path.isabs(combined_scatter_table_path):
+                combined_scatter_table_path = self.downloads_dir_path + combined_scatter_table_path
+
+        self.df_for_combined_scatter.to_csv(combined_scatter_table_path, index=False)
+
+        download_message = "The table is successfully saved under:\n" + combined_scatter_table_path
+        markdown = pn.pane.Markdown(download_message, styles={'font-size': "12px", 'color': config.title_red_color})
+        download_floatpanel = pn.layout.FloatPanel(markdown, name='Download message', margin=10)
+        self.download_combined_scatter_table_column.pop(2)
+        self.download_combined_scatter_table_column.append(download_floatpanel)
+
+    def category_by_feature_scatter(self, row, feature, same_color, diff_color):
+        if self.metadata_dict[feature][row['Sample1']] == self.metadata_dict[feature][row['Sample2']]:
+            return same_color
+        else:
+            return diff_color
+
+    def create_combined_scatter_plot(self, combined_df, color, use_metadata, feature, same_color, different_color):
+
+        self.df_for_combined_scatter = combined_df.copy()
+
+        fig, ax1 = plt.subplots(figsize=(8, 7))
+
+        # Use metadata to separate plot to same/different feature
+        if use_metadata:
+            self.df_for_combined_scatter['Color'] = self.df_for_combined_scatter.apply(
+                lambda row: self.category_by_feature_scatter(row, feature, same_color, different_color), axis=1)
+            print(self.df_for_combined_scatter)
+
+            ax1.scatter(self.df_for_combined_scatter['APSS'], self.df_for_combined_scatter['ANI'],
+                        c=self.df_for_combined_scatter['Color'], linewidths=0.1, edgecolors="gray")
+
+            # Define the color-to-category (same/different) mapping
+            color_to_category = {
+                same_color: 'Same ' + feature,
+                different_color: 'Different ' + feature
+            }
+
+            # Create legend handles
+            handles = [
+                mpatches.Patch(color=color, label=label)
+                for color, label in color_to_category.items()
+            ]
+
+            # Add legend to the plot
+            ax1.legend(handles=handles, loc='lower left', bbox_to_anchor=(0, 1), fontsize=12)
+
+        # Do not use metadata in plot - show all the comparisons together
+        else:
+            ax1.scatter(self.df_for_combined_scatter['APSS'], self.df_for_combined_scatter['ANI'],
+                        c=color, linewidths=0.1, edgecolors="gray")
+
+        plt.xlabel("APSS", labelpad=5, fontsize=12)
+        plt.ylabel("ANI", labelpad=5, fontsize=12)
+
+        # Calculate the Spearman correlation for the plot
+        corr, p_value = spearmanr(self.df_for_combined_scatter['APSS'], self.df_for_combined_scatter['ANI'])
+
+        # Add to plot (adjust x, y text position as needed)
+        ax1.text(0.05, 0.95, f"r = {corr:.2f}", transform=ax1.transAxes,
+                 fontsize=12, verticalalignment='top',
+                 #bbox=dict(boxstyle="round", facecolor="white", alpha=0.5)
+                 )
+
+        plt.close(fig)
+
+        return fig
 
     def changed_contig_sorting(self, sorting_select, contig_select, event):
         sorting_method = sorting_select.value
@@ -2741,18 +3864,38 @@ class StrainVisApp:
 
         self.selected_subset_species_num = len(self.selected_genomes_subset)
 
-        self.create_multi_genomes_plots_initial_column()
-
-        multi_genome_col = pn.Column(
+        # Create the species selection part (which is common to all input modes)
+        species_select_col = pn.Column(
             self.all_or_subset_radio,
             self.genomes_select_card,
             self.update_genomes_selection_button,
-            self.main_plots_multi_column,
-            styles={'margin': "0px", 'padding': "0"}
+            styles={'margin': "0 0 10px 0", 'padding': "0"}
         )
-
         self.main_multi_column.clear()
-        self.main_multi_column.append(multi_genome_col)
+        self.main_multi_column.append(species_select_col)
+
+        if self.input_mode == "SynTracker":
+            self.create_multi_genomes_column_syntracker_mode()
+            self.main_multi_column.append(self.synteny_multi_initial_plots_column)
+
+        elif self.input_mode == "ANI":
+            self.create_multi_genomes_column_ANI_mode()
+            self.main_multi_column.append(self.ani_multi_plots_column)
+
+        else:
+            self.create_multi_genomes_column_both_mode()
+            self.main_multi_column.append(self.synteny_ani_multi_tabs)
+
+    def create_multi_genomes_column_both_mode(self):
+        self.create_multi_genomes_column_syntracker_mode()
+        self.create_multi_genomes_column_ANI_mode()
+
+        self.synteny_multi_initial_plots_column.styles = config.both_mode_other_style
+        self.ani_multi_plots_column.styles = config.both_mode_other_style
+
+        self.synteny_ani_multi_tabs.clear()
+        self.synteny_ani_multi_tabs.append(('SynTracker', self.synteny_multi_initial_plots_column))
+        self.synteny_ani_multi_tabs.append(('ANI', self.ani_multi_plots_column))
 
     def update_genomes_selection(self, event):
         # Build the two bar-plots for subsampled regions based on the selected list of genomes
@@ -2766,10 +3909,18 @@ class StrainVisApp:
         print("\nupdate_genomes_selection:\nNumber of selected species: " + str(self.selected_subset_species_num))
         print(self.selected_genomes_subset)
 
-        self.create_multi_genomes_plots_initial_column()
+        if self.input_mode == "SynTracker":
+            self.create_multi_genomes_column_syntracker_mode()
 
-    def create_multi_genomes_plots_initial_column(self):
-        self.main_plots_multi_column.clear()
+        elif self.input_mode == "ANI":
+            self.create_multi_genomes_column_ANI_mode()
+
+        else:
+            self.create_multi_genomes_column_syntracker_mode()
+            self.create_multi_genomes_column_ANI_mode()
+
+    def create_multi_genomes_column_syntracker_mode(self):
+        self.synteny_multi_initial_plots_column.clear()
         self.plots_by_size_multi_column.clear()
 
         # Initialize the dictionaries that hold the APSS for all the genomes in different sampling sizes
@@ -2805,7 +3956,7 @@ class StrainVisApp:
                                                   df=self.pairs_num_per_sampling_size_multi_genomes_df,
                                                   sampling_size=self.sample_sizes_slider_multi,
                                                   is_all_regions=is_all_regions)
-        pairs_bar_plot_pane = pn.pane.HoloViews(pairs_vs_sampling_size_bar_plot, width=535, sizing_mode="fixed")
+        pairs_bar_plot_pane = pn.pane.HoloViews(pairs_vs_sampling_size_bar_plot, width=530, sizing_mode="fixed")
 
         # Create a markdown for the pairs lost percent (binded to the slider)
         binded_text = pn.bind(widgets.create_pairs_lost_text, self.pairs_num_per_sampling_size_multi_genomes_df,
@@ -2819,7 +3970,7 @@ class StrainVisApp:
                                                     df=self.pairs_num_per_sampling_size_multi_genomes_df,
                                                     sampling_size=self.sample_sizes_slider_multi,
                                                     is_all_regions=is_all_regions)
-        species_bar_plot_pane = pn.pane.HoloViews(species_vs_sampling_size_bar_plot, width=535, sizing_mode="fixed")
+        species_bar_plot_pane = pn.pane.HoloViews(species_vs_sampling_size_bar_plot, width=530, sizing_mode="fixed")
 
         # Create a markdown for the pairs lost percent (binded to the slider)
         binded_text = pn.bind(widgets.create_species_num_text, self.pairs_num_per_sampling_size_multi_genomes_df,
@@ -2828,7 +3979,7 @@ class StrainVisApp:
         species_plot_column = pn.Column(pn.pane.Markdown(refs=binded_text, align='center'), species_bar_plot_pane,
                                         styles={'background-color': "white"})
 
-        plots_row = pn.Row(pairs_plot_column, pn.Spacer(width=30), species_plot_column)
+        plots_row = pn.Row(pairs_plot_column, pn.Spacer(width=20), species_plot_column)
         slider_row = pn.Row(self.sample_sizes_slider_multi, align='center')
         button_row = pn.Row(self.show_box_plot_multi_button,  align='center')
 
@@ -2838,10 +3989,9 @@ class StrainVisApp:
             slider_row,
             button_row,
             self.plots_by_size_multi_column,
-            styles={'padding': "10px"}
         )
 
-        self.main_plots_multi_column.append(plots_column)
+        self.synteny_multi_initial_plots_column.append(plots_column)
 
     def create_multi_genomes_plots_by_APSS(self, event):
 
@@ -2865,7 +4015,8 @@ class StrainVisApp:
             size_title = "Presenting plots using APSS from " + self.sampling_size_multi + \
                          " subsampled regions:"
 
-        self.plots_by_size_multi_column.append(pn.pane.Markdown(size_title, styles={'font-size': "18px",
+        self.plots_by_size_multi_column.append(pn.pane.Markdown(size_title, styles={'font-size': "20px",
+                                                                                    'color': config.title_purple_color,
                                                                                     'margin': "0 0 10px 0",
                                                                                     'padding': "0"}))
 
@@ -2904,6 +4055,34 @@ class StrainVisApp:
             # Add the plots to the layout
             self.create_box_plot_multi_pane()
             self.plots_by_size_multi_column.append(self.box_plot_card)
+
+    def create_multi_genomes_column_ANI_mode(self):
+
+        if self.feature_select_watcher_ani in self.box_plot_feature_select_ani.param.watchers:
+            self.box_plot_feature_select_ani.param.unwatch(self.feature_select_watcher_ani)
+        self.ani_multi_plots_column.clear()
+        self.box_plot_card_ani.clear()
+        self.metadata_box_plot_card_ani.clear()
+
+        self.ani_scores_genomes_subset_df = dm.return_genomes_subset_ani_table(self.ani_scores_all_genomes_df,
+                                                                               self.selected_genomes_subset)
+
+        self.species_num_in_subset_ani = len(self.ani_scores_genomes_subset_df['Ref_genome'].unique())
+        print("\ncreate_multi_genomes_column_ANI_mode: Number of available species: " +
+              str(self.species_num_in_subset_ani))
+
+        # No data for the selected genomes subset
+        if self.species_num_in_subset_ani == 0:
+            text = "None of the species in the selected subset appears in the ANI input file."
+            self.ani_multi_plots_column.append(pn.pane.Markdown(text, styles={'font-size': "18px",
+                                                                              'color': config.title_red_color,
+                                                                              'margin': "0"}))
+
+        # Enough data -> creating plots
+        else:
+            # Add the plots to the layout
+            self.create_box_plot_multi_pane_ani()
+            self.ani_multi_plots_column.append(self.box_plot_card_ani)
 
     def create_box_plot_multi_pane(self):
         styling_title = "Plot styling options:"
@@ -2952,10 +4131,7 @@ class StrainVisApp:
         self.download_boxplot_table_column = pn.Column(self.save_boxplot_table_path, download_table_button,
                                                        pn.pane.Markdown())
 
-        download_pvalues_button = pn.widgets.Button(name='Download P-values table in csv format', button_type='primary')
-        download_pvalues_button.on_click(self.download_pvalues_table)
-
-        self.download_pvalues_table_column = pn.Column(self.save_pvalues_table_path, download_pvalues_button,
+        self.download_pvalues_table_column = pn.Column(self.save_pvalues_table_path, self.download_pvalues_button,
                                                        pn.pane.Markdown())
 
         self.download_multi_col = pn.Column(styling_col, pn.Spacer(height=30), self.download_box_plot_column,
@@ -3066,7 +4242,6 @@ class StrainVisApp:
         print(self.boxplot_p_values_df)
 
     def update_feature_in_boxplot(self, event):
-        print("\nIn update_feature_in_boxplot callback")
         self.calculate_metadata_for_box_plot()
 
         self.box_plot = pn.bind(pm.create_box_plot, avg_df=self.genomes_subset_selected_size_APSS_df,
@@ -3153,5 +4328,248 @@ class StrainVisApp:
         self.download_pvalues_table_column.pop(2)
         self.download_pvalues_table_column.append(download_floatpanel)
 
+    def create_box_plot_multi_pane_ani(self):
+        styling_title = "Plot styling options:"
+        metadata_colors_row = pn.Row(self.box_plot_same_color_ani, pn.Spacer(width=3), self.box_plot_different_color_ani)
+        metadata_col = pn.Column(self.box_plot_feature_select_ani, metadata_colors_row, styles={'padding': "10x"})
+        self.metadata_box_plot_card_ani.append(metadata_col)
+        styling_col = pn.Column(pn.pane.Markdown(styling_title, styles={'font-size': "15px", 'font-weight': "bold",
+                                                                        'color': config.title_blue_color,
+                                                                        'margin': "0"}),
+                                self.box_plot_color_ani,
+                                pn.Spacer(height=5),
+                                self.use_metadata_box_plot_ani,
+                                self.metadata_box_plot_card_ani
+                                )
+
+        save_file_title = "Plot download options:"
+        download_button = pn.widgets.Button(name='Download high-resolution image', button_type='primary')
+        download_button.on_click(self.download_box_plot_ani)
+
+        if self.species_num_in_subset_ani == self.number_of_genomes:
+            num = "all"
+        else:
+            num = str(self.species_num_in_subset_ani)
+        box_plot_file = "ANI_boxplot_" + num + "_species"
+        boxplot_table = "Data_for_ANI_boxplot_" + num + "_species"
+        pvalues_table = "P-values_ANI_boxplot_" + num + "_species"
+
+        self.save_box_plot_file_path_ani.placeholder = box_plot_file
+        self.save_boxplot_table_path_ani.placeholder = boxplot_table
+        self.save_pvalues_table_path_ani.placeholder = pvalues_table
+
+        self.download_box_plot_column_ani = pn.Column(pn.pane.Markdown(save_file_title,
+                                                                       styles={'font-size': "15px",
+                                                                               'font-weight': "bold",
+                                                                               'color': config.title_blue_color,
+                                                                               'margin': "0"}),
+                                                      self.box_plot_image_format_ani, self.save_box_plot_file_path_ani,
+                                                      download_button, pn.pane.Markdown())
+
+        download_table_button = pn.widgets.Button(name='Download data table in csv format', button_type='primary')
+        download_table_button.on_click(self.download_boxplot_table_ani)
+
+        self.download_boxplot_table_column_ani = pn.Column(self.save_boxplot_table_path_ani, download_table_button,
+                                                           pn.pane.Markdown())
+
+        self.download_pvalues_table_column_ani = pn.Column(self.save_pvalues_table_path_ani,
+                                                           self.download_pvalues_button_ani,
+                                                           pn.pane.Markdown())
+
+        self.download_multi_col_ani = pn.Column(styling_col, pn.Spacer(height=30), self.download_box_plot_column_ani,
+                                                self.download_boxplot_table_column_ani)
+
+        # There is metadata
+        if self.is_metadata:
+
+            self.box_plot_feature_select_ani.options = self.metadata_features_list
+            self.box_plot_feature_select_ani.value = self.metadata_features_list[0]
+
+            self.calculate_metadata_for_box_plot_ani()
+
+            # Set watcher for the feature-select widget
+            self.feature_select_watcher_ani = self.box_plot_feature_select_ani.param.watch(
+                self.update_feature_in_boxplot_ani, 'value', onlychanged=False)
+
+            # Add the p-values download column
+            self.download_multi_col_ani.append(self.download_pvalues_table_column_ani)
+
+        # No metadata
+        else:
+            self.use_metadata_box_plot_ani.disabled = True
+
+        self.box_plot_ani = pn.bind(pm.create_box_plot_ani, ani_df=self.ani_scores_genomes_subset_df,
+                                    pvalues_df=self.boxplot_p_values_df_ani, color=self.box_plot_color_ani,
+                                    use_metadata=self.use_metadata_box_plot_ani,
+                                    feature=self.box_plot_feature_select_ani.value,
+                                    same_color=self.box_plot_same_color_ani,
+                                    different_color=self.box_plot_different_color_ani)
+
+        self.box_plot_pane_ani = pn.pane.Matplotlib(self.box_plot_ani, width=700, dpi=300, tight=True, format='png')
+
+        box_plot_row = pn.Row(self.download_multi_col_ani, pn.Spacer(width=30), self.box_plot_pane_ani,
+                              styles={'padding': "15px"})
+        self.box_plot_card_ani.append(box_plot_row)
+
+    def calculate_metadata_for_box_plot_ani(self):
+
+        presented_genomes_list = self.ani_scores_genomes_subset_df['Ref_genome'].unique()
+        feature = self.box_plot_feature_select_ani.value
+
+        print("\ncalculate_metadata_for_box_plot_ani:")
+        print("Number of species to present: " + str(self.species_num_in_subset_ani))
+        print("Compared feature: " + feature)
+
+        if self.species_num_in_subset_ani == self.number_of_genomes:
+            num = "all"
+        else:
+            num = str(self.species_num_in_subset_ani)
+
+        box_plot_file = "ANI_boxplot_" + num + "_species"
+        boxplot_table = "Data_for_ANI_boxplot_" + num + "_species"
+        pvalues_table = "P-values_ANI_boxplot_" + num + "_species"
+
+        self.save_box_plot_file_path_ani.placeholder = box_plot_file + "_feature_" + feature
+        self.save_boxplot_table_path.placeholder = boxplot_table + "_feature_" + feature
+        self.save_pvalues_table_path.placeholder = pvalues_table + "_feature_" + feature
+
+        self.ani_scores_genomes_subset_df['Category'] = self.ani_scores_genomes_subset_df.apply(
+            lambda row: category_by_feature(row, feature, self.metadata_dict), axis=1)
+        #print("\nDF for box_plot with category:")
+        #print(self.genomes_subset_selected_size_APSS_df)
+
+        same_feature = 'Same ' + feature
+        diff_feature = 'Different ' + feature
+
+        # Calculate P-values for each genome
+        valid_pval_list = []
+        genome_pval_dict = {}
+        pval_corrected = []
+        for genome in presented_genomes_list:
+            #print("\nGenome: " + genome + ", Feature: " + feature)
+            same_array = self.ani_scores_genomes_subset_df[
+                (self.ani_scores_genomes_subset_df['Ref_genome'] == genome) &
+                (self.ani_scores_genomes_subset_df['Category'] == same_feature)]['ANI']
+            diff_array = self.ani_scores_genomes_subset_df[
+                (self.ani_scores_genomes_subset_df['Ref_genome'] == genome) &
+                (self.ani_scores_genomes_subset_df['Category'] == diff_feature)]['ANI']
+            p_val = return_p_value(same_array, diff_array)
+            if str(p_val) != "nan":
+                valid_pval_list.append(p_val)
+            genome_pval_dict[genome] = p_val
+            #print("P-value = " + str(p_val))
+
+        #print("\nOriginal p-values:")
+        #print(valid_pval_list)
+
+        if len(valid_pval_list) >= 2:
+            reject, pval_corrected, _, q_values = multipletests(valid_pval_list, method='fdr_bh')
+            #print("Corrected p-values:")
+            #print(pval_corrected)
+
+        valid_counter = 0
+        if len(pval_corrected) > 0:
+            for genome in presented_genomes_list:
+                if str(genome_pval_dict[genome]) != "nan":
+                    genome_pval_dict[genome] = pval_corrected[valid_counter]
+                    valid_counter += 1
+
+        updated_pval_list = genome_pval_dict.values()
+        genomes_pvalues_dict = {'Ref_genome': presented_genomes_list, 'P_value': updated_pval_list}
+        self.boxplot_p_values_df_ani = pd.DataFrame(genomes_pvalues_dict)
+        # print(pvalues_df)
+
+        self.boxplot_p_values_df_ani['Significance'] = self.boxplot_p_values_df_ani.apply(
+            lambda row: return_significance(row), axis=1)
+        print(self.boxplot_p_values_df_ani)
+
+    def update_feature_in_boxplot_ani(self, event):
+        self.calculate_metadata_for_box_plot_ani()
+
+        self.box_plot_ani = pn.bind(pm.create_box_plot_ani, ani_df=self.ani_scores_genomes_subset_df,
+                                    pvalues_df=self.boxplot_p_values_df_ani, color=self.box_plot_color_ani,
+                                    use_metadata=self.use_metadata_box_plot_ani,
+                                    feature=self.box_plot_feature_select_ani.value,
+                                    same_color=self.box_plot_same_color_ani,
+                                    different_color=self.box_plot_different_color_ani)
+        self.box_plot_pane_ani.object = self.box_plot_ani
+
+    def download_box_plot_ani(self, event):
+        fformat = self.box_plot_image_format_ani.value
+
+        # Set the directory for saving
+        if self.save_box_plot_file_path_ani.value == "":
+            box_plot_file_path = self.downloads_dir_path + self.save_box_plot_file_path_ani.placeholder + "." + fformat
+        else:
+            box_plot_file_path = self.save_box_plot_file_path_ani.value
+
+            # Add a file-format suffix if there is none
+            regex = r"^\S+\." + re.escape(fformat) + r"$"
+            if not re.search(regex, box_plot_file_path, re.IGNORECASE):
+                box_plot_file_path += "." + fformat
+
+            # If path is not absolute - save file basename under the downloads dir
+            if not os.path.isabs(box_plot_file_path):
+                box_plot_file_path = self.downloads_dir_path + box_plot_file_path
+
+        self.box_plot_ani().savefig(box_plot_file_path, format=fformat, dpi=300.0, bbox_inches='tight')
+
+        download_message = "The image is successfully saved under:\n" + box_plot_file_path
+        markdown = pn.pane.Markdown(download_message, styles={'font-size': "12px", 'color': config.title_red_color})
+        download_floatpanel = pn.layout.FloatPanel(markdown, name='Download message', margin=10)
+        self.download_box_plot_column_ani.pop(4)
+        self.download_box_plot_column_ani.append(download_floatpanel)
+
+    def download_boxplot_table_ani(self, event):
+        fformat = "csv"
+
+        # Set the directory for saving
+        if self.save_boxplot_table_path_ani.value == "":
+            boxplot_table_path = self.downloads_dir_path + self.save_boxplot_table_path_ani.placeholder + "." + fformat
+        else:
+            boxplot_table_path = self.save_boxplot_table_path_ani.value
+
+            # Add a file-format suffix if there is none
+            regex = r"^\S+\." + re.escape(fformat) + r"$"
+            if not re.search(regex, boxplot_table_path, re.IGNORECASE):
+                boxplot_table_path += "." + fformat
+
+            # If path is not absolute - save file basename under the downloads dir
+            if not os.path.isabs(boxplot_table_path):
+                boxplot_table_path = self.downloads_dir_path + boxplot_table_path
+
+        self.ani_scores_genomes_subset_df.to_csv(boxplot_table_path, index=False, sep='\t')
+
+        download_message = "The table is successfully saved under:\n" + boxplot_table_path
+        markdown = pn.pane.Markdown(download_message, styles={'font-size': "12px", 'color': config.title_red_color})
+        download_floatpanel = pn.layout.FloatPanel(markdown, name='Download message', margin=10)
+        self.download_boxplot_table_column_ani.pop(2)
+        self.download_boxplot_table_column_ani.append(download_floatpanel)
+
+    def download_pvalues_table_ani(self, event):
+        fformat = "csv"
+
+        # Set the directory for saving
+        if self.save_pvalues_table_path_ani.value == "":
+            pvalues_table_path = self.downloads_dir_path + self.save_pvalues_table_path_ani.placeholder + "." + fformat
+        else:
+            pvalues_table_path = self.save_pvalues_table_path_ani.value
+
+            # Add a file-format suffix if there is none
+            regex = r"^\S+\." + re.escape(fformat) + r"$"
+            if not re.search(regex, pvalues_table_path, re.IGNORECASE):
+                pvalues_table_path += "." + fformat
+
+            # If path is not absolute - save file basename under the downloads dir
+            if not os.path.isabs(pvalues_table_path):
+                pvalues_table_path = self.downloads_dir_path + pvalues_table_path
+
+        self.boxplot_p_values_df_ani.to_csv(pvalues_table_path, index=False, sep='\t')
+
+        download_message = "The table is successfully saved under:\n" + pvalues_table_path
+        markdown = pn.pane.Markdown(download_message, styles={'font-size': "12px", 'color': config.title_red_color})
+        download_floatpanel = pn.layout.FloatPanel(markdown, name='Download message', margin=10)
+        self.download_pvalues_table_column_ani.pop(2)
+        self.download_pvalues_table_column_ani.append(download_floatpanel)
 
 

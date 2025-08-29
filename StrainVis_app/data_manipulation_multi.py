@@ -97,6 +97,22 @@ def create_sorted_by_pairs_genomes_list(score_per_region_all_genomes_df):
     return genomes_list_by_pairs_num
 
 
+def create_sorted_by_pairs_genomes_list_ani(ani_scores_all_genomes_df):
+
+    pairs_num_df = ani_scores_all_genomes_df[['Ref_genome', 'ANI']].groupby('Ref_genome').count().\
+        sort_values('ANI', ascending=False).reset_index()
+    pairs_num_df.columns.values[1] = "Number_of_pairs"
+
+    print("\ncreate_sorted_by_pairs_genomes_list_ani:")
+    print(pairs_num_df)
+
+    genomes_list_by_pairs_num = list(pairs_num_df['Ref_genome'])
+    print("\nGenomes list sorted by pairs number:")
+    print(genomes_list_by_pairs_num)
+
+    return genomes_list_by_pairs_num
+
+
 def create_pairs_num_per_sampling_size(score_per_region_selected_genomes_df):
 
     regions_num_per_pair_df = score_per_region_selected_genomes_df[['Ref_genome', 'Sample1', 'Sample2', 'Synteny_score']].\
@@ -189,5 +205,13 @@ def return_genomes_subset_APSS_selected_size_table(all_genomes_selected_size_APS
     #print("\nreturn_genomes_subset_APSS_selected_size_table:")
     #print(genomes_subset_selected_size_APSS_df)
     return genomes_subset_selected_size_APSS_df
+
+
+def return_genomes_subset_ani_table(all_genomes_ani_df, genomes_list):
+    genomes_subset_ani_df = all_genomes_ani_df[all_genomes_ani_df['Ref_genome'].isin(genomes_list)].reset_index()
+
+    #print("\return_genomes_subset_ani_table:")
+    #print(genomes_subset_ani_df)
+    return genomes_subset_ani_df
 
 

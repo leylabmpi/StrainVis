@@ -13,6 +13,14 @@ def return_selected_genome_table(score_per_region_df, selected_genome):
     return selected_genome_df
 
 
+def return_selected_genome_ani_table(ani_all_genomes_df, selected_genome):
+    selected_genome_df = ani_all_genomes_df[ani_all_genomes_df['Ref_genome'] == selected_genome]
+    selected_genome_df = selected_genome_df[['Sample1', 'Sample2', 'ANI']]
+
+    #print(selected_genome_df)
+    return selected_genome_df
+
+
 def return_selected_genome_avg_table(avg_big_df, selected_genome):
     selected_genome_avg_df = avg_big_df[avg_big_df['Ref_genome'] == selected_genome]
     selected_genome_avg_df = selected_genome_avg_df[['Sample1', 'Sample2', 'APSS', 'Compared_regions']]
