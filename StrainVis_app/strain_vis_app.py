@@ -372,7 +372,7 @@ class StrainVisApp:
                                    header_background="#2e86c1", header_color="#ffffff")
         self.network_card = pn.Card(title='Network', styles=config.plot_card_style, header_background="#2e86c1",
                                     header_color="#ffffff")
-        self.combined_scatter_card = pn.Card(title='APSS/ANI distribution', styles=config.plot_card_style,
+        self.combined_scatter_card = pn.Card(title='ANI/APSS scatter', styles=config.plot_card_style,
                                              header_background="#2e86c1", header_color="#ffffff")
         self.box_plot_card = pn.Card(title='APSS distribution among species', styles=config.plot_card_style,
                                      header_background="#2e86c1", header_color="#ffffff")

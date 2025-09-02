@@ -2,6 +2,30 @@
 
 ### Version 1.0.0
 
+- [Overview](#overview)
+- [Installation](#installation)
+- [Open StrainVis web-application](#open-strainvis-web-application)
+- [Run StrainVis on a remote server and open it in a local browser](#run-strainvis-on-a-remote-server-and-open-it-in-a-local-browser)
+- [Input](#input)
+- [Visual analyses](#visual-analyses)
+- [Single species analyses](#single-species-analyses)
+  - [SynTracker results analyses](#syntracker-results-analyses) 
+    - [APSS-based analyses](#apss-based-analyses)
+      - [Initial bar-plots](#initial-bar-plots)
+      - [APSS distribution plot](#apss-distribution-plot)
+      - [Clustered heatmap plot](#clustered-heatmap-plot)
+      - [Network plot](#network-plot)
+    - [Synteny per position analyses](#synteny-per-position-analyses)
+  - [ANI results analyses](#ani-results-analyses)
+  - [Combined analysis](#combined-analysis)
+- [Multiple species analyses](#multiple-species-analyses)
+  - [Setting the species that will be included in the analysis](#setting-the-species-that-will-be-included-in-the-analysis)
+  - [SynTracker results analyses](#syntracker-results-analyses)
+    - [Initial bar-plots](#initial-bar-plots)
+    - [APSS distribution among species plot](#apss-distribution-among-species-plot)
+  - [ANI analysis](#ani-analysis)
+    - [ANI distribution among species plot](#ani-distribution-among-species-plot)
+
 ## Overview
 
 StrainVis is a Python-based web application for visual analyses and interactive exploration of the results obtained by 
@@ -147,7 +171,7 @@ using N sub-sampled regions (according to the user's choice).
 
 2. **Synteny per position:** Presenting different measures based on the synteny scores for each position in the reference genome.
 
-### *APSS-based analyses*
+### 1. APSS-based analyses
 
 ### Initial bar-plots
 The initial presented bar-plots allow the user to interactively change the number of sub-sampled regions
@@ -257,7 +281,7 @@ In order to save the exact current view (including graph interactive modificatio
 - **Save data table:** The network data is saved as a tab-delimited format file, containing the following columns: Sample1, Sample2, APSS, weight.  
 The weight column reflects the score of each pair of samples after applying the APSS connections threshold. 
 
-### *Synteny per position analyses*
+### 2. Synteny per position analyses
 
 These analyses are presented for each contig of the selected reference genome. If there is more than one contig, 
 it can be selected from the list of contigs using a drop-down menu.
@@ -293,6 +317,32 @@ They appear in at least 50% of the compared sample-pairs.
 - **Filter plot button:** Clicking this button updates the plot, so that only pairwise comparisons, originating from the selected groups of the selected feature, will be included in the plot.
 - **Reset filteration button:** Clicking this button resets the filtering and updates the plot so that all data is shown.
 
+### ANI results analyses
+
+The following analyses are provided for the ANI results:
+- **ANI distribution plot**: Shows the ANI distribution among all the sample pairs.
+- **Clustered heatmap plot**: Presents the ANI of the pairwise comparisons as a clustered heatmap.
+
+Detailed information about these plots and their customization options can be found under the section 
+'APSS-based analyses' of the SynTracker results.
+
+### Combined analysis
+
+This tab is available when the user provides both SynTracker and ANI input files.
+
+### ANI vs. APSS scatter plot
+
+This plot is a scatter plot of the ANI vs. the APSS among all the sample pairwise comparisons, which are available in both input files. 
+The APSS values that are shown in the plot correspond to the number of subsampled regions that was selected by the user in the 'APSS-based analyses' view.  
+The Spearman correlation between the two metrices is calculated and presented on the plot.  
+The color of the data points can be set by the user.
+
+**Including metadata**: Upon feature selection, the data points, representing the pairwise-comparisons, 
+can be colored according to two categories: same / different feature.
+for example: if the selected feature is 'country', the two categories are 'same country' and 'different country'.
+The features are derived from the upoaded metadata file and can be interactively selected from a drop-down menu.
+The 'same color' and the 'different color' can be set by the user.
+
 ## Multiple Species Visualization
 
 The multiple Species visualisation tab is active when the input file contains more than one species. 
@@ -303,6 +353,8 @@ It presents APSS-based analysis for all the species or for a selected subset.
 - **Select a subset of species:** Using the multi-select widget, it is possible to select specific species to be included in the analysis.
 By default, the species are sorted by their abundance (the number of compared pairs), but they can be sorted alphabetically by their names as well.
 - **Update species selection button:** Clicking this button updates the set of species that are included in the analysis.
+
+### SynTracker results analyses
 
 ### Initial bar-plots
 The initial presented bar-plots allow the user to interactively change the number of sub-sampled regions
@@ -326,3 +378,10 @@ for example: if the selected feature is 'country', the two categories are 'same 
 The features are derived from the uploaded metadata file and can be interactively selected from a drop-down menu.  
 The colors of the same / different feature categories can be changed using the color-picker widgets.  
 When using metadata, the P-values of the comparisons for the selected feature can be downloaded in addition to the APSS table.
+
+### ANI analysis
+
+### ANI distribution among species plot
+
+This plot shows the ANI distribution among all the compared sample-pairs of each included species as a boxplot.
+It provides the same customization options as the APSS distribution among species plot, explained in details above.
