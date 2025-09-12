@@ -79,7 +79,9 @@
 </ul></li>
 </ul>
 <h2 id="overview">Overview</h2>
-<p>StrainVis is a Python-based web application for visual analyses and interactive exploration of the results obtained by the SynTracker pipeline or by other ANI-based strain tracking methods.</p>
+<p>StrainVis is a Python-based web application for visual analyses and interactive exploration of the results obtained by
+the SynTracker pipeline or by other strain tracking methods, based on ANI (Average Nucleotide Identity).
+</p>
 <p>StrainVis accepts either SynTracker’s output file ‘synteny_scores_per_region.csv’ or an ANI file, obtained by another method, containing either one reference genome or multiple reference genomes (usually, one reference genome per species). It presents accordingly analyses for each species separately and for multiple species together.<br />
 A metadata file (matches to the samples that were previously compared by SynTracker) may also be provided in order to enable a deeper analysis of SynTracker’s results.</p>
 <p>StrainVis allows the user to interactively select the presented plots and to change visual parameters in each plot. It also enables to interactively select the metadata feature by which the samples should be grouped and coloured (for each plot separately).</p>
@@ -161,7 +163,7 @@ The user may enter the name of the file (including full path), or use the defaul
       <li><p><strong>ANI</strong>: Presents the single-species analyses of the ANI results.</p></li>
       <li><p><strong>Combined</strong>: Presents a combined APSS and ANI based analysis.</p></li>
     </ul>
-<h2 id="syntracker-results-single-species-analyses">SynTracker results single-species analyses</h2>
+<h2 id="syntracker-results-single-species-analyses">Single-species analyses of SynTracker results</h2>
 <p>StrainVis provides two types of analyses of the synteny scores obtained by SynTracker:</p>
 <ol type="1">
 <li><p><strong>APSS-based analyses:</strong> Analyses based on the APSS (Average Pairwise Synteny Scores) that are calculated using N sub-sampled regions (according to the user’s choice).</p></li>
@@ -268,7 +270,7 @@ They appear in at least 50% of the compared sample-pairs.</p></li>
 <li><strong>Filter plot button:</strong> Clicking this button updates the plot, so that only pairwise comparisons, originating from the selected groups of the selected feature, will be included in the plot.</li>
 <li><strong>Reset filteration button:</strong> Clicking this button resets the filtering and updates the plot so that all data is shown.</li>
 </ul>
-<h3 id="ani-results-analyses">ANI results analyses</h3>
+<h3 id="ani-results-analyses">Single-species analyses of ANI results</h3>
 <p>The following analyses are provided for the ANI results:</p>
     <ul>
       <li><p><div style="color: #800080; font-weight: bold;">ANI distribution plot:</div> Shows the ANI distribution among all the sample pairs.</p></li>
@@ -277,7 +279,7 @@ They appear in at least 50% of the compared sample-pairs.</p></li>
 <p>These plots are similar to the ones created for the SynTracker results.
     Detailed information about the customization options can be found under the sections <a href="#apss-distribution-plot">APSS distribution plot</a>
  and <a href="#clustered-heatmap-plot">Clustered heatmap plot</a> of the SynTracker results.</p>
-<h3 id="combined-analysis">Combined analysis</h3>
+<h3 id="combined-analysis">Single-species combined analysis</h3>
 <p>This tab is available when the user provides both SynTracker and ANI input files.</p>
 <h4 id="ani-vs.-apss-scatter-plot">ANI vs. APSS scatter plot</h4>
 <p>This plot is a scatter plot of the ANI vs. the APSS among all the sample pairwise comparisons, which are available in both input files. The APSS values that are shown in the plot correspond to the number of subsampled regions that was selected by the user in the ‘APSS-based analyses’ view.<br />
