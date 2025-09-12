@@ -9,21 +9,21 @@
 - [Input](#input)
 - [Visual analyses](#visual-analyses)
 - [Single species analyses](#single-species-analyses)
-  - [SynTracker results analyses](#syntracker-results-analyses) 
+  - [Single-species analyses of SynTracker results](#single-species-analyses-of-syntracker-results) 
     - [APSS-based analyses](#apss-based-analyses)
       - [Initial bar-plots](#initial-bar-plots)
       - [APSS distribution plot](#apss-distribution-plot)
       - [Clustered heatmap plot](#clustered-heatmap-plot)
       - [Network plot](#network-plot)
     - [Synteny per position analyses](#synteny-per-position-analyses)
-  - [ANI results analyses](#ani-results-analyses)
-  - [Combined analysis](#combined-analysis)
+  - [Single-species analyses of ANI results](#single-species-analyses-of-ani-results)
+  - [Single-species combined analysis](#single-species-combined-analysis)
 - [Multiple species analyses](#multiple-species-analyses)
-  - [Setting the species that will be included in the analysis](#setting-the-species-that-will-be-included-in-the-analysis)
-  - [SynTracker results analyses](#syntracker-results-analyses)
+  - [Setting the included species](#setting-the-included-species)
+  - [Multiple species analyses of SynTracker results](#multiple-species-analyses-of-syntracker-results)
     - [Initial bar-plots](#initial-bar-plots)
     - [APSS distribution among species plot](#apss-distribution-among-species-plot)
-  - [ANI analysis](#ani-analysis)
+  - [Multiple species analysis of ANI results](#multiple-species-analysis-of-ani-results)
     - [ANI distribution among species plot](#ani-distribution-among-species-plot)
 
 ## Overview
@@ -62,7 +62,7 @@ The web-application is served using the Bokeh server.
 To launch the server from the command-line and open the application in the browser, type the following command
 (from within the activated conda strain_vis environment):
 
-`panel serve strain_vis.py --port 5005 --websocket-max-message-size 524288000 --show &`
+`panel serve strain_vis.py --port 5005 --websocket-max-message-size 524288000 &`
 
 The application should be opened in the browser under the URL: http://localhost:5005/strain_vis.  
 As long as the Bokeh server is running, StrainVis application can be accessed using the above URL.  
@@ -162,16 +162,16 @@ When providing both SynTracker and ANI results, it is possible to move between t
   - **ANI**: Presents the single-species analyses of the ANI results.
   - **Combined**: Presents a combined APSS and ANI based analysis.
 
-### SynTracker results analyses
+## Single-species analyses of SynTracker results
 
-The single species visualization is combined of two types of analyses:
+StrainVis provides two types of analyses of the synteny scores obtained by SynTracker:
 
 1. **APSS-based analyses:** Analyses based on the APSS (Average Pairwise Synteny Scores) that are calculated 
 using N sub-sampled regions (according to the user's choice). 
 
 2. **Synteny per position:** Presenting different measures based on the synteny scores for each position in the reference genome.
 
-### 1. APSS-based analyses
+### APSS-based analyses
 
 ### Initial bar-plots
 The initial presented bar-plots allow the user to interactively change the number of sub-sampled regions
@@ -281,7 +281,7 @@ In order to save the exact current view (including graph interactive modificatio
 - **Save data table:** The network data is saved as a tab-delimited format file, containing the following columns: Sample1, Sample2, APSS, weight.  
 The weight column reflects the score of each pair of samples after applying the APSS connections threshold. 
 
-### 2. Synteny per position analyses
+### Synteny per position analyses
 
 These analyses are presented for each contig of the selected reference genome. If there is more than one contig, 
 it can be selected from the list of contigs using a drop-down menu.
@@ -317,7 +317,7 @@ They appear in at least 50% of the compared sample-pairs.
 - **Filter plot button:** Clicking this button updates the plot, so that only pairwise comparisons, originating from the selected groups of the selected feature, will be included in the plot.
 - **Reset filteration button:** Clicking this button resets the filtering and updates the plot so that all data is shown.
 
-### ANI results analyses
+## Single-species analysis of ANI results
 
 The following analyses are provided for the ANI results:
 - **ANI distribution plot**: Shows the ANI distribution among all the sample pairs.
@@ -326,7 +326,7 @@ The following analyses are provided for the ANI results:
 Detailed information about these plots and their customization options can be found under the section 
 'APSS-based analyses' of the SynTracker results.
 
-### Combined analysis
+## Single-species combined analysis
 
 This tab is available when the user provides both SynTracker and ANI input files.
 
@@ -343,18 +343,18 @@ for example: if the selected feature is 'country', the two categories are 'same 
 The features are derived from the upoaded metadata file and can be interactively selected from a drop-down menu.
 The 'same color' and the 'different color' can be set by the user.
 
-## Multiple Species Visualization
+## Multiple Species Analyses
 
-The multiple Species visualisation tab is active when the input file contains more than one species. 
-It presents APSS-based analysis for all the species or for a selected subset.
+The multiple species analyses tab is active when the input file(s) contains more than one species. It presents APSS-/ANI-based analysis for all the species or for a selected subset of species.  
+Please note that when both SynTracker and ANI input files are provided, the list of available species is taken from the SynTracker results input file.
 
-### Setting the species that will be included in the analysis
+### Setting the included species
 - **All species:** Include all available species.
 - **Select a subset of species:** Using the multi-select widget, it is possible to select specific species to be included in the analysis.
-By default, the species are sorted by their abundance (the number of compared pairs), but they can be sorted alphabetically by their names as well.
-- **Update species selection button:** Clicking this button updates the set of species that are included in the analysis.
+- **Sort species by:** The list of species may be sorted by the number of compared sample-pairs (in order to display the more abundant species first), or alphabetically, by the species names.
+- **Update species selection/sorting button:** Clicking this button updates the plot with the selected set of species and their selected order.
 
-### SynTracker results analyses
+## Multiple species analyses of SynTracker results
 
 ### Initial bar-plots
 The initial presented bar-plots allow the user to interactively change the number of sub-sampled regions
@@ -379,7 +379,7 @@ The features are derived from the uploaded metadata file and can be interactivel
 The colors of the same / different feature categories can be changed using the color-picker widgets.  
 When using metadata, the P-values of the comparisons for the selected feature can be downloaded in addition to the APSS table.
 
-### ANI analysis
+## Multiple species analysis of ANI results
 
 ### ANI distribution among species plot
 

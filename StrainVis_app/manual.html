@@ -50,7 +50,7 @@
   </ul>
 <li><a href="#single-species-analyses">Single species analyses</a>
 <ul>
-<li><a href="#syntracker-results-single-species-analyses">SynTracker results single-species analyses</a>
+<li><a href="#syntracker-results-single-species-analyses">Single-species analyses of SynTracker results</a>
 <ul>
 <li><a href="#apss-based-analyses">APSS-based analyses</a>
 <ul>
@@ -61,18 +61,18 @@
 </ul></li>
 <li><a href="#synteny-per-position-analyses">Synteny per position analyses</a></li>
 </ul></li>
-<li><a href="#ani-results-analyses">ANI results analyses</a></li>
-<li><a href="#combined-analysis">Combined analysis</a></li>
+<li><a href="#ani-results-analyses">Single-species analyses of ANI results</a></li>
+<li><a href="#combined-analysis">Single-species combined analysis</a></li>
 </ul></li>
 <li><a href="#multiple-species-analyses">Multiple species analyses</a>
 <ul>
 <li><a href="#setting-the-included-species">Setting the included species</a></li>
-<li><a href="#syntracker-results-multi-species-analysis">SynTracker results multi-species analysis</a>
+<li><a href="#syntracker-results-multi-species-analysis">Multiple-species analysis of SynTracker results</a>
 <ul>
 <li><a href="#initial-bar-plots">Initial bar-plots</a></li>
 <li><a href="#apss-distribution-among-species-plot">APSS distribution among species plot</a></li>
 </ul></li>
-<li><a href="#ani-multi-species-analysis">ANI multi-species analysis</a>
+<li><a href="#ani-multi-species-analysis">Multiple-species analysis of ANI results</a>
 <ul>
 <li><a href="#ani-distribution-among-species-plot">ANI distribution among species plot</a></li>
 </ul></li>
@@ -286,18 +286,18 @@ The color of the data points can be set by the user.</p>
 <p><strong>Including metadata</strong>:</p>
     <p>Upon feature selection, the data points, representing the pairwise-comparisons, can be colored according to two categories: same / different feature. for example: if the selected feature is ‘country’, the two categories are ‘same country’ and ‘different country’. The features are derived from the upoaded metadata file and can be interactively selected from a drop-down menu. The ‘same color’ and the ‘different color’ can be set by the user.</p>
 <h2 id="multiple-species-analyses">Multiple Species Analyses</h2>
-<p>The multiple Species visualisation tab is active when the input file(s) contains more than one species.
+<p>The multiple species analyses tab is active when the input file(s) contains more than one species.
     It presents APSS-/ANI-based analysis for all the species or for a selected subset of species.<br />
     Please note that when both SynTracker and ANI input files are provided, the list of available species is taken from the SynTracker results input file.
 </p>
 <h3 id="setting-the-included-species">Setting the included species</h3>
 <ul>
     <li><p><strong>All species:</strong> Include all available species.</p></li>
-    <li><p><strong>Select a subset of species:</strong> Using the multi-select widget, it is possible to select specific species to be included in the analysis. By default, the species are sorted by their abundance (the number of compared pairs), but they can be sorted alphabetically by their names as well.</p></li>
-    <li><p><strong>Sort species by:</strong> The list of species may be sorted by the number of compared sample-pairs (in order to display the more abundant species first), or by the species names.</p></li>
+    <li><p><strong>Select a subset of species:</strong> Using the multi-select widget, it is possible to select specific species to be included in the analysis.</p></li>
+    <li><p><strong>Sort species by:</strong> The list of species may be sorted by the number of compared sample-pairs (in order to display the more abundant species first), or alphabetically, by the species names.</p></li>
     <li><strong>Update species selection/sorting button:</strong> Clicking this button updates the plot with the selected set of species and their selected order.</li>
 </ul>
-<h3 id="syntracker-results-multi-species-analysis">SynTracker results multiple-species analysis</h3>
+<h3 id="syntracker-results-multi-species-analysis">Multiple-species analysis of SynTracker results</h3>
 <h4 id="initial-bar-plots-1">Initial bar-plots</h4>
 <p>The initial presented bar-plots allow the user to interactively change the number of sub-sampled regions and see how it influences the number of compared sample-pairs and the total number of species that can be taken into account in the following APSS-based analysis.<br />
 The numbers of sub-sampled regions available for selection are: 40, 60, 80, 100, 125, 150, 175, 200, 250, 300, 350, 400. In case the number of compared pairs, when selecting 40 regions, is lower than 100, the option ‘All regions’ is also available for selection. That means that all the compared pairs from all the available regions are included in the downstream analysis.<br />
@@ -312,10 +312,10 @@ for example: if the selected feature is ‘country’, the two categories are �
 The features are derived from the uploaded metadata file and can be interactively selected from a drop-down menu.<br />
 The colors of the same / different feature categories can be changed using the color-picker widgets.<br />
 When using metadata, the P-values of the comparisons for the selected feature can be downloaded in addition to the APSS table.</p>
-<h3 id="ani-multi-species-analysis">ANI multiple-species analysis</h3>
+<h3 id="ani-multi-species-analysis">Multiple-species analysis of ANI results</h3>
 <h4 id="ani-distribution-among-species-plot">ANI distribution among species plot</h4>
 <p>This plot shows the ANI distribution among all the compared sample-pairs of each included species as a boxplot. It provides the same customization options as the APSS distribution among species plot, explained in details above.</p>
 
-  </main>
+</main>
 </body>
 </html>
