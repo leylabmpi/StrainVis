@@ -223,7 +223,8 @@ class StrainVisApp:
         with open(manual_file_path, 'r') as manual:
             manual_content = manual.read()
         self.help_area = pn.Column(styles=config.main_area_style)
-        self.help_area.append(pn.pane.Markdown(manual_content, styles={'font-size': "16px"}))
+        #self.help_area.append(pn.pane.Markdown(manual_content, styles={'font-size': "16px"}))
+        self.help_area.append(pn.pane.HTML(manual_content, styles={'font-size': "16px"}))
 
         self.main_container.append(self.main_area)
         self.template.main.append(self.main_container)
@@ -280,7 +281,7 @@ class StrainVisApp:
         self.genomes_select_card = pn.Card(title='Species subset selection',
                                            collapsed=pn.bind(change_collapse_state,
                                                              selection_val=self.all_or_subset_radio, watch=True),
-                                           styles={'margin': "5px 0 5px 10px", 'width': "600px"}
+                                           styles={'margin': "5px 0 5px 10px", 'width': "420px"}
                                            )
         self.genomes_subset_select = pn.widgets.MultiSelect(options=[], height=300,
                                                             disabled=pn.bind(change_collapse_state,
@@ -290,7 +291,7 @@ class StrainVisApp:
                                                            value=config.genomes_sorting_options[0],
                                                            options=config.genomes_sorting_options, width=200,
                                                            styles={'margin': "0"})
-        self.update_genomes_selection_button = pn.widgets.Button(name='Update species selection',
+        self.update_genomes_selection_button = pn.widgets.Button(name='Update species selection/sorting',
                                                                  button_type='primary',
                                                                  styles={'margin': "12px 0 12px 10px"})
         self.update_genomes_selection_button.on_click(self.update_genomes_selection)
@@ -362,17 +363,17 @@ class StrainVisApp:
         self.selected_contig_column = pn.Column(styles={'padding': "10px 0 0 0"})
 
         # Plots cards
-        self.clustermap_card = pn.Card(title='Clustered heatmap', styles=config.plot_card_style,
+        self.clustermap_card = pn.Card(title='Clustered heatmap plot', styles=config.plot_card_style,
                                        header_background="#2e86c1", header_color="#ffffff")
-        self.jitter_card = pn.Card(title='APSS distribution', styles=config.plot_card_style,
+        self.jitter_card = pn.Card(title='APSS distribution plot', styles=config.plot_card_style,
                                    header_background="#2e86c1", header_color="#ffffff")
-        self.clustermap_card_ani = pn.Card(title='Clustered heatmap', styles=config.plot_card_style,
+        self.clustermap_card_ani = pn.Card(title='Clustered heatmap plot', styles=config.plot_card_style,
                                        header_background="#2e86c1", header_color="#ffffff")
-        self.jitter_card_ani = pn.Card(title='ANI distribution', styles=config.plot_card_style,
+        self.jitter_card_ani = pn.Card(title='ANI distribution plot', styles=config.plot_card_style,
                                    header_background="#2e86c1", header_color="#ffffff")
         self.network_card = pn.Card(title='Network', styles=config.plot_card_style, header_background="#2e86c1",
                                     header_color="#ffffff")
-        self.combined_scatter_card = pn.Card(title='ANI/APSS scatter', styles=config.plot_card_style,
+        self.combined_scatter_card = pn.Card(title='ANI/APSS scatter plot', styles=config.plot_card_style,
                                              header_background="#2e86c1", header_color="#ffffff")
         self.box_plot_card = pn.Card(title='APSS distribution among species', styles=config.plot_card_style,
                                      header_background="#2e86c1", header_color="#ffffff")
@@ -1114,9 +1115,9 @@ class StrainVisApp:
         elif self.input_mode == "ANI":
             title = "Loading input file: " + self.ani_filename
         else:
-            title = "Loading input files: " + self.syntracker_filename + " and " + self.ani_filename
+            title = "Loading input files:\n" + self.syntracker_filename + "\n" + self.ani_filename
 
-        self.main_area.append(pn.pane.Markdown(title, styles={'font-size': "20px"}))
+        self.main_area.append(pn.pane.Markdown(title, styles={'font-size': "20px"}, hard_line_break=True))
 
     def start_process(self):
         self.ref_genomes_list = []
@@ -1382,6 +1383,10 @@ class StrainVisApp:
         else:
             self.genomes_subset_select.options = self.ref_genomes_list_by_pairs_num
 
+        # Sort the selected values (if any) according to the order in options
+        self.genomes_subset_select.value = [item for item in self.genomes_subset_select.options if item in
+                                            self.genomes_subset_select.value]
+
     def select_ref_genome(self, ref_genome, event):
         self.ref_genome = ref_genome.value
         print("\n\nSelected species = " + self.ref_genome)
@@ -1586,7 +1591,9 @@ class StrainVisApp:
 
     def create_single_genome_column_ANI_mode(self):
         self.jitter_card_ani.clear()
+        self.metadata_jitter_card_ani.clear()
         self.clustermap_card_ani.clear()
+        self.metadata_clustermap_card_ani.clear()
 
         # Verify that the current ref-genome is found in the ANI input
         if self.ref_genome in self.ref_genomes_list_ani:
@@ -1594,6 +1601,19 @@ class StrainVisApp:
             # Get the ANI scores table for the selected genome only
             self.ani_scores_selected_genome_df = ds.return_selected_genome_ani_table(self.ani_scores_all_genomes_df,
                                                                                      self.ref_genome)
+            print("\nANI df selected genome:")
+            print(self.ani_scores_selected_genome_df)
+
+            # Display the number of samples and the number of compared pairs
+            num_samples = pd.unique(self.ani_scores_selected_genome_df[["Sample1", "Sample2"]].values.ravel()).shape[0]
+            num_pairs = len(self.ani_scores_selected_genome_df)
+            samples_title = "Number of samples: " + str(num_samples)
+            pairs_title = "Number of compared sample pairs: " + str(num_pairs)
+            combined_title = samples_title + "\n" + pairs_title
+            self.ani_single_plots_column.append(pn.pane.Markdown(combined_title, hard_line_break=True,
+                                                                 styles={'font-size': "18px",
+                                                                         'margin': "0 0 10px 0",
+                                                                         'padding': "0"}))
 
             # Add the plots to the layout
             self.create_jitter_pane_ani(self.ani_scores_selected_genome_df)
@@ -1624,11 +1644,11 @@ class StrainVisApp:
         else:
             # Verify that there is a specific subsampling size has already been selected and calculated
             if self.sampling_size == "":
-                message = "No subsampling size for the APSS-based analyses was selected and calculated.  " \
+                message = "No subsampling size for the APSS-based analyses was selected and calculated.\n" \
                           "Please return to the 'SynTracker' tab, select a subsampling size (using the slider) " \
                           "and click the button 'Display plots using the selected number of regions'."
 
-                self.combined_single_plots_column.append(pn.pane.Markdown(message,
+                self.combined_single_plots_column.append(pn.pane.Markdown(message, hard_line_break=True,
                                                                           styles={'font-size': "20px",
                                                                                   'color': config.title_red_color
                                                                                   }))
@@ -1827,8 +1847,8 @@ class StrainVisApp:
                     on=['Sample1', 'Sample2'],
                     how='inner'  # Only keep rows where the sample pair exists in both DataFrames
                 )
-                print("\nCombined APSS and ANI df:")
-                print(APSS_ANI_selected_genome_df)
+                #print("\nCombined APSS and ANI df:")
+                #print(APSS_ANI_selected_genome_df)
                 self.create_combined_scatter_pane(APSS_ANI_selected_genome_df)
 
             plots_column = pn.Column(self.jitter_card, pn.Spacer(height=20), self.clustermap_card, pn.Spacer(height=20),
@@ -1988,7 +2008,7 @@ class StrainVisApp:
             else:
                 plot = sns.catplot(data=self.df_for_jitter, x="Category", y="APSS", order=[same_feature, diff_feature],
                                    hue="Category", hue_order=[same_feature, diff_feature],
-                                   palette=[same_color, different_color], edgecolor="gray", linewidth=0.1)
+                                   palette=[same_color, different_color], linewidth=0.1)
 
         # Do not use metadata in plot - show all the comparisons together
         else:
@@ -1996,8 +2016,7 @@ class StrainVisApp:
             if type == 'Boxplot':
                 plot = sns.catplot(data=self.df_for_jitter, kind='box', x="Category", y="APSS", color=color, width=0.5)
             else:
-                plot = sns.catplot(data=self.df_for_jitter, x="Category", y="APSS", color=color, edgecolor="gray",
-                                   linewidth=0.1)
+                plot = sns.catplot(data=self.df_for_jitter, x="Category", y="APSS", color=color, linewidth=0.1)
 
         # Remove the x-axis label
         plot.set_axis_labels("", "APSS")  # Sets x-label to empty string
@@ -2029,7 +2048,7 @@ class StrainVisApp:
                 plot = sns.catplot(data=self.df_for_jitter_ani, x="Category", y="ANI",
                                    order=[same_feature, diff_feature],
                                    hue="Category", hue_order=[same_feature, diff_feature],
-                                   palette=[same_color, different_color], edgecolor="gray", linewidth=0.1)
+                                   palette=[same_color, different_color], linewidth=0.1)
 
         # Do not use metadata in plot - show all the comparisons together
         else:
@@ -2038,8 +2057,7 @@ class StrainVisApp:
                 plot = sns.catplot(data=self.df_for_jitter_ani, kind='box', x="Category", y="ANI", color=color,
                                    width=0.5)
             else:
-                plot = sns.catplot(data=self.df_for_jitter_ani, x="Category", y="ANI", color=color, edgecolor="gray",
-                                   linewidth=0.1)
+                plot = sns.catplot(data=self.df_for_jitter_ani, x="Category", y="ANI", color=color, linewidth=0.1)
 
         # Remove the x-axis label
         plot.set_axis_labels("", "ANI")  # Sets x-label to empty string
@@ -2212,7 +2230,8 @@ class StrainVisApp:
         # If the num of columns exceeds the defined maximum, do not create the clustermap plot
         # and display a message + a possibility to download the matrix
         if col_num > config.max_clustermap_cols:
-            error = "The number of samples exceeds the limit of 120 so the heatmap plot cannot be well presented."
+            error = "The number of samples exceeds the limit of " + str(config.max_clustermap_cols) + \
+                    " so the heatmap plot cannot be well presented."
             suggestion = "It ia possible to download the scoring matrix and display the heatmap in another program."
             clustermap_col = pn.Column(
                                        pn.pane.Markdown(error, styles={'font-size': "16px",
@@ -2388,7 +2407,8 @@ class StrainVisApp:
         # If the num of columns exceeds the defined maximum, do not create the clustermap plot
         # and display a message + a possibility to download the matrix
         if col_num > config.max_clustermap_cols:
-            error = "The number of samples exceeds the limit of 120 so the heatmap plot cannot be well presented."
+            error = "The number of samples exceeds the limit of " + str(config.max_clustermap_cols) + \
+                    " so the heatmap plot cannot be well presented."
             suggestion = "It ia possible to download the scoring matrix and display the heatmap in another program."
             clustermap_col = pn.Column(
                                        pn.pane.Markdown(error, styles={'font-size': "16px",
@@ -2951,21 +2971,19 @@ class StrainVisApp:
         self.combined_scatter_card.clear()
         self.metadata_combined_scatter_card.clear()
 
-        combined_scatter_plot_column = pn.Column()
+        size_title = "Presenting plot using APSS from " + self.sampling_size + " subsampled regions"
 
-        size_title = "Presenting plot using APSS from " + self.sampling_size + " subsampled regions:"
-
-        combined_scatter_plot_column.append(pn.pane.Markdown(size_title, styles={'font-size': "20px",
-                                                                                 'color': config.title_purple_color,
-                                                                                 'margin': "0",
-                                                                                 'padding': "0"}))
+        self.combined_single_plots_column.append(pn.pane.Markdown(size_title, styles={'font-size': "20px",
+                                                                                      'color': config.title_purple_color,
+                                                                                      'margin': "0",
+                                                                                      'padding': "0"}))
 
         num_pairs = len(APSS_ANI_selected_genome_df)
         print("\nNumber of common sample pairs: " + str(num_pairs))
-        pairs_title = "Number of common sample pairs: " + str(num_pairs)
-        combined_scatter_plot_column.append(pn.pane.Markdown(pairs_title, styles={'font-size': "18px",
-                                                                                  'margin': "0 0 10px 0",
-                                                                                  'padding': "0"}))
+        pairs_title = "Number of common compared sample pairs: " + str(num_pairs)
+        self.combined_single_plots_column.append(pn.pane.Markdown(pairs_title, styles={'font-size': "18px",
+                                                                                       'margin': "0 0 10px 0",
+                                                                                       'padding': "0"}))
 
         styling_title = "Plot styling options:"
         metadata_colors_row = pn.Row(self.combined_scatter_same_color, pn.Spacer(width=3),
@@ -3109,7 +3127,7 @@ class StrainVisApp:
         if use_metadata:
             self.df_for_combined_scatter['Color'] = self.df_for_combined_scatter.apply(
                 lambda row: self.category_by_feature_scatter(row, feature, same_color, different_color), axis=1)
-            print(self.df_for_combined_scatter)
+            #print(self.df_for_combined_scatter)
 
             ax1.scatter(self.df_for_combined_scatter['APSS'], self.df_for_combined_scatter['ANI'],
                         c=self.df_for_combined_scatter['Color'], linewidths=0.1, edgecolors="gray")
@@ -3844,6 +3862,8 @@ class StrainVisApp:
         self.sample_sizes_slider_multi.value = config.sampling_sizes[0]
 
         self.genomes_subset_select.options = self.ref_genomes_list_by_pairs_num
+        self.selected_genomes_subset = self.ref_genomes_list_by_pairs_num
+        self.selected_subset_species_num = len(self.selected_genomes_subset)
 
         # Doesn't work
         #if self.number_of_genomes > 20:
@@ -3851,22 +3871,13 @@ class StrainVisApp:
         #else:
         #    self.genomes_subset_select.size = self.number_of_genomes
 
-        genomes_select_col = pn.Column(pn.Spacer(height=12), self.genomes_subset_select)
-        genomes_select_row = pn.Row(genomes_select_col, pn.Spacer(width=10), self.genomes_sort_select_multi,
-                                    styles={'padding': "10px"})
-        self.genomes_select_card.append(genomes_select_row)
+        self.genomes_select_card.append(self.genomes_subset_select)
 
-        # Build the two bar-plots for subsampled regions based on the selected list of genomes
-        if self.all_or_subset_radio.value == 'All species':
-            self.selected_genomes_subset = self.ref_genomes_list
-        else:
-            self.selected_genomes_subset = self.genomes_subset_select.value
-
-        self.selected_subset_species_num = len(self.selected_genomes_subset)
+        all_or_subset_row = pn.Row(self.all_or_subset_radio, pn.Spacer(width=15), self.genomes_sort_select_multi)
 
         # Create the species selection part (which is common to all input modes)
         species_select_col = pn.Column(
-            self.all_or_subset_radio,
+            all_or_subset_row,
             self.genomes_select_card,
             self.update_genomes_selection_button,
             styles={'margin': "0 0 10px 0", 'padding': "0"}
@@ -3900,14 +3911,18 @@ class StrainVisApp:
     def update_genomes_selection(self, event):
         # Build the two bar-plots for subsampled regions based on the selected list of genomes
         if self.all_or_subset_radio.value == 'All species':
-            self.selected_genomes_subset = self.ref_genomes_list
+            self.selected_genomes_subset = self.genomes_subset_select.options
         else:
             self.selected_genomes_subset = self.genomes_subset_select.value
 
         self.selected_subset_species_num = len(self.selected_genomes_subset)
 
+        # No selected species -> treat as all species
+        if self.selected_subset_species_num == 0:
+            self.selected_genomes_subset = self.genomes_subset_select.options
+
         print("\nupdate_genomes_selection:\nNumber of selected species: " + str(self.selected_subset_species_num))
-        print(self.selected_genomes_subset)
+        #print(self.selected_genomes_subset)
 
         if self.input_mode == "SynTracker":
             self.create_multi_genomes_column_syntracker_mode()
@@ -3922,10 +3937,6 @@ class StrainVisApp:
     def create_multi_genomes_column_syntracker_mode(self):
         self.synteny_multi_initial_plots_column.clear()
         self.plots_by_size_multi_column.clear()
-
-        # Initialize the dictionaries that hold the APSS for all the genomes in different sampling sizes
-        for size in config.sampling_sizes:
-            self.calculated_APSS_all_genomes_size_dict[size] = 0
 
         # Get the score-per-region table for the selected genomes only
         self.score_per_region_genomes_subset_df = dm.return_genomes_subset_table(self.score_per_region_all_genomes_df,
@@ -4004,6 +4015,7 @@ class StrainVisApp:
         print("Number of species at this sampling size: " + str(self.species_num_at_sampling_size))
 
         if self.feature_select_watcher in self.box_plot_feature_select.param.watchers:
+            print("\nfeature_select_watcher is in watchers and will be removed")
             self.box_plot_feature_select.param.unwatch(self.feature_select_watcher)
         self.plots_by_size_multi_column.clear()
         self.box_plot_card.clear()
@@ -4147,7 +4159,7 @@ class StrainVisApp:
 
             # Set watcher for the feature-select widget
             self.feature_select_watcher = self.box_plot_feature_select.param.watch(self.update_feature_in_boxplot,
-                                                                                   'value', onlychanged=False)
+                                                                                   'value', onlychanged=True)
 
             # Add the p-values download column
             self.download_multi_col.append(self.download_pvalues_table_column)
@@ -4157,6 +4169,7 @@ class StrainVisApp:
             self.use_metadata_box_plot.disabled = True
 
         self.box_plot = pn.bind(pm.create_box_plot, avg_df=self.genomes_subset_selected_size_APSS_df,
+                                genomes_list=self.selected_genomes_subset,
                                 pvalues_df=self.boxplot_p_values_df, color=self.box_plot_color,
                                 use_metadata=self.use_metadata_box_plot, feature=self.box_plot_feature_select.value,
                                 same_color=self.box_plot_same_color, different_color=self.box_plot_different_color)
@@ -4245,6 +4258,7 @@ class StrainVisApp:
         self.calculate_metadata_for_box_plot()
 
         self.box_plot = pn.bind(pm.create_box_plot, avg_df=self.genomes_subset_selected_size_APSS_df,
+                                genomes_list=self.selected_genomes_subset,
                                 pvalues_df=self.boxplot_p_values_df, color=self.box_plot_color,
                                 use_metadata=self.use_metadata_box_plot, feature=self.box_plot_feature_select.value,
                                 same_color=self.box_plot_same_color, different_color=self.box_plot_different_color)
@@ -4389,7 +4403,7 @@ class StrainVisApp:
 
             # Set watcher for the feature-select widget
             self.feature_select_watcher_ani = self.box_plot_feature_select_ani.param.watch(
-                self.update_feature_in_boxplot_ani, 'value', onlychanged=False)
+                self.update_feature_in_boxplot_ani, 'value', onlychanged=True)
 
             # Add the p-values download column
             self.download_multi_col_ani.append(self.download_pvalues_table_column_ani)
@@ -4399,6 +4413,7 @@ class StrainVisApp:
             self.use_metadata_box_plot_ani.disabled = True
 
         self.box_plot_ani = pn.bind(pm.create_box_plot_ani, ani_df=self.ani_scores_genomes_subset_df,
+                                    genomes_list=self.selected_genomes_subset,
                                     pvalues_df=self.boxplot_p_values_df_ani, color=self.box_plot_color_ani,
                                     use_metadata=self.use_metadata_box_plot_ani,
                                     feature=self.box_plot_feature_select_ani.value,
@@ -4487,6 +4502,7 @@ class StrainVisApp:
         self.calculate_metadata_for_box_plot_ani()
 
         self.box_plot_ani = pn.bind(pm.create_box_plot_ani, ani_df=self.ani_scores_genomes_subset_df,
+                                    genomes_list=self.selected_genomes_subset,
                                     pvalues_df=self.boxplot_p_values_df_ani, color=self.box_plot_color_ani,
                                     use_metadata=self.use_metadata_box_plot_ani,
                                     feature=self.box_plot_feature_select_ani.value,

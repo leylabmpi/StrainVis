@@ -303,7 +303,7 @@ They appear in at least 10% of the compared sample-pairs.
 They are among the top 10% regions with the highest average synteny scores.  
 They appear in at least 50% of the compared sample-pairs.
 
-#### Customization options of (unrelated to metadata):
+#### Customization options (unrelated to metadata):
 
 - **Set contig length range:** Set the start and end positions of the contig that will be presented in the plot.
 - **Set new range button:** Clicking this button updates the plot to present the newly set range.

@@ -131,6 +131,6 @@ The user may enter the name of the file (including full path), or use the defaul
 
 ## Help pages
 
-A detailed documentation about all types of provided analyses and customization options is found here: https://github.com/leylabmpi/StrainVis/blob/main/StrainVis_app/manual.md
+A detailed documentation about all types of provided analyses and customization options is found here: https://github.com/leylabmpi/StrainVis/blob/main/StrainVis_app/manual.html
 
 The manual can also be viewed from the StrainVis web-application, under the 'Help' tab.

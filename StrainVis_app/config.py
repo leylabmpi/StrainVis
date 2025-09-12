@@ -20,7 +20,8 @@ bottom_percentile = 0.1
 
 file_upload_timeout = 20
 downloads_dir = "/Downloads/"
-manual_file = "/StrainVis_app/manual.md"
+#manual_file = "/StrainVis_app/manual.md"
+manual_file = "/StrainVis_app/manual.html"
 
 ## CSS Styles ##
 header_color = "#0072b5"
