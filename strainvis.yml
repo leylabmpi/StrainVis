@@ -11,6 +11,4 @@ dependencies:
   - scipy
   - networkx
   - fastcluster
-  - selenium
-  - firefox
-  - geckodriver
+

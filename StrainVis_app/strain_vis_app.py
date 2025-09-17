@@ -1228,7 +1228,7 @@ class StrainVisApp:
                 self.number_of_genomes_ani = self.ani_scores_all_genomes_df.groupby(['Ref_genome']).ngroups
                 self.ref_genomes_list_ani = list(self.ani_scores_all_genomes_df.groupby(['Ref_genome']).groups)
                 print("\nNumber of species in ANI file: " + str(self.number_of_genomes_ani))
-                print("\Species list from ANI file: " + str(self.ref_genomes_list_ani))
+                #print("Species list from ANI file: " + str(self.ref_genomes_list_ani))
 
         # If a metadata file was uploaded - read the file into a DF
         if self.is_metadata:
