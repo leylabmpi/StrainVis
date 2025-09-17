@@ -183,6 +183,7 @@ class StrainVisApp:
         self.synteny_per_pos_feature_select_watcher = ""
         self.visited_multi_genome_tab = 0
         self.activated_synteny_per_pos_tab = 0
+        self.clicked_button_display_APSS = 0
 
         # Bootstrap template
         self.template = pn.template.VanillaTemplate(
@@ -617,9 +618,10 @@ class StrainVisApp:
         self.network_threshold_input = pn.widgets.FloatInput(name='Define threshold:',
                                                              value=config.APSS_connections_threshold_default, step=0.01,
                                                              start=0.5, end=1.0, width=100,
-                                                             disabled=pn.bind(change_disabled_state_threshold,
-                                                                              value=self.network_threshold_select,
-                                                                              watch=True)
+                                                             disabled=True
+                                                             #disabled=pn.bind(change_disabled_state_threshold,
+                                                             #                 value=self.network_threshold_select,
+                                                             #                 watch=True)
                                                              )
         self.network_iterations = pn.widgets.DiscreteSlider(name='Number of iterations',
                                                             options=config.network_iterations_options,
@@ -1772,27 +1774,22 @@ class StrainVisApp:
         self.metadata_colorby_card.clear()
         self.metadata_jitter_card.clear()
         self.network_iterations.value = config.network_iterations_options[0]
-        if self.threshold_select_watcher in self.network_threshold_select.param.watchers:
-            self.network_threshold_select.param.unwatch(self.threshold_select_watcher)
-        if self.threshold_input_watcher in self.network_threshold_input.param.watchers:
-            self.network_threshold_input.param.unwatch(self.threshold_input_watcher)
-        if self.is_metadata:
-            if self.continuous_watcher in self.is_continuous.param.watchers:
-                self.is_continuous.param.unwatch(self.continuous_watcher)
-            if self.colormap_watcher in self.nodes_colormap.param.watchers:
-                self.nodes_colormap.param.unwatch(self.colormap_watcher)
-            if self.custom_colormap_watcher in self.custom_colormap_input.param.watchers:
-                self.custom_colormap_input.param.unwatch(self.custom_colormap_watcher)
-            if self.nodes_colorby_watcher in self.nodes_color_by.param.watchers:
-                self.nodes_color_by.param.unwatch(self.nodes_colorby_watcher)
-            if self.feature_colormap_watcher in self.feature_colormap.param.watchers:
-                self.feature_colormap.param.unwatch(self.feature_colormap_watcher)
-            if self.feature_colormap_ani_watcher in self.feature_colormap_ani.param.watchers:
-                self.feature_colormap_ani.param.unwatch(self.feature_colormap_ani_watcher)
         self.network_threshold_input.value = config.APSS_connections_threshold_default
         self.is_continuous.value = False
         self.nodes_colormap.options = config.categorical_colormap_dict
         self.nodes_colormap.value = config.categorical_colormap_dict['cet_glasbey']
+
+        # Unwatch network-related watchers (if it's not the first time that this function is called)
+        if self.clicked_button_display_APSS:
+            self.network_threshold_select.param.unwatch(self.threshold_select_watcher)
+            self.network_threshold_input.param.unwatch(self.threshold_input_watcher)
+            if self.is_metadata:
+                self.is_continuous.param.unwatch(self.continuous_watcher)
+                self.nodes_colormap.param.unwatch(self.colormap_watcher)
+                self.custom_colormap_input.param.unwatch(self.custom_colormap_watcher)
+                self.nodes_color_by.param.unwatch(self.nodes_colorby_watcher)
+                self.feature_colormap.param.unwatch(self.feature_colormap_watcher)
+        self.clicked_button_display_APSS = 1
 
         # Check if the requested genome and size have already been calculated. If so, fetch the specific dataframe
         if self.calculated_APSS_genome_size_dict[self.sampling_size]:
@@ -2650,7 +2647,8 @@ class StrainVisApp:
                                                  np.negative(np.log(1 - self.df_for_network['APSS'])), 0)
         #print("\nDF for network:")
         #print(self.df_for_network)
-        print("\nMean APSS: " + str(mean_APSS))
+        print("\ncreate_network_pane:")
+        print("Mean APSS: " + str(mean_APSS))
         print("Standard deviation APSS: " + str(std_APSS) + "\n")
 
         # Update the placeholder of the filenames for download with the default threshold.
@@ -2692,6 +2690,7 @@ class StrainVisApp:
             self.generate_rand_positions()
 
             # Add the actual threshold value to the network_threshold_select widget
+            self.network_threshold_input.disabled = True
             self.network_threshold_select.options = []
 
             str_mean = config.network_thresholds_options[0] + " (APSS=" + str(mean_APSS) + ")"
@@ -2717,13 +2716,10 @@ class StrainVisApp:
             self.network_threshold_select.value = self.network_threshold_select.options[0]
 
             # Set watchers for the threshold widgets
-            self.threshold_select_watcher = self.network_threshold_select.param.watch(partial(self.change_weight_attribute,
-                                                                                      mean_APSS, std_APSS, mean_std_only),
-                                                                                      'value', onlychanged=True)
-            self.threshold_input_watcher = self.network_threshold_input.param.watch(partial(self.change_weight_attribute,
-                                                                                            mean_APSS, std_APSS,
-                                                                                            mean_std_only), 'value',
-                                                                                    onlychanged=True)
+            self.threshold_select_watcher = self.network_threshold_select.param.watch(partial(
+                self.changed_threshold_select, mean_APSS, std_APSS, mean_std_only), 'value', onlychanged=True)
+            self.threshold_input_watcher = self.network_threshold_input.param.watch(self.changed_threshold_input,
+                                                                                    'value', onlychanged=True)
 
             # There is metadata
             if self.is_metadata:
@@ -2881,13 +2877,13 @@ class StrainVisApp:
             pos_tuple = (pos_x, pos_y)
             self.pos_dict[node] = pos_tuple
 
-    def change_weight_attribute(self, mean, std, mean_std_only, event):
-
-        print("\nchange_weight_attribute:")
-        print("Current mean: " + str(mean))
+    def changed_threshold_select(self, mean, std, mean_std_only, event):
+        #print("\nchanged_threshold_select:")
+        #print("Current mean: " + str(mean))
 
         if self.network_threshold_select.value == self.network_threshold_select.options[0]:
             self.APSS_connections_threshold = mean
+            self.network_threshold_input.disabled = True
 
         elif self.network_threshold_select.value == self.network_threshold_select.options[1]:
             mean_std = mean + std
@@ -2895,20 +2891,34 @@ class StrainVisApp:
                 self.APSS_connections_threshold = mean_std
             else:
                 self.APSS_connections_threshold = 0.99
+            self.network_threshold_input.disabled = True
 
         elif self.network_threshold_select.value == self.network_threshold_select.options[2]:
             if mean_std_only:
                 self.APSS_connections_threshold = self.network_threshold_input.value
+                self.network_threshold_input.disabled = False
             else:
                 mean_2_std = mean + 2 * std
                 if mean_2_std < 1:
                     self.APSS_connections_threshold = mean_2_std
                 else:
                     self.APSS_connections_threshold = 0.99
+                self.network_threshold_input.disabled = True
         else:
             self.APSS_connections_threshold = self.network_threshold_input.value
+            self.network_threshold_input.disabled = False
+
+        self.change_weight_attribute()
+
+    def changed_threshold_input(self, event):
+        #print("\nIn changed_threshold_input")
+        self.APSS_connections_threshold = self.network_threshold_input.value
+        self.change_weight_attribute()
+
+    def change_weight_attribute(self):
 
         self.APSS_connections_threshold = round(self.APSS_connections_threshold, 2)
+        print("\nchange_weight_attribute:")
         print("APSS_connections_threshold = " + str(self.APSS_connections_threshold))
 
         # Update the threshold in the deafult filenames for download
@@ -2980,82 +2990,93 @@ class StrainVisApp:
 
         num_pairs = len(APSS_ANI_selected_genome_df)
         print("\nNumber of common sample pairs: " + str(num_pairs))
-        pairs_title = "Number of common compared sample pairs: " + str(num_pairs)
-        self.combined_single_plots_column.append(pn.pane.Markdown(pairs_title, styles={'font-size': "18px",
-                                                                                       'margin': "0 0 10px 0",
-                                                                                       'padding': "0"}))
 
-        styling_title = "Plot styling options:"
-        metadata_colors_row = pn.Row(self.combined_scatter_same_color, pn.Spacer(width=3),
-                                     self.combined_scatter_different_color)
-        metadata_col = pn.Column(self.combined_scatter_feature_select,
-                                 metadata_colors_row,
-                                 styles={'padding': "10x"})
-        self.metadata_combined_scatter_card.append(metadata_col)
-        styling_col = pn.Column(pn.pane.Markdown(styling_title, styles={'font-size': "15px", 'font-weight': "bold",
-                                                                        'color': config.title_blue_color,
-                                                                        'margin': "0"}),
-                                self.combined_scatter_color,
-                                pn.Spacer(height=5),
-                                self.use_metadata_combined_scatter,
-                                self.metadata_combined_scatter_card
-                                )
+        # Check that there is at least 1 common pair. If not, print a message and don't display the plot-card.
+        if num_pairs == 0:
+            pairs_title = "There are no common compared sample-pairs for the selected number of subsampled regions - " \
+                          "cannot display the combined plot"
+            self.combined_single_plots_column.append(pn.pane.Markdown(pairs_title, styles={'font-size': "18px",
+                                                                                           'color': config.title_red_color,
+                                                                                           'margin': "0 0 10px 0",
+                                                                                           'padding': "0"}))
 
-        save_file_title = "Plot download options:"
-        download_button = pn.widgets.Button(name='Download high-resolution image', button_type='primary')
-        download_button.on_click(self.download_combined_scatter)
-
-        combined_scatter_file = "ANI_vs_APSS_plot_" + self.ref_genome + "_" + self.sampling_size + "_regions"
-        self.save_combined_scatter_file_path.placeholder = combined_scatter_file
-
-        self.download_combined_scatter_column = pn.Column(pn.pane.Markdown(save_file_title,
-                                                                           styles={'font-size': "15px",
-                                                                                   'font-weight': "bold",
-                                                                                   'color': config.title_blue_color,
-                                                                                   'margin': "0"}),
-                                                          self.combined_scatter_image_format,
-                                                          self.save_combined_scatter_file_path,
-                                                          download_button, pn.pane.Markdown())
-
-        # Use metadata in plot
-        if self.is_metadata:
-            # Update the color nodes by- drop-down menu with the available metadata features
-            self.combined_scatter_feature_select.options = self.metadata_features_list
-            self.combined_scatter_feature_select.value = self.metadata_features_list[0]
-        # No metadata
         else:
-            self.use_metadata_combined_scatter.disabled = True
+            pairs_title = "Number of common compared sample pairs: " + str(num_pairs)
+            self.combined_single_plots_column.append(pn.pane.Markdown(pairs_title, styles={'font-size': "18px",
+                                                                                           'margin': "0 0 10px 0",
+                                                                                           'padding': "0"}))
 
-        # Create the jitter plot
-        self.combined_scatter_plot = pn.bind(self.create_combined_scatter_plot,
-                                             combined_df=APSS_ANI_selected_genome_df,
-                                             color=self.combined_scatter_color,
-                                             use_metadata=self.use_metadata_combined_scatter,
-                                             feature=self.combined_scatter_feature_select,
-                                             same_color=self.combined_scatter_same_color,
-                                             different_color=self.combined_scatter_different_color)
+            styling_title = "Plot styling options:"
+            metadata_colors_row = pn.Row(self.combined_scatter_same_color, pn.Spacer(width=3),
+                                         self.combined_scatter_different_color)
+            metadata_col = pn.Column(self.combined_scatter_feature_select,
+                                    metadata_colors_row,
+                                    styles={'padding': "10x"})
+            self.metadata_combined_scatter_card.append(metadata_col)
+            styling_col = pn.Column(pn.pane.Markdown(styling_title, styles={'font-size': "15px", 'font-weight': "bold",
+                                                                            'color': config.title_blue_color,
+                                                                            'margin': "0"}),
+                                    self.combined_scatter_color,
+                                    pn.Spacer(height=5),
+                                    self.use_metadata_combined_scatter,
+                                    self.metadata_combined_scatter_card
+                                    )
 
-        combined_scatter_pane = pn.pane.Matplotlib(self.combined_scatter_plot, height=550, dpi=300, tight=True,
-                                                   format='png')
+            save_file_title = "Plot download options:"
+            download_button = pn.widgets.Button(name='Download high-resolution image', button_type='primary')
+            download_button.on_click(self.download_combined_scatter)
 
-        combined_scatter_table_file = "Data_for_ANI_vs_APSS_plot_" + self.ref_genome + "_" + self.sampling_size + \
-                                       "_regions"
-        self.save_combined_scatter_table_path.placeholder = combined_scatter_table_file
-        download_table_button = pn.widgets.Button(name='Download data table in csv format', button_type='primary')
-        download_table_button.on_click(self.download_combined_scatter_table)
+            combined_scatter_file = "ANI_vs_APSS_plot_" + self.ref_genome + "_" + self.sampling_size + "_regions"
+            self.save_combined_scatter_file_path.placeholder = combined_scatter_file
 
-        self.download_combined_scatter_table_column = pn.Column(self.save_combined_scatter_table_path,
-                                                                download_table_button,
-                                                                pn.pane.Markdown())
+            self.download_combined_scatter_column = pn.Column(pn.pane.Markdown(save_file_title,
+                                                              styles={'font-size': "15px",
+                                                                      'font-weight': "bold",
+                                                                      'color': config.title_blue_color,
+                                                                      'margin': "0"}),
+                                                              self.combined_scatter_image_format,
+                                                              self.save_combined_scatter_file_path,
+                                                              download_button, pn.pane.Markdown())
 
-        controls_col = pn.Column(styling_col, pn.Spacer(height=25), self.download_combined_scatter_column,
-                                 self.download_combined_scatter_table_column)
+            # Use metadata in plot
+            if self.is_metadata:
+                # Update the color nodes by- drop-down menu with the available metadata features
+                self.combined_scatter_feature_select.options = self.metadata_features_list
+                self.combined_scatter_feature_select.value = self.metadata_features_list[0]
+            # No metadata
+            else:
+                self.use_metadata_combined_scatter.disabled = True
 
-        combined_scatter_row = pn.Row(controls_col, pn.Spacer(width=120), combined_scatter_pane,
-                                      styles={'padding': "15px"})
-        self.combined_scatter_card.append(combined_scatter_row)
+            # Create the scatter plot
+            self.combined_scatter_plot = pn.bind(self.create_combined_scatter_plot,
+                                                 combined_df=APSS_ANI_selected_genome_df,
+                                                 color=self.combined_scatter_color,
+                                                 use_metadata=self.use_metadata_combined_scatter,
+                                                 feature=self.combined_scatter_feature_select,
+                                                 same_color=self.combined_scatter_same_color,
+                                                 different_color=self.combined_scatter_different_color)
 
-        self.combined_single_plots_column.append(self.combined_scatter_card)
+            combined_scatter_pane = pn.pane.Matplotlib(self.combined_scatter_plot, height=550, dpi=300, tight=True,
+                                                       format='png')
+
+            combined_scatter_table_file = "Data_for_ANI_vs_APSS_plot_" + self.ref_genome + "_" + self.sampling_size + \
+                                          "_regions"
+            self.save_combined_scatter_table_path.placeholder = combined_scatter_table_file
+            download_table_button = pn.widgets.Button(name='Download data table in csv format', button_type='primary')
+            download_table_button.on_click(self.download_combined_scatter_table)
+
+            self.download_combined_scatter_table_column = pn.Column(self.save_combined_scatter_table_path,
+                                                                    download_table_button,
+                                                                    pn.pane.Markdown())
+
+            controls_col = pn.Column(styling_col, pn.Spacer(height=25), self.download_combined_scatter_column,
+                                     self.download_combined_scatter_table_column)
+
+            combined_scatter_row = pn.Row(controls_col, pn.Spacer(width=120), combined_scatter_pane,
+                                          styles={'padding': "15px"})
+            self.combined_scatter_card.append(combined_scatter_row)
+
+            self.combined_single_plots_column.append(self.combined_scatter_card)
 
     def download_combined_scatter(self, event):
         fformat = self.combined_scatter_image_format.value
