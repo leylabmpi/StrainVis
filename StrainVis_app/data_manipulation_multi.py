@@ -151,6 +151,8 @@ def create_pairs_num_per_sampling_size(score_per_region_selected_genomes_df):
 
     summary_df['Number_of_species'] = \
         summary_df.apply(lambda row: count_species_num(row, pairs_num_per_sampling_size_df), axis=1)
+
+    print("\ncreate_pairs_num_per_sampling_size:")
     print(summary_df)
 
     return summary_df

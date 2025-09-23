@@ -46,7 +46,7 @@ def plot_species_vs_sampling_size_bar(df, sampling_size, is_all_regions):
     return bar_plot
 
 
-def create_box_plot(avg_df, genomes_list, pvalues_df, color, use_metadata, feature, same_color, different_color):
+def create_box_plot(avg_df, sorted_genomes_list, pvalues_df, color, use_metadata, feature, same_color, different_color):
 
     #print("\ncreate_box_plot: Feature is " + feature)
     #print("Genomes list:")
@@ -69,7 +69,7 @@ def create_box_plot(avg_df, genomes_list, pvalues_df, color, use_metadata, featu
         same_feature = 'Same ' + feature
         diff_feature = 'Different ' + feature
 
-        box_plot = sns.boxplot(data=avg_df, x="APSS", y="Ref_genome", order=genomes_list,
+        box_plot = sns.boxplot(data=avg_df, x="APSS", y="Ref_genome", order=sorted_genomes_list,
                                hue="Category", width=0.8, showcaps=False, gap=0.1,
                                hue_order=[same_feature, diff_feature],
                                palette=[same_color, different_color]
@@ -91,7 +91,7 @@ def create_box_plot(avg_df, genomes_list, pvalues_df, color, use_metadata, featu
 
     # Do not use metadata in plot - show all the comparisons together
     else:
-        box_plot = sns.boxplot(data=avg_df, x="APSS", y="Ref_genome", order=genomes_list, color=color, width=0.5,
+        box_plot = sns.boxplot(data=avg_df, x="APSS", y="Ref_genome", order=sorted_genomes_list, color=color, width=0.5,
                                showcaps=False)
 
     box_plot.yaxis.grid(True)  # Hide the horizontal gridlines
@@ -105,7 +105,8 @@ def create_box_plot(avg_df, genomes_list, pvalues_df, color, use_metadata, featu
     return fig
 
 
-def create_box_plot_ani(ani_df, genomes_list, pvalues_df, color, use_metadata, feature, same_color, different_color):
+def create_box_plot_ani(ani_df, sorted_genomes_list, pvalues_df, color, use_metadata, feature, same_color,
+                        different_color):
 
     #print("\ncreate_box_plot_ani: Feature is " + feature)
     #print("Genomes list:")
@@ -113,15 +114,7 @@ def create_box_plot_ani(ani_df, genomes_list, pvalues_df, color, use_metadata, f
     #print("\nANI dataframe:")
     #print(ani_df)
 
-    presented_genomes_list = ani_df['Ref_genome'].unique()
-    genomes_num = len(presented_genomes_list)
-
-    # Remove the genomes that appear only in SynTracker's results from the presented genome list
-    real_genome_list = []
-    for genome in genomes_list:
-        if genome in presented_genomes_list:
-            real_genome_list.append(genome)
-
+    genomes_num = len(sorted_genomes_list)
     if genomes_num <= 8:
         fig_height = 4
     else:
@@ -134,7 +127,7 @@ def create_box_plot_ani(ani_df, genomes_list, pvalues_df, color, use_metadata, f
         same_feature = 'Same ' + feature
         diff_feature = 'Different ' + feature
 
-        box_plot = sns.boxplot(data=ani_df, x="ANI", y="Ref_genome", order=real_genome_list,
+        box_plot = sns.boxplot(data=ani_df, x="ANI", y="Ref_genome", order=sorted_genomes_list,
                                hue="Category", width=0.8, showcaps=False, gap=0.1,
                                hue_order=[same_feature, diff_feature],
                                palette=[same_color, different_color]
@@ -156,8 +149,8 @@ def create_box_plot_ani(ani_df, genomes_list, pvalues_df, color, use_metadata, f
 
     # Do not use metadata in plot - show all the comparisons together
     else:
-        box_plot = sns.boxplot(data=ani_df, x="ANI", y="Ref_genome", order=real_genome_list, color=color, width=0.5,
-                               showcaps=False)
+        box_plot = sns.boxplot(data=ani_df, x="ANI", y="Ref_genome", order=sorted_genomes_list, color=color,
+                               width=0.5, showcaps=False)
 
     box_plot.yaxis.grid(True)  # Hide the horizontal gridlines
     box_plot.xaxis.grid(True)  # Show the vertical gridlines

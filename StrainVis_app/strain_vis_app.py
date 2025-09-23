@@ -130,6 +130,8 @@ class StrainVisApp:
         self.ref_genomes_list_ani = []
         self.ref_genomes_list_by_pairs_num_ani = []
         self.selected_genomes_subset = []
+        self.sorted_selected_genomes_subset = []
+        self.sorted_selected_genomes_subset_ani = []
         self.selected_subset_species_num = 0
         self.species_num_at_sampling_size = 0
         self.species_num_in_subset_ani = 0
@@ -619,9 +621,6 @@ class StrainVisApp:
                                                              value=config.APSS_connections_threshold_default, step=0.01,
                                                              start=0.5, end=1.0, width=100,
                                                              disabled=True
-                                                             #disabled=pn.bind(change_disabled_state_threshold,
-                                                             #                 value=self.network_threshold_select,
-                                                             #                 watch=True)
                                                              )
         self.network_iterations = pn.widgets.DiscreteSlider(name='Number of iterations',
                                                             options=config.network_iterations_options,
@@ -1127,6 +1126,8 @@ class StrainVisApp:
         self.ref_genomes_list_ani = []
         self.ref_genomes_list_by_pairs_num_ani = []
         self.selected_genomes_subset = []
+        self.sorted_selected_genomes_subset = []
+        self.sorted_selected_genomes_subset_ani = []
         self.selected_subset_species_num = 0
         self.species_num_at_sampling_size = 0
         self.species_num_in_subset_ani = 0
@@ -1774,7 +1775,6 @@ class StrainVisApp:
         self.metadata_colorby_card.clear()
         self.metadata_jitter_card.clear()
         self.network_iterations.value = config.network_iterations_options[0]
-        self.network_threshold_input.value = config.APSS_connections_threshold_default
         self.is_continuous.value = False
         self.nodes_colormap.options = config.categorical_colormap_dict
         self.nodes_colormap.value = config.categorical_colormap_dict['cet_glasbey']
@@ -1783,6 +1783,7 @@ class StrainVisApp:
         if self.clicked_button_display_APSS:
             self.network_threshold_select.param.unwatch(self.threshold_select_watcher)
             self.network_threshold_input.param.unwatch(self.threshold_input_watcher)
+            self.network_threshold_input.value = config.APSS_connections_threshold_default
             if self.is_metadata:
                 self.is_continuous.param.unwatch(self.continuous_watcher)
                 self.nodes_colormap.param.unwatch(self.colormap_watcher)
@@ -4027,6 +4028,7 @@ class StrainVisApp:
 
     def create_multi_genomes_plots_by_APSS(self, event):
 
+        self.sorted_selected_genomes_subset = []
         self.sampling_size_multi = self.sample_sizes_slider_multi.value
         print("\nMulti species visualization. Selected subsampling size = " + self.sampling_size_multi)
 
@@ -4042,55 +4044,63 @@ class StrainVisApp:
         self.box_plot_card.clear()
         self.metadata_box_plot_card.clear()
 
-        if self.sampling_size_multi == 'All':
-            size_title = "Presenting plots using APSS from all available regions:"
-        else:
-            size_title = "Presenting plots using APSS from " + self.sampling_size_multi + \
-                         " subsampled regions:"
-
-        self.plots_by_size_multi_column.append(pn.pane.Markdown(size_title, styles={'font-size': "20px",
-                                                                                    'color': config.title_purple_color,
-                                                                                    'margin': "0 0 10px 0",
-                                                                                    'padding': "0"}))
-
-        # Check if the requested genome and size have already been calculated. If so, fetch the specific dataframe
-        if self.calculated_APSS_all_genomes_size_dict[self.sampling_size_multi]:
-            print("\nThe selected size (" + self.sampling_size_multi + ") has already been calculated - retrieve it.")
-            all_genomes_selected_size_APSS_df = self.APSS_all_genomes_all_sizes_dict[self.sampling_size_multi]
-
-        else:
-            # Calculate and return the dataframe with average scores for the selected genome and sampling size
-            print("\nThe selected size (" + self.sampling_size_multi + ") has not been calculated yet - calculate it...")
-            before = time.time()
-            all_genomes_selected_size_APSS_df = dm.calculate_APSS_all_genomes_sampling_size(
-                self.score_per_region_all_genomes_df, self.sampling_size_multi)
-            after = time.time()
-            duration = after - before
-            print("Calculating APSS with " + str(self.sampling_size_multi ) + " regions for " +
-                  str(self.number_of_genomes) + " species took " + str(duration) + " seconds.\n")
-            # Save the dataframe in the main dictionary
-            self.APSS_all_genomes_all_sizes_dict[self.sampling_size_multi] = all_genomes_selected_size_APSS_df
-            self.calculated_APSS_all_genomes_size_dict[self.sampling_size_multi] = 1
-
-        self.genomes_subset_selected_size_APSS_df = dm.return_genomes_subset_APSS_selected_size_table(
-            all_genomes_selected_size_APSS_df, self.selected_genomes_subset)
-
-        # No data at the selected sampling size
-        if self.genomes_subset_selected_size_APSS_df.empty:
+        # Np species at the selected sampling size
+        if self.species_num_at_sampling_size == 0:
             text = "The data obtained using " + self.sampling_size + " subsampled regions is not sufficient for " \
                                                                      "further processing"
             self.plots_by_size_multi_column.append(pn.pane.Markdown(text, styles={'font-size': "18px",
                                                                                   'color': config.title_red_color,
-                                                                                   'margin': "0"}))
+                                                                                  'margin': "0"}))
 
-        # Enough data -> creating plots
+        # Enough data to present the plot
         else:
+            if self.sampling_size_multi == 'All':
+                size_title = "Presenting plots using APSS from all available regions:"
+            else:
+                size_title = "Presenting plots using APSS from " + self.sampling_size_multi + \
+                             " subsampled regions:"
+
+            self.plots_by_size_multi_column.append(pn.pane.Markdown(size_title, styles={'font-size': "20px",
+                                                                                        'color': config.title_purple_color,
+                                                                                        'margin': "0 0 10px 0",
+                                                                                        'padding': "0"}))
+
+            # Check if the requested genome and size have already been calculated. If so, fetch the specific dataframe
+            if self.calculated_APSS_all_genomes_size_dict[self.sampling_size_multi]:
+                print("\nThe selected size (" + self.sampling_size_multi + ") has already been calculated - retrieve it.")
+                all_genomes_selected_size_APSS_df = self.APSS_all_genomes_all_sizes_dict[self.sampling_size_multi]
+
+            else:
+                # Calculate and return the dataframe with average scores for the selected genome and sampling size
+                print("\nThe selected size (" + self.sampling_size_multi + ") has not been calculated yet - calculate it...")
+                before = time.time()
+                all_genomes_selected_size_APSS_df = dm.calculate_APSS_all_genomes_sampling_size(
+                    self.score_per_region_all_genomes_df, self.sampling_size_multi)
+                after = time.time()
+                duration = after - before
+                print("Calculating APSS with " + str(self.sampling_size_multi ) + " regions for " +
+                      str(self.number_of_genomes) + " species took " + str(duration) + " seconds.\n")
+                # Save the dataframe in the main dictionary
+                self.APSS_all_genomes_all_sizes_dict[self.sampling_size_multi] = all_genomes_selected_size_APSS_df
+                self.calculated_APSS_all_genomes_size_dict[self.sampling_size_multi] = 1
+
+            # Get the table containing the selected genomes only
+            self.genomes_subset_selected_size_APSS_df = dm.return_genomes_subset_APSS_selected_size_table(
+                all_genomes_selected_size_APSS_df, self.selected_genomes_subset)
+
+            # Sort the present genomes list by the requested sorting method
+            presented_genomes_list = self.genomes_subset_selected_size_APSS_df['Ref_genome'].unique()
+            for genome in self.selected_genomes_subset:
+                if genome in presented_genomes_list:
+                    self.sorted_selected_genomes_subset.append(genome)
+
             # Add the plots to the layout
             self.create_box_plot_multi_pane()
             self.plots_by_size_multi_column.append(self.box_plot_card)
 
     def create_multi_genomes_column_ANI_mode(self):
 
+        self.sorted_selected_genomes_subset_ani = []
         if self.feature_select_watcher_ani in self.box_plot_feature_select_ani.param.watchers:
             self.box_plot_feature_select_ani.param.unwatch(self.feature_select_watcher_ani)
         self.ani_multi_plots_column.clear()
@@ -4100,7 +4110,8 @@ class StrainVisApp:
         self.ani_scores_genomes_subset_df = dm.return_genomes_subset_ani_table(self.ani_scores_all_genomes_df,
                                                                                self.selected_genomes_subset)
 
-        self.species_num_in_subset_ani = len(self.ani_scores_genomes_subset_df['Ref_genome'].unique())
+        presented_genomes_list = self.ani_scores_genomes_subset_df['Ref_genome'].unique()
+        self.species_num_in_subset_ani = len(presented_genomes_list)
         print("\ncreate_multi_genomes_column_ANI_mode: Number of available species: " +
               str(self.species_num_in_subset_ani))
 
@@ -4113,6 +4124,11 @@ class StrainVisApp:
 
         # Enough data -> creating plots
         else:
+            # Sort the present genomes list by the requested sorting method
+            for genome in self.selected_genomes_subset:
+                if genome in presented_genomes_list:
+                    self.sorted_selected_genomes_subset_ani.append(genome)
+
             # Add the plots to the layout
             self.create_box_plot_multi_pane_ani()
             self.ani_multi_plots_column.append(self.box_plot_card_ani)
@@ -4190,7 +4206,7 @@ class StrainVisApp:
             self.use_metadata_box_plot.disabled = True
 
         self.box_plot = pn.bind(pm.create_box_plot, avg_df=self.genomes_subset_selected_size_APSS_df,
-                                genomes_list=self.selected_genomes_subset,
+                                sorted_genomes_list=self.sorted_selected_genomes_subset,
                                 pvalues_df=self.boxplot_p_values_df, color=self.box_plot_color,
                                 use_metadata=self.use_metadata_box_plot, feature=self.box_plot_feature_select.value,
                                 same_color=self.box_plot_same_color, different_color=self.box_plot_different_color)
@@ -4202,7 +4218,6 @@ class StrainVisApp:
 
     def calculate_metadata_for_box_plot(self):
 
-        presented_genomes_list = self.genomes_subset_selected_size_APSS_df['Ref_genome'].unique()
         feature = self.box_plot_feature_select.value
 
         print("\ncalculate_metadata_for_box_plot:")
@@ -4237,7 +4252,7 @@ class StrainVisApp:
         valid_pval_list = []
         genome_pval_dict = {}
         pval_corrected = []
-        for genome in presented_genomes_list:
+        for genome in self.sorted_selected_genomes_subset:
             #print("\nGenome: " + genome + ", Feature: " + feature)
             same_array = self.genomes_subset_selected_size_APSS_df[
                 (self.genomes_subset_selected_size_APSS_df['Ref_genome'] == genome) &
@@ -4261,13 +4276,13 @@ class StrainVisApp:
 
         valid_counter = 0
         if len(pval_corrected) > 0:
-            for genome in presented_genomes_list:
+            for genome in self.sorted_selected_genomes_subset:
                 if str(genome_pval_dict[genome]) != "nan":
                     genome_pval_dict[genome] = pval_corrected[valid_counter]
                     valid_counter += 1
 
         updated_pval_list = genome_pval_dict.values()
-        genomes_pvalues_dict = {'Ref_genome': presented_genomes_list, 'P_value': updated_pval_list}
+        genomes_pvalues_dict = {'Ref_genome': self.sorted_selected_genomes_subset, 'P_value': updated_pval_list}
         self.boxplot_p_values_df = pd.DataFrame(genomes_pvalues_dict)
         # print(pvalues_df)
 
@@ -4279,7 +4294,7 @@ class StrainVisApp:
         self.calculate_metadata_for_box_plot()
 
         self.box_plot = pn.bind(pm.create_box_plot, avg_df=self.genomes_subset_selected_size_APSS_df,
-                                genomes_list=self.selected_genomes_subset,
+                                sorted_genomes_list=self.sorted_selected_genomes_subset,
                                 pvalues_df=self.boxplot_p_values_df, color=self.box_plot_color,
                                 use_metadata=self.use_metadata_box_plot, feature=self.box_plot_feature_select.value,
                                 same_color=self.box_plot_same_color, different_color=self.box_plot_different_color)
@@ -4434,7 +4449,7 @@ class StrainVisApp:
             self.use_metadata_box_plot_ani.disabled = True
 
         self.box_plot_ani = pn.bind(pm.create_box_plot_ani, ani_df=self.ani_scores_genomes_subset_df,
-                                    genomes_list=self.selected_genomes_subset,
+                                    sorted_genomes_list=self.sorted_selected_genomes_subset_ani,
                                     pvalues_df=self.boxplot_p_values_df_ani, color=self.box_plot_color_ani,
                                     use_metadata=self.use_metadata_box_plot_ani,
                                     feature=self.box_plot_feature_select_ani.value,
@@ -4449,7 +4464,7 @@ class StrainVisApp:
 
     def calculate_metadata_for_box_plot_ani(self):
 
-        presented_genomes_list = self.ani_scores_genomes_subset_df['Ref_genome'].unique()
+        #presented_genomes_list = self.ani_scores_genomes_subset_df['Ref_genome'].unique()
         feature = self.box_plot_feature_select_ani.value
 
         print("\ncalculate_metadata_for_box_plot_ani:")
@@ -4481,7 +4496,7 @@ class StrainVisApp:
         valid_pval_list = []
         genome_pval_dict = {}
         pval_corrected = []
-        for genome in presented_genomes_list:
+        for genome in self.sorted_selected_genomes_subset_ani:
             #print("\nGenome: " + genome + ", Feature: " + feature)
             same_array = self.ani_scores_genomes_subset_df[
                 (self.ani_scores_genomes_subset_df['Ref_genome'] == genome) &
@@ -4505,13 +4520,13 @@ class StrainVisApp:
 
         valid_counter = 0
         if len(pval_corrected) > 0:
-            for genome in presented_genomes_list:
+            for genome in self.sorted_selected_genomes_subset_ani:
                 if str(genome_pval_dict[genome]) != "nan":
                     genome_pval_dict[genome] = pval_corrected[valid_counter]
                     valid_counter += 1
 
         updated_pval_list = genome_pval_dict.values()
-        genomes_pvalues_dict = {'Ref_genome': presented_genomes_list, 'P_value': updated_pval_list}
+        genomes_pvalues_dict = {'Ref_genome': self.sorted_selected_genomes_subset_ani, 'P_value': updated_pval_list}
         self.boxplot_p_values_df_ani = pd.DataFrame(genomes_pvalues_dict)
         # print(pvalues_df)
 
@@ -4523,7 +4538,7 @@ class StrainVisApp:
         self.calculate_metadata_for_box_plot_ani()
 
         self.box_plot_ani = pn.bind(pm.create_box_plot_ani, ani_df=self.ani_scores_genomes_subset_df,
-                                    genomes_list=self.selected_genomes_subset,
+                                    sorted_genomes_list=self.sorted_selected_genomes_subset_ani,
                                     pvalues_df=self.boxplot_p_values_df_ani, color=self.box_plot_color_ani,
                                     use_metadata=self.use_metadata_box_plot_ani,
                                     feature=self.box_plot_feature_select_ani.value,
