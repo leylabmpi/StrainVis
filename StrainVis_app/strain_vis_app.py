@@ -2572,7 +2572,11 @@ class StrainVisApp:
         self.update_network_plot()
 
     def create_network_pane(self, selected_genome_and_size_avg_df):
+        mean_only = 0
         mean_std_only = 0
+        mean_std = 0
+        mean_2_std = 0
+
         init_button = pn.widgets.Button(name='Initialize nodes positions', button_type='primary',
                                         button_style='outline')
         init_button.on_click(self.init_positions)
@@ -2643,7 +2647,10 @@ class StrainVisApp:
         # Currently the threshold is the mean APSS
         mean_APSS = self.df_for_network.loc[:, 'APSS'].mean().round(2)
         std_APSS = self.df_for_network.loc[:, 'APSS'].std().round(2)
-        self.APSS_connections_threshold = mean_APSS
+        if mean_APSS < 1.0:
+            self.APSS_connections_threshold = mean_APSS
+        else:
+            self.APSS_connections_threshold = 0.99
         self.df_for_network['weight'] = np.where(self.df_for_network['APSS'] >= self.APSS_connections_threshold,
                                                  np.negative(np.log(1 - self.df_for_network['APSS'])), 0)
         #print("\nDF for network:")
@@ -2694,31 +2701,42 @@ class StrainVisApp:
             self.network_threshold_input.disabled = True
             self.network_threshold_select.options = []
 
-            str_mean = config.network_thresholds_options[0] + " (APSS=" + str(mean_APSS) + ")"
-            self.network_threshold_select.options.append(str_mean)
+            if mean_APSS >= 0.99:
+                mean_APSS = 0.99
+                str_mean = config.network_thresholds_options[0] + " (APSS=0.99)"
+                self.network_threshold_select.options.append(str_mean)
+                mean_only = 1
 
-            mean_std = round((mean_APSS + std_APSS), 2)
-            if mean_std >= 0.99:
-                mean_std = 0.99
-                mean_std_only = 1
-            str_mean_std = config.network_thresholds_options[1] + " (APSS=" + str(mean_std) + ")"
-            self.network_threshold_select.options.append(str_mean_std)
+            else:
+                str_mean = config.network_thresholds_options[0] + " (APSS=" + str(mean_APSS) + ")"
+                self.network_threshold_select.options.append(str_mean)
 
-            # Add the mean + 2std option only if it's <= 0.99 (and mean + 1std also <= 0.99)
-            if not mean_std_only:
-                mean_2_std = round((mean_APSS + 2 * std_APSS), 2)
-                if mean_2_std <= 0.99:
-                    str_mean_2_std = config.network_thresholds_options[2] + " (APSS=" + str(mean_2_std) + ")"
-                    self.network_threshold_select.options.append(str_mean_2_std)
-                else:
+                mean_std = round((mean_APSS + std_APSS), 2)
+                if mean_std >= 0.99:
+                    mean_std = 0.99
+                    str_mean_std = config.network_thresholds_options[1] + " (APSS=0.99)"
+                    self.network_threshold_select.options.append(str_mean_std)
                     mean_std_only = 1
+
+                else:
+                    str_mean_std = config.network_thresholds_options[1] + " (APSS=" + str(mean_std) + ")"
+                    self.network_threshold_select.options.append(str_mean_std)
+
+                    # Add the mean + 2std option only if it's <= 0.99 (and mean + 1std also <= 0.99)
+                    mean_2_std = round((mean_APSS + 2 * std_APSS), 2)
+                    if mean_2_std <= 0.99:
+                        str_mean_2_std = config.network_thresholds_options[2] + " (APSS=" + str(mean_2_std) + ")"
+                        self.network_threshold_select.options.append(str_mean_2_std)
+                    else:
+                        mean_std_only = 1
 
             self.network_threshold_select.options.append(config.network_thresholds_options[3])
             self.network_threshold_select.value = self.network_threshold_select.options[0]
 
             # Set watchers for the threshold widgets
             self.threshold_select_watcher = self.network_threshold_select.param.watch(partial(
-                self.changed_threshold_select, mean_APSS, std_APSS, mean_std_only), 'value', onlychanged=True)
+                self.changed_threshold_select, mean_APSS, mean_std, mean_2_std, mean_only, mean_std_only), 'value',
+                onlychanged=True)
             self.threshold_input_watcher = self.network_threshold_input.param.watch(self.changed_threshold_input,
                                                                                     'value', onlychanged=True)
 
@@ -2878,7 +2896,7 @@ class StrainVisApp:
             pos_tuple = (pos_x, pos_y)
             self.pos_dict[node] = pos_tuple
 
-    def changed_threshold_select(self, mean, std, mean_std_only, event):
+    def changed_threshold_select(self, mean, mean_std, mean_2_std, mean_only, mean_std_only, event):
         #print("\nchanged_threshold_select:")
         #print("Current mean: " + str(mean))
 
@@ -2887,23 +2905,21 @@ class StrainVisApp:
             self.network_threshold_input.disabled = True
 
         elif self.network_threshold_select.value == self.network_threshold_select.options[1]:
-            mean_std = mean + std
-            if mean_std < 1:
-                self.APSS_connections_threshold = mean_std
+            # The second option is the custom threshold
+            if mean_only:
+                self.APSS_connections_threshold = self.network_threshold_input.value
+                self.network_threshold_input.disabled = False
             else:
-                self.APSS_connections_threshold = 0.99
-            self.network_threshold_input.disabled = True
+                self.APSS_connections_threshold = mean_std
+                self.network_threshold_input.disabled = True
 
         elif self.network_threshold_select.value == self.network_threshold_select.options[2]:
+            # The third option is the custom threshold
             if mean_std_only:
                 self.APSS_connections_threshold = self.network_threshold_input.value
                 self.network_threshold_input.disabled = False
             else:
-                mean_2_std = mean + 2 * std
-                if mean_2_std < 1:
-                    self.APSS_connections_threshold = mean_2_std
-                else:
-                    self.APSS_connections_threshold = 0.99
+                self.APSS_connections_threshold = mean_2_std
                 self.network_threshold_input.disabled = True
         else:
             self.APSS_connections_threshold = self.network_threshold_input.value

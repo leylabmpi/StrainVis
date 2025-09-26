@@ -138,9 +138,9 @@ continuous_colormap_dict = {
     'Blues': bp.Blues256,
     'Reds': bp.Reds256,
     'Greens': bp.Greens256,
-    'BuPu': bp.BuPu,
-    'GnBu': bp.GnBu,
-    'OrRd': bp.OrRd,
+    #'BuPu': bp.BuPu,
+    #'GnBu': bp.GnBu,
+    #'OrRd': bp.OrRd,
 }
 
 
