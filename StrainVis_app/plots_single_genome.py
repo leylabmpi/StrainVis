@@ -85,11 +85,16 @@ def create_jitter_plot_bokeh(avg_df, color):
     return plot
 
 
-def create_clustermap(matrix, cmap, is_metadata, feature, cmap_metadata, custom_cmap, metadata_dict):
+def create_clustermap(matrix, cmap, method, is_metadata, feature, cmap_metadata, custom_cmap, metadata_dict):
 
     # The number of columns doesn't exceed the defined maximum - continue creating the clustermap plot
     col_num = len(matrix.columns)
-    mask_array = np.full((col_num, col_num), np.where(matrix == 100, True, False))
+
+    # Create a masking matrix to display the NA values in grey color
+    mask_array = np.isnan(matrix)
+
+    # Fill the NA cells with the mean score
+    matrix = matrix.fillna(matrix.mean().mean())
 
     #print("\ncreate_clustermap: selected cmap: " + cmap)
     colmap = plt.get_cmap(cmap)
@@ -140,13 +145,13 @@ def create_clustermap(matrix, cmap, is_metadata, feature, cmap_metadata, custom_
         colors_df = pd.DataFrame({feature: colors}, index=matrix.index)
         #print(colors_df)
 
-        clustermap = sns.clustermap(matrix, cmap=colmap, row_cluster=True, linewidths=.5,
+        clustermap = sns.clustermap(matrix, metric=method, cmap=colmap, row_cluster=True, linewidths=.5,
                                     cbar_pos=(0.04, 0.82, 0.02, 0.15), xticklabels=1, yticklabels=1,
                                     dendrogram_ratio=(0.2, 0.2), mask=mask_array, row_colors=colors_df)
 
     # No metadata
     else:
-        clustermap = sns.clustermap(matrix, cmap=colmap, row_cluster=True, linewidths=.5,
+        clustermap = sns.clustermap(matrix, metric=method, cmap=colmap, row_cluster=True, linewidths=.5,
                                     cbar_pos=(0.04, 0.82, 0.02, 0.15), xticklabels=1, yticklabels=1,
                                     dendrogram_ratio=(0.2, 0.2), mask=mask_array)
 

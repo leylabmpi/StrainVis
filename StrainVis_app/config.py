@@ -8,6 +8,7 @@ sampling_sizes_wo_all = ['40', '60', '80', '100', '125', '150', '175', '200', '2
 genomes_sorting_options = ['Number of compared pairs', 'Species name']
 contig_sorting_options = ['Contig length', 'Contig name']
 catplot_types = ['Scatter (jitter) plot', 'Boxplot']
+clustering_methods = ['euclidean', 'cityblock', 'cosine', 'correlation']
 min_pairs_for_all_regions = 100
 max_clustermap_cols = 200  # 150
 max_network_nodes = 300
@@ -138,9 +139,8 @@ continuous_colormap_dict = {
     'Blues_r': bp.Blues256[::-1],
     'Reds_r': bp.Reds256[::-1],
     'Greens_r': bp.Greens256[::-1],
-    #'BuPu': bp.BuPu,
-    #'GnBu': bp.GnBu,
-    #'OrRd': bp.OrRd,
+    'Oranges_r': bp.Oranges256[::-1],
+    'Purples_r': bp.Purples256[::-1],
 }
 
 

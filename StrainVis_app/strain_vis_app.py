@@ -395,6 +395,9 @@ class StrainVisApp:
         self.clustermap_cmap = pn.widgets.Select(value=config.clustermap_colormaps_list[0],
                                                  options=config.clustermap_colormaps_list,
                                                  name="Select colormap from the following list:")
+        self.clustermap_method = pn.widgets.Select(value=config.clustering_methods[0],
+                                                   options=config.clustering_methods,
+                                                   name="Select a distance metric for the clustering:")
         self.clustermap_image_format = pn.widgets.Select(value=config.matplotlib_file_formats[0],
                                                          options=config.matplotlib_file_formats,
                                                          name="Select image format:")
@@ -2189,6 +2192,7 @@ class StrainVisApp:
                                                                         'color': config.title_blue_color,
                                                                         'margin': "0"}),
                                 self.clustermap_cmap,
+                                self.clustermap_method,
                                 pn.Spacer(height=5),
                                 self.use_metadata_clustermap,
                                 self.metadata_clustermap_card)
@@ -2223,7 +2227,6 @@ class StrainVisApp:
         pivoted_df = selected_genome_and_size_avg_df.pivot(columns='Sample1', index='Sample2', values='APSS')
         self.scores_matrix = pivoted_df.combine_first(pivoted_df.T)
         np.fill_diagonal(self.scores_matrix.values, 1.0)
-        self.scores_matrix = self.scores_matrix.fillna(100.0)
         #print("\nScores matrix:")
         #print(self.scores_matrix)
 
@@ -2268,7 +2271,8 @@ class StrainVisApp:
                 self.use_metadata_clustermap.disabled = True
 
             self.clustermap_plot = pn.bind(ps.create_clustermap, matrix=self.scores_matrix,
-                                           cmap=self.clustermap_cmap, is_metadata=self.use_metadata_clustermap,
+                                           cmap=self.clustermap_cmap, method=self.clustermap_method,
+                                           is_metadata=self.use_metadata_clustermap,
                                            feature=self.color_by_feature,
                                            cmap_metadata=self.feature_colormap.value_name,
                                            custom_cmap=self.custom_colormap_input_clustermap.value,
@@ -2290,7 +2294,8 @@ class StrainVisApp:
     def update_clustermap_plot(self):
         #print("\nIn update_clustermap_plot")
         self.clustermap_plot = pn.bind(ps.create_clustermap, matrix=self.scores_matrix,
-                                       cmap=self.clustermap_cmap, is_metadata=self.use_metadata_clustermap,
+                                       cmap=self.clustermap_cmap, method=self.clustermap_method,
+                                       is_metadata=self.use_metadata_clustermap,
                                        feature=self.color_by_feature,
                                        cmap_metadata=self.feature_colormap.value_name,
                                        custom_cmap=self.custom_colormap_input_clustermap.value,
@@ -2303,7 +2308,7 @@ class StrainVisApp:
 
         # Update the placeholder of the filename for download.
         clustermap_file = "Clustermap_" + self.ref_genome + "_" + self.sampling_size + "_regions_" + \
-                          self.clustermap_cmap.value
+                          self.clustermap_cmap.value + "_" + self.clustermap_method.value
         if self.use_metadata_clustermap.value:
             if self.feature_colormap.value_name == 'Define custom colormap':
                 clustermap_file += "_colorby_" + self.color_by_feature.value + "_custom_colormap"
@@ -2406,7 +2411,6 @@ class StrainVisApp:
         pivoted_df = selected_genome_ani_df.pivot(columns='Sample1', index='Sample2', values='ANI')
         self.scores_matrix_ani = pivoted_df.combine_first(pivoted_df.T)
         np.fill_diagonal(self.scores_matrix_ani.values, 1.0)
-        self.scores_matrix_ani = self.scores_matrix_ani.fillna(100.0)
         #print("\nScores matrix:")
         #print(self.scores_matrix_ani)
 
@@ -2488,7 +2492,7 @@ class StrainVisApp:
         fformat = self.clustermap_image_format_ani.value
 
         # Update the placeholder of the filename for download.
-        clustermap_file = "ANI_Clustermap_" + self.ref_genome + "_" + self.clustermap_cmap.value
+        clustermap_file = "ANI_Clustermap_" + self.ref_genome + "_" + self.clustermap_cmap_ani.value
         if self.use_metadata_clustermap_ani.value:
             if self.feature_colormap_ani.value_name == 'Define custom colormap':
                 clustermap_file += "_colorby_" + self.color_by_feature_ani.value + "_custom_colormap"
