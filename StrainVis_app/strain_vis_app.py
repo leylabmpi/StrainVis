@@ -430,6 +430,9 @@ class StrainVisApp:
         self.clustermap_cmap_ani = pn.widgets.Select(value=config.clustermap_colormaps_list[0],
                                                      options=config.clustermap_colormaps_list,
                                                      name="Select colormap from the following list:")
+        self.clustermap_method_ani = pn.widgets.Select(value=config.clustering_methods[0],
+                                                       options=config.clustering_methods,
+                                                       name="Select a distance metric for the clustering:")
         self.clustermap_image_format_ani = pn.widgets.Select(value=config.matplotlib_file_formats[0],
                                                              options=config.matplotlib_file_formats,
                                                              name="Select image format:")
@@ -2182,6 +2185,8 @@ class StrainVisApp:
 
     def create_clustermap_pane(self, selected_genome_and_size_avg_df):
 
+        self.clustermap_method.value = config.clustering_methods[0]
+
         styling_title = "Heatmap customization options:"
         metadata_coloring_col = pn.Column(self.color_by_feature,
                                           self.feature_colormap,
@@ -2367,6 +2372,8 @@ class StrainVisApp:
 
     def create_clustermap_pane_ani(self, selected_genome_ani_df):
 
+        self.clustermap_method_ani.value = config.clustering_methods[0]
+
         styling_title = "Heatmap customization options:"
         metadata_coloring_col = pn.Column(self.color_by_feature_ani,
                                           self.feature_colormap_ani,
@@ -2377,6 +2384,7 @@ class StrainVisApp:
                                                                         'color': config.title_blue_color,
                                                                         'margin': "0"}),
                                 self.clustermap_cmap_ani,
+                                self.clustermap_method_ani,
                                 pn.Spacer(height=5),
                                 self.use_metadata_clustermap_ani,
                                 self.metadata_clustermap_card_ani)
@@ -2456,7 +2464,7 @@ class StrainVisApp:
                 self.use_metadata_clustermap_ani.disabled = True
 
             self.clustermap_plot_ani = pn.bind(ps.create_clustermap, matrix=self.scores_matrix_ani,
-                                               cmap=self.clustermap_cmap_ani,
+                                               cmap=self.clustermap_cmap_ani, method=self.clustermap_method_ani,
                                                is_metadata=self.use_metadata_clustermap_ani,
                                                feature=self.color_by_feature_ani,
                                                cmap_metadata=self.feature_colormap_ani.value_name,
@@ -2480,7 +2488,8 @@ class StrainVisApp:
     def update_clustermap_plot_ani(self):
         print("\nIn update_clustermap_plot_ani")
         self.clustermap_plot_ani = pn.bind(ps.create_clustermap, matrix=self.scores_matrix_ani,
-                                           cmap=self.clustermap_cmap_ani, is_metadata=self.use_metadata_clustermap_ani,
+                                           cmap=self.clustermap_cmap_ani, method=self.clustermap_method_ani,
+                                           is_metadata=self.use_metadata_clustermap_ani,
                                            feature=self.color_by_feature_ani,
                                            cmap_metadata=self.feature_colormap_ani.value_name,
                                            custom_cmap=self.custom_colormap_input_clustermap_ani.value,
@@ -2492,7 +2501,8 @@ class StrainVisApp:
         fformat = self.clustermap_image_format_ani.value
 
         # Update the placeholder of the filename for download.
-        clustermap_file = "ANI_Clustermap_" + self.ref_genome + "_" + self.clustermap_cmap_ani.value
+        clustermap_file = "ANI_Clustermap_" + self.ref_genome + "_" + self.clustermap_cmap_ani.value + "_" + \
+                          self.clustermap_method_ani.value
         if self.use_metadata_clustermap_ani.value:
             if self.feature_colormap_ani.value_name == 'Define custom colormap':
                 clustermap_file += "_colorby_" + self.color_by_feature_ani.value + "_custom_colormap"
