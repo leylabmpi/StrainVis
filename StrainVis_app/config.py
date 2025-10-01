@@ -131,13 +131,13 @@ categorical_colormap_dict = {
 }
 
 continuous_colormap_dict = {
-    'cet_rainbow4': cc.m_rainbow4,
-    'cet_isolum': cc.isolum,
-    'plasma': bp.Plasma256,
-    'viridis': bp.Viridis256,
-    'Blues': bp.Blues256,
-    'Reds': bp.Reds256,
-    'Greens': bp.Greens256,
+    'cet_rainbow4_r': cc.rainbow4[::-1],
+    'cet_isolum_r': cc.isolum[::-1],
+    'plasma_r': bp.Plasma256[::-1],
+    'viridis_r': bp.Viridis256[::-1],
+    'Blues_r': bp.Blues256[::-1],
+    'Reds_r': bp.Reds256[::-1],
+    'Greens_r': bp.Greens256[::-1],
     #'BuPu': bp.BuPu,
     #'GnBu': bp.GnBu,
     #'OrRd': bp.OrRd,

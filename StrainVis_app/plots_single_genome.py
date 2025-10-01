@@ -109,14 +109,21 @@ def create_clustermap(matrix, cmap, is_metadata, feature, cmap_metadata, custom_
 
         # If the user defined a custom cmap - process it and turn it into a cmap
         if cmap_metadata == 'Define custom colormap':
-            custom_colors_list = custom_cmap
-            cmap_metadata_mpl = re.split(r'\s*,\s*', custom_colors_list)
-            cmap_length = len(cmap_metadata_mpl)
-            #print("Custom cmap:")
-            #print(cmap_metadata_mpl)
+            if custom_cmap != "":
+                custom_colors_list = custom_cmap
+                cmap_metadata_mpl = re.split(r'\s*,\s*', custom_colors_list)
+                cmap_length = len(cmap_metadata_mpl)
+                print("\nCustom cmap:")
+                print(cmap_metadata_mpl)
 
-            # Assign each group with a color, according to the colormap order
-            group_to_color = {group: cmap_metadata_mpl[i % cmap_length] for i, group in enumerate(unique_groups)}
+                # Assign each group with a color, according to the colormap order
+                group_to_color = {group: cmap_metadata_mpl[i % cmap_length] for i, group in enumerate(unique_groups)}
+
+            # Custom colormap is not defined yet
+            else:
+                print("\nCustom cmap is not defined yet")
+                # Assign each group with black, according to the colormap order
+                group_to_color = {group: 'black' for i, group in enumerate(unique_groups)}
 
         # Standard colormap
         else:

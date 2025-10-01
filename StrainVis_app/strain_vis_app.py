@@ -181,7 +181,9 @@ class StrainVisApp:
         self.custom_colormap_watcher = ""
         self.nodes_colorby_watcher = ""
         self.feature_colormap_watcher = ""
+        self.custom_colormap_clustermap_watcher = ""
         self.feature_colormap_ani_watcher = ""
+        self.custom_colormap_clustermap_ani_watcher = ""
         self.synteny_per_pos_feature_select_watcher = ""
         self.visited_multi_genome_tab = 0
         self.activated_synteny_per_pos_tab = 0
@@ -1790,6 +1792,10 @@ class StrainVisApp:
                 self.custom_colormap_input.param.unwatch(self.custom_colormap_watcher)
                 self.nodes_color_by.param.unwatch(self.nodes_colorby_watcher)
                 self.feature_colormap.param.unwatch(self.feature_colormap_watcher)
+                self.custom_colormap_input_clustermap.param.unwatch(self.custom_colormap_clustermap_watcher)
+                self.feature_colormap_ani.param.unwatch(self.feature_colormap_ani_watcher)
+                self.custom_colormap_input_clustermap_ani.param.unwatch(self.custom_colormap_clustermap_ani_watcher)
+
         self.clicked_button_display_APSS = 1
 
         # Check if the requested genome and size have already been calculated. If so, fetch the specific dataframe
@@ -2253,6 +2259,9 @@ class StrainVisApp:
                 # Define a watcher for the colormap widget
                 self.feature_colormap_watcher = self.feature_colormap.param.watch(self.change_colormap_clustermap,
                                                                                   'value', onlychanged=True)
+                self.custom_colormap_clustermap_watcher = \
+                    self.custom_colormap_input_clustermap.param.watch(self.get_custom_colormap_clustermap,
+                                                                      'value', onlychanged=True)
 
             # No metadata
             else:
@@ -2262,7 +2271,7 @@ class StrainVisApp:
                                            cmap=self.clustermap_cmap, is_metadata=self.use_metadata_clustermap,
                                            feature=self.color_by_feature,
                                            cmap_metadata=self.feature_colormap.value_name,
-                                           custom_cmap=self.custom_colormap_input_clustermap,
+                                           custom_cmap=self.custom_colormap_input_clustermap.value,
                                            metadata_dict=self.metadata_dict)
 
             self.clustermap_pane = pn.pane.Matplotlib(self.clustermap_plot, height=600, dpi=300, tight=True,
@@ -2274,14 +2283,17 @@ class StrainVisApp:
     def change_colormap_clustermap(self, event):
         self.update_clustermap_plot()
 
+    def get_custom_colormap_clustermap(self, event):
+        self.update_clustermap_plot()
+
     # Update the clustermap plot
     def update_clustermap_plot(self):
-        print("\nIn update_clustermap_plot")
+        #print("\nIn update_clustermap_plot")
         self.clustermap_plot = pn.bind(ps.create_clustermap, matrix=self.scores_matrix,
                                        cmap=self.clustermap_cmap, is_metadata=self.use_metadata_clustermap,
                                        feature=self.color_by_feature,
                                        cmap_metadata=self.feature_colormap.value_name,
-                                       custom_cmap=self.custom_colormap_input_clustermap,
+                                       custom_cmap=self.custom_colormap_input_clustermap.value,
                                        metadata_dict=self.metadata_dict)
 
         self.clustermap_pane.object = self.clustermap_plot
@@ -2431,6 +2443,9 @@ class StrainVisApp:
                 self.feature_colormap_ani_watcher = \
                     self.feature_colormap_ani.param.watch(self.change_colormap_clustermap_ani,
                                                           'value', onlychanged=True)
+                self.custom_colormap_clustermap_ani_watcher = \
+                    self.custom_colormap_input_clustermap_ani.param.watch(self.get_custom_colormap_clustermap_ani,
+                                                                          'value', onlychanged=True)
 
             # No metadata
             else:
@@ -2441,7 +2456,7 @@ class StrainVisApp:
                                                is_metadata=self.use_metadata_clustermap_ani,
                                                feature=self.color_by_feature_ani,
                                                cmap_metadata=self.feature_colormap_ani.value_name,
-                                               custom_cmap=self.custom_colormap_input_clustermap_ani,
+                                               custom_cmap=self.custom_colormap_input_clustermap_ani.value,
                                                metadata_dict=self.metadata_dict)
 
             self.clustermap_pane_ani = pn.pane.Matplotlib(self.clustermap_plot_ani, height=600, dpi=300, tight=True,
@@ -2454,6 +2469,9 @@ class StrainVisApp:
     def change_colormap_clustermap_ani(self, event):
         self.update_clustermap_plot_ani()
 
+    def get_custom_colormap_clustermap_ani(self, event):
+        self.update_clustermap_plot_ani()
+
     # Update the clustermap plot
     def update_clustermap_plot_ani(self):
         print("\nIn update_clustermap_plot_ani")
@@ -2461,7 +2479,7 @@ class StrainVisApp:
                                            cmap=self.clustermap_cmap_ani, is_metadata=self.use_metadata_clustermap_ani,
                                            feature=self.color_by_feature_ani,
                                            cmap_metadata=self.feature_colormap_ani.value_name,
-                                           custom_cmap=self.custom_colormap_input_clustermap_ani,
+                                           custom_cmap=self.custom_colormap_input_clustermap_ani.value,
                                            metadata_dict=self.metadata_dict)
 
         self.clustermap_pane_ani.object = self.clustermap_plot_ani
@@ -2550,7 +2568,7 @@ class StrainVisApp:
             # Feature is indeed really continuous
             else:
                 self.nodes_colormap.options = config.continuous_colormap_dict
-                self.nodes_colormap.value = config.continuous_colormap_dict['cet_rainbow4']
+                self.nodes_colormap.value = config.continuous_colormap_dict['cet_rainbow4_r']
 
         # Categorical feature
         else:
