@@ -2069,8 +2069,8 @@ class StrainVisApp:
                                    hue="Category", hue_order=[same_feature, diff_feature],
                                    palette=[same_color, different_color], width=0.5)
 
-                # P-value is valid
-                if str(p_val) != "nan":
+                # P-value is valid and significant
+                if str(p_val) != "nan" and p_val < 0.05:
                     ax = plot.ax  # get the underlying matplotlib axis
 
                     # Place the p-value text between the two boxes, slightly above the max APSS
@@ -2130,8 +2130,8 @@ class StrainVisApp:
                                    hue="Category", hue_order=[same_feature, diff_feature],
                                    palette=[same_color, different_color], width=0.5)
 
-                # P-value is valid
-                if str(p_val) != "nan":
+                # P-value is valid and significant
+                if str(p_val) != "nan" and p_val < 0.05:
                     ax = plot.ax  # get the underlying matplotlib axis
 
                     # Place the p-value text between the two boxes, slightly above the max APSS
