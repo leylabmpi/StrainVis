@@ -191,6 +191,8 @@ class StrainVisApp:
         self.activated_synteny_per_pos_tab = 0
         self.clicked_button_display_APSS = 0
         self.visited_ANI_tab = 0
+        self.clicked_button_display_APSS_multi = 0
+        self.visited_ANI_tab_multi = 0
 
         # Bootstrap template
         self.template = pn.template.VanillaTemplate(
@@ -2057,29 +2059,34 @@ class StrainVisApp:
             same_feature = 'Same ' + feature
             diff_feature = 'Different ' + feature
             if type == 'Boxplot':
-
-                # Calculate the P-value of the comparison
-                same_array = self.df_for_jitter[self.df_for_jitter['Category'] == same_feature]['APSS']
-                diff_array = self.df_for_jitter[self.df_for_jitter['Category'] == diff_feature]['APSS']
-                p_val = return_p_value(same_array, diff_array)
-                print("\nP-value for " + feature + " comparison = " + str(p_val))
-
                 plot = sns.catplot(data=self.df_for_jitter, kind='box', x="Category", y="APSS",
                                    order=[same_feature, diff_feature],
                                    hue="Category", hue_order=[same_feature, diff_feature],
                                    palette=[same_color, different_color], width=0.5)
 
-                # P-value is valid and significant
-                if str(p_val) != "nan" and p_val < 0.05:
-                    ax = plot.ax  # get the underlying matplotlib axis
+                # Calculate the P-value of the comparison
+                same_array = self.df_for_jitter[self.df_for_jitter['Category'] == same_feature]['APSS']
+                diff_array = self.df_for_jitter[self.df_for_jitter['Category'] == diff_feature]['APSS']
 
-                    # Place the p-value text between the two boxes, slightly above the max APSS
-                    y_max = self.df_for_jitter["APSS"].max()
-                    ax.text(
-                        0.5, y_max * 1.01,  # x = middle of the two boxes, y = above max
-                        f"p = {p_val:.2e}",  # format p-value in scientific notation
-                        ha="center", va="bottom", fontsize=10
-                    )
+                # Sample size is enough for P-value calculation
+                if len(same_array) >= 1 and len(diff_array) >= 1:
+                    p_val = return_p_value(same_array, diff_array)
+                    print("\nP-value for " + feature + " comparison = " + str(p_val))
+
+                    # P-value is valid and significant
+                    if str(p_val) != "nan" and p_val < 0.05:
+                        ax = plot.ax  # get the underlying matplotlib axis
+
+                        # Place the p-value text between the two boxes, slightly above the max APSS
+                        y_max = self.df_for_jitter["APSS"].max()
+                        ax.text(
+                            0.5, y_max * 1.01,  # x = middle of the two boxes, y = above max
+                            f"p = {p_val:.2e}",  # format p-value in scientific notation
+                            ha="center", va="bottom", fontsize=10
+                        )
+                # Sample size is not enough for P-value calculation
+                else:
+                    print("\nCannot calculate P-value for feature " + feature + ": Sample size is not enough.")
 
             else:
                 plot = sns.catplot(data=self.df_for_jitter, x="Category", y="APSS", order=[same_feature, diff_feature],
@@ -2118,29 +2125,34 @@ class StrainVisApp:
 
             # Boxplot
             if type == 'Boxplot':
-
-                # Calculate the P-value of the comparison
-                same_array = self.df_for_jitter_ani[self.df_for_jitter_ani['Category'] == same_feature]['ANI']
-                diff_array = self.df_for_jitter_ani[self.df_for_jitter_ani['Category'] == diff_feature]['ANI']
-                p_val = return_p_value(same_array, diff_array)
-                print("\nP-value for " + feature + " comparison = " + str(p_val))
-
                 plot = sns.catplot(data=self.df_for_jitter_ani, kind='box', x="Category", y="ANI",
                                    order=[same_feature, diff_feature],
                                    hue="Category", hue_order=[same_feature, diff_feature],
                                    palette=[same_color, different_color], width=0.5)
 
-                # P-value is valid and significant
-                if str(p_val) != "nan" and p_val < 0.05:
-                    ax = plot.ax  # get the underlying matplotlib axis
+                # Calculate the P-value of the comparison
+                same_array = self.df_for_jitter_ani[self.df_for_jitter_ani['Category'] == same_feature]['ANI']
+                diff_array = self.df_for_jitter_ani[self.df_for_jitter_ani['Category'] == diff_feature]['ANI']
 
-                    # Place the p-value text between the two boxes, slightly above the max APSS
-                    y_max = self.df_for_jitter_ani["ANI"].max()
-                    ax.text(
-                        0.5, y_max * 1.01,  # x = middle of the two boxes, y = above max
-                        f"p = {p_val:.2e}",  # format p-value in scientific notation
-                        ha="center", va="bottom", fontsize=10
-                    )
+                # Sample size is enough for P-value calculation
+                if len(same_array) >= 1 and len(diff_array) >= 1:
+                    p_val = return_p_value(same_array, diff_array)
+                    print("\nP-value for " + feature + " comparison = " + str(p_val))
+
+                    # P-value is valid and significant
+                    if str(p_val) != "nan" and p_val < 0.05:
+                        ax = plot.ax  # get the underlying matplotlib axis
+
+                        # Place the p-value text between the two boxes, slightly above the max APSS
+                        y_max = self.df_for_jitter["ANI"].max()
+                        ax.text(
+                            0.5, y_max * 1.01,  # x = middle of the two boxes, y = above max
+                            f"p = {p_val:.2e}",  # format p-value in scientific notation
+                            ha="center", va="bottom", fontsize=10
+                        )
+                # Sample size is not enough for P-value calculation
+                else:
+                    print("\nCannot calculate P-value for feature " + feature + ": Sample size is not enough.")
 
             # Jitterplot
             else:
@@ -4162,6 +4174,11 @@ class StrainVisApp:
 
     def create_multi_genomes_plots_by_APSS(self, event):
 
+        # Unwatch watchers (if it's not the first time that this function is called)
+        if self.clicked_button_display_APSS_multi and self.is_metadata:
+            self.box_plot_feature_select.param.unwatch(self.feature_select_watcher)
+        self.clicked_button_display_APSS_multi = 1
+
         self.sorted_selected_genomes_subset = []
         self.sampling_size_multi = self.sample_sizes_slider_multi.value
         print("\nMulti species visualization. Selected subsampling size = " + self.sampling_size_multi)
@@ -4171,9 +4188,6 @@ class StrainVisApp:
             'Number_of_species'].values[0]
         print("Number of species at this sampling size: " + str(self.species_num_at_sampling_size))
 
-        if self.feature_select_watcher in self.box_plot_feature_select.param.watchers:
-            print("\nfeature_select_watcher is in watchers and will be removed")
-            self.box_plot_feature_select.param.unwatch(self.feature_select_watcher)
         self.plots_by_size_multi_column.clear()
         self.box_plot_card.clear()
         self.metadata_box_plot_card.clear()
@@ -4234,9 +4248,12 @@ class StrainVisApp:
 
     def create_multi_genomes_column_ANI_mode(self):
 
-        self.sorted_selected_genomes_subset_ani = []
-        if self.feature_select_ani_watcher in self.box_plot_feature_select_ani.param.watchers:
+        # Unwatch watchers (if it's not the first time that this function is called)
+        if self.visited_ANI_tab_multi and self.is_metadata:
             self.box_plot_feature_select_ani.param.unwatch(self.feature_select_ani_watcher)
+        self.visited_ANI_tab_multi = 1
+
+        self.sorted_selected_genomes_subset_ani = []
         self.ani_multi_plots_column.clear()
         self.box_plot_card_ani.clear()
         self.metadata_box_plot_card_ani.clear()
@@ -4347,7 +4364,8 @@ class StrainVisApp:
 
         self.box_plot_pane = pn.pane.Matplotlib(self.box_plot, width=700, dpi=300, tight=True, format='png')
 
-        box_plot_row = pn.Row(self.download_multi_col, pn.Spacer(width=30), self.box_plot_pane, styles={'padding': "15px"})
+        box_plot_row = pn.Row(self.download_multi_col, pn.Spacer(width=30), self.box_plot_pane,
+                              styles={'padding': "15px"})
         self.box_plot_card.append(box_plot_row)
 
     def calculate_metadata_for_box_plot(self):
