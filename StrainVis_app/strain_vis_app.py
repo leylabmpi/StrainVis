@@ -175,7 +175,7 @@ class StrainVisApp:
         self.threshold_select_watcher = ""
         self.threshold_input_watcher = ""
         self.feature_select_watcher = ""
-        self.feature_select_watcher_ani = ""
+        self.feature_select_ani_watcher = ""
         self.continuous_watcher = ""
         self.colormap_watcher = ""
         self.custom_colormap_watcher = ""
@@ -184,10 +184,13 @@ class StrainVisApp:
         self.custom_colormap_clustermap_watcher = ""
         self.feature_colormap_ani_watcher = ""
         self.custom_colormap_clustermap_ani_watcher = ""
+        self.jitter_feature_watcher = ""
+        self.jitter_feature_ani_watcher = ""
         self.synteny_per_pos_feature_select_watcher = ""
         self.visited_multi_genome_tab = 0
         self.activated_synteny_per_pos_tab = 0
         self.clicked_button_display_APSS = 0
+        self.visited_ANI_tab = 0
 
         # Bootstrap template
         self.template = pn.template.VanillaTemplate(
@@ -459,6 +462,7 @@ class StrainVisApp:
 
         # Jitter plot elements
         self.jitter_plot = ""
+        self.jitter_pane = ""
         self.df_for_jitter = pd.DataFrame()
         self.use_metadata_jitter = pn.widgets.Checkbox(name='Use metadata in plot', value=False,
                                                        styles={'font-size': "14px"})
@@ -494,6 +498,7 @@ class StrainVisApp:
 
         # Jitter plot ANI elements
         self.jitter_plot_ani = ""
+        self.jitter_pane_ani = ""
         self.df_for_jitter_ani = pd.DataFrame()
         self.use_metadata_jitter_ani = pn.widgets.Checkbox(name='Use metadata in plot', value=False,
                                                            styles={'font-size': "14px"})
@@ -1606,6 +1611,13 @@ class StrainVisApp:
         self.clustermap_card_ani.clear()
         self.metadata_clustermap_card_ani.clear()
 
+        # Unwatch ANI plots related watchers (if it's not the first time that this function is called)
+        if self.visited_ANI_tab and self.is_metadata:
+            self.feature_colormap_ani.param.unwatch(self.feature_colormap_ani_watcher)
+            self.custom_colormap_input_clustermap_ani.param.unwatch(self.custom_colormap_clustermap_ani_watcher)
+            self.jitter_feature_select_ani.param.unwatch(self.jitter_feature_ani_watcher)
+            self.visited_ANI_tab = 1
+
         # Verify that the current ref-genome is found in the ANI input
         if self.ref_genome in self.ref_genomes_list_ani:
 
@@ -1787,7 +1799,7 @@ class StrainVisApp:
         self.nodes_colormap.options = config.categorical_colormap_dict
         self.nodes_colormap.value = config.categorical_colormap_dict['cet_glasbey']
 
-        # Unwatch network-related watchers (if it's not the first time that this function is called)
+        # Unwatch watchers (if it's not the first time that this function is called)
         if self.clicked_button_display_APSS:
             self.network_threshold_select.param.unwatch(self.threshold_select_watcher)
             self.network_threshold_input.param.unwatch(self.threshold_input_watcher)
@@ -1799,8 +1811,7 @@ class StrainVisApp:
                 self.nodes_color_by.param.unwatch(self.nodes_colorby_watcher)
                 self.feature_colormap.param.unwatch(self.feature_colormap_watcher)
                 self.custom_colormap_input_clustermap.param.unwatch(self.custom_colormap_clustermap_watcher)
-                self.feature_colormap_ani.param.unwatch(self.feature_colormap_ani_watcher)
-                self.custom_colormap_input_clustermap_ani.param.unwatch(self.custom_colormap_clustermap_ani_watcher)
+                self.jitter_feature_select.param.unwatch(self.jitter_feature_watcher)
 
         self.clicked_button_display_APSS = 1
 
@@ -1902,6 +1913,12 @@ class StrainVisApp:
             # Update the color nodes by- drop-down menu with the available metadata features
             self.jitter_feature_select.options = self.metadata_features_list
             self.jitter_feature_select.value = self.metadata_features_list[0]
+
+            # Define a watcher for the jitter_feature_select widget
+            self.jitter_feature_watcher = self.jitter_feature_select.param.watch(partial(self.change_jitter_feature,
+                                                                                         selected_genome_and_size_avg_df),
+                                                                                 'value', onlychanged=True)
+
         # No metadata
         else:
             self.use_metadata_jitter.disabled = True
@@ -1909,10 +1926,10 @@ class StrainVisApp:
         # Create the jitter plot
         self.jitter_plot = pn.bind(self.create_jitter_plot_syntracker, avg_df=selected_genome_and_size_avg_df,
                                    type=self.jitter_type_select, color=self.jitter_color,
-                                   use_metadata=self.use_metadata_jitter, feature=self.jitter_feature_select,
+                                   use_metadata=self.use_metadata_jitter, feature=self.jitter_feature_select.value,
                                    same_color=self.jitter_same_color, different_color=self.jitter_different_color)
 
-        jitter_pane = pn.pane.Matplotlib(self.jitter_plot, height=550, dpi=300, tight=True, format='png')
+        self.jitter_pane = pn.pane.Matplotlib(self.jitter_plot, height=550, dpi=300, tight=True, format='png')
 
         jitter_table_file = "Data_for_dist_plot_" + self.ref_genome + "_" + self.sampling_size + "_regions"
         self.save_jitter_table_path.placeholder = jitter_table_file
@@ -1926,8 +1943,19 @@ class StrainVisApp:
         controls_col = pn.Column(styling_col, pn.Spacer(height=25), self.download_jitter_column,
                                  self.download_jitter_table_column)
 
-        jitter_row = pn.Row(controls_col, pn.Spacer(width=120), jitter_pane, styles={'padding': "15px"})
+        jitter_row = pn.Row(controls_col, pn.Spacer(width=120), self.jitter_pane, styles={'padding': "15px"})
         self.jitter_card.append(jitter_row)
+
+    def change_jitter_feature(self, selected_genome_and_size_avg_df, event):
+        self.update_jitter_plot(selected_genome_and_size_avg_df)
+
+    def update_jitter_plot(self, selected_genome_and_size_avg_df):
+        # Update the jitter plot
+        self.jitter_plot = pn.bind(self.create_jitter_plot_syntracker, avg_df=selected_genome_and_size_avg_df,
+                                   type=self.jitter_type_select, color=self.jitter_color,
+                                   use_metadata=self.use_metadata_jitter, feature=self.jitter_feature_select.value,
+                                   same_color=self.jitter_same_color, different_color=self.jitter_different_color)
+        self.jitter_pane.object = self.jitter_plot
 
     def create_jitter_pane_ani(self, ani_df):
         styling_title = "Plot styling options:"
@@ -1966,6 +1994,11 @@ class StrainVisApp:
             # Update the color nodes by- drop-down menu with the available metadata features
             self.jitter_feature_select_ani.options = self.metadata_features_list
             self.jitter_feature_select_ani.value = self.metadata_features_list[0]
+
+            # Define a watcher for the jitter_feature_select widget
+            self.jitter_feature_ani_watcher = self.jitter_feature_select_ani.param.watch(
+                partial(self.change_jitter_feature_ani, ani_df), 'value', onlychanged=True)
+
         # No metadata
         else:
             self.use_metadata_jitter_ani.disabled = True
@@ -1974,11 +2007,11 @@ class StrainVisApp:
         self.jitter_plot_ani = pn.bind(self.create_jitter_plot_ani, ani_df=ani_df,
                                        type=self.jitter_type_select_ani, color=self.jitter_color_ani,
                                        use_metadata=self.use_metadata_jitter_ani,
-                                       feature=self.jitter_feature_select_ani,
+                                       feature=self.jitter_feature_select_ani.value,
                                        same_color=self.jitter_same_color_ani,
                                        different_color=self.jitter_different_color_ani)
 
-        jitter_pane = pn.pane.Matplotlib(self.jitter_plot_ani, height=550, dpi=300, tight=True, format='png')
+        self.jitter_pane_ani = pn.pane.Matplotlib(self.jitter_plot_ani, height=550, dpi=300, tight=True, format='png')
 
         jitter_table_file = "Data_for_ANI_dist_plot_" + self.ref_genome
         self.save_jitter_table_path_ani.placeholder = jitter_table_file
@@ -1991,7 +2024,7 @@ class StrainVisApp:
         controls_col = pn.Column(styling_col, pn.Spacer(height=25), self.download_jitter_column_ani,
                                  self.download_jitter_table_column_ani)
 
-        jitter_row = pn.Row(controls_col, pn.Spacer(width=120), jitter_pane, styles={'padding': "15px"})
+        jitter_row = pn.Row(controls_col, pn.Spacer(width=120), self.jitter_pane_ani, styles={'padding': "15px"})
         self.jitter_card_ani.append(jitter_row)
 
     def category_by_feature(self, row, feature):
@@ -1999,6 +2032,19 @@ class StrainVisApp:
             return 'Same ' + feature
         else:
             return 'Different ' + feature
+
+    def change_jitter_feature_ani(self, ani_df, event):
+        self.update_jitter_plot_ani(ani_df)
+
+    def update_jitter_plot_ani(self, ani_df):
+        # Update the jitter plot
+        self.jitter_plot_ani = pn.bind(self.create_jitter_plot_ani, ani_df=ani_df,
+                                       type=self.jitter_type_select_ani, color=self.jitter_color_ani,
+                                       use_metadata=self.use_metadata_jitter_ani,
+                                       feature=self.jitter_feature_select_ani.value,
+                                       same_color=self.jitter_same_color_ani,
+                                       different_color=self.jitter_different_color_ani)
+        self.jitter_pane_ani.object = self.jitter_plot_ani
 
     def create_jitter_plot_syntracker(self, avg_df, type, color, use_metadata, feature, same_color, different_color):
 
@@ -2011,10 +2057,30 @@ class StrainVisApp:
             same_feature = 'Same ' + feature
             diff_feature = 'Different ' + feature
             if type == 'Boxplot':
+
+                # Calculate the P-value of the comparison
+                same_array = self.df_for_jitter[self.df_for_jitter['Category'] == same_feature]['APSS']
+                diff_array = self.df_for_jitter[self.df_for_jitter['Category'] == diff_feature]['APSS']
+                p_val = return_p_value(same_array, diff_array)
+                print("\nP-value for " + feature + " comparison = " + str(p_val))
+
                 plot = sns.catplot(data=self.df_for_jitter, kind='box', x="Category", y="APSS",
                                    order=[same_feature, diff_feature],
                                    hue="Category", hue_order=[same_feature, diff_feature],
                                    palette=[same_color, different_color], width=0.5)
+
+                # P-value is valid
+                if str(p_val) != "nan":
+                    ax = plot.ax  # get the underlying matplotlib axis
+
+                    # Place the p-value text between the two boxes, slightly above the max APSS
+                    y_max = self.df_for_jitter["APSS"].max()
+                    ax.text(
+                        0.5, y_max * 1.01,  # x = middle of the two boxes, y = above max
+                        f"p = {p_val:.2e}",  # format p-value in scientific notation
+                        ha="center", va="bottom", fontsize=10
+                    )
+
             else:
                 plot = sns.catplot(data=self.df_for_jitter, x="Category", y="APSS", order=[same_feature, diff_feature],
                                    hue="Category", hue_order=[same_feature, diff_feature],
@@ -2049,11 +2115,34 @@ class StrainVisApp:
                 axis=1)
             same_feature = 'Same ' + feature
             diff_feature = 'Different ' + feature
+
+            # Boxplot
             if type == 'Boxplot':
+
+                # Calculate the P-value of the comparison
+                same_array = self.df_for_jitter_ani[self.df_for_jitter_ani['Category'] == same_feature]['ANI']
+                diff_array = self.df_for_jitter_ani[self.df_for_jitter_ani['Category'] == diff_feature]['ANI']
+                p_val = return_p_value(same_array, diff_array)
+                print("\nP-value for " + feature + " comparison = " + str(p_val))
+
                 plot = sns.catplot(data=self.df_for_jitter_ani, kind='box', x="Category", y="ANI",
                                    order=[same_feature, diff_feature],
                                    hue="Category", hue_order=[same_feature, diff_feature],
                                    palette=[same_color, different_color], width=0.5)
+
+                # P-value is valid
+                if str(p_val) != "nan":
+                    ax = plot.ax  # get the underlying matplotlib axis
+
+                    # Place the p-value text between the two boxes, slightly above the max APSS
+                    y_max = self.df_for_jitter_ani["ANI"].max()
+                    ax.text(
+                        0.5, y_max * 1.01,  # x = middle of the two boxes, y = above max
+                        f"p = {p_val:.2e}",  # format p-value in scientific notation
+                        ha="center", va="bottom", fontsize=10
+                    )
+
+            # Jitterplot
             else:
                 plot = sns.catplot(data=self.df_for_jitter_ani, x="Category", y="ANI",
                                    order=[same_feature, diff_feature],
@@ -3229,10 +3318,7 @@ class StrainVisApp:
         corr, p_value = spearmanr(self.df_for_combined_scatter['APSS'], self.df_for_combined_scatter['ANI'])
 
         # Add to plot (adjust x, y text position as needed)
-        ax1.text(0.05, 0.95, f"r = {corr:.2f}", transform=ax1.transAxes,
-                 fontsize=12, verticalalignment='top',
-                 #bbox=dict(boxstyle="round", facecolor="white", alpha=0.5)
-                 )
+        ax1.text(0.05, 0.95, f"r = {corr:.2f}", transform=ax1.transAxes, fontsize=12, verticalalignment='top')
 
         plt.close(fig)
 
@@ -4149,8 +4235,8 @@ class StrainVisApp:
     def create_multi_genomes_column_ANI_mode(self):
 
         self.sorted_selected_genomes_subset_ani = []
-        if self.feature_select_watcher_ani in self.box_plot_feature_select_ani.param.watchers:
-            self.box_plot_feature_select_ani.param.unwatch(self.feature_select_watcher_ani)
+        if self.feature_select_ani_watcher in self.box_plot_feature_select_ani.param.watchers:
+            self.box_plot_feature_select_ani.param.unwatch(self.feature_select_ani_watcher)
         self.ani_multi_plots_column.clear()
         self.box_plot_card_ani.clear()
         self.metadata_box_plot_card_ani.clear()
@@ -4486,7 +4572,7 @@ class StrainVisApp:
             self.calculate_metadata_for_box_plot_ani()
 
             # Set watcher for the feature-select widget
-            self.feature_select_watcher_ani = self.box_plot_feature_select_ani.param.watch(
+            self.feature_select_ani_watcher = self.box_plot_feature_select_ani.param.watch(
                 self.update_feature_in_boxplot_ani, 'value', onlychanged=True)
 
             # Add the p-values download column
