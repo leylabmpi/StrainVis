@@ -176,7 +176,7 @@ class StrainVisApp:
         self.threshold_input_watcher = ""
         self.feature_select_watcher = ""
         self.feature_select_ani_watcher = ""
-        self.continuous_watcher = ""
+        self.continuous_network_watcher = ""
         self.colormap_watcher = ""
         self.custom_colormap_watcher = ""
         self.nodes_colorby_watcher = ""
@@ -184,6 +184,10 @@ class StrainVisApp:
         self.custom_colormap_clustermap_watcher = ""
         self.feature_colormap_ani_watcher = ""
         self.custom_colormap_clustermap_ani_watcher = ""
+        self.continuous_clustermap_watcher = ""
+        self.continuous_clustermap_ani_watcher = ""
+        self.color_by_feature_clustermap_watcher = ""
+        self.color_by_feature_clustermap_ani_watcher = ""
         self.jitter_feature_watcher = ""
         self.jitter_feature_ani_watcher = ""
         self.synteny_per_pos_feature_select_watcher = ""
@@ -420,6 +424,7 @@ class StrainVisApp:
                                                                   chkbox_state=self.use_metadata_clustermap,
                                                                   watch=True))
         self.color_by_feature = pn.widgets.Select(options=['Select feature'], name="Color rows by:", width=150)
+        self.is_continuous_clustermap = pn.widgets.Checkbox(name='Continuous feature', value=False)
         self.feature_colormap = pn.widgets.ColorMap(name="Select colormap:",
                                                     options=config.categorical_colormap_dict,
                                                     value=config.categorical_colormap_dict['cet_glasbey'])
@@ -454,6 +459,7 @@ class StrainVisApp:
                                                                       chkbox_state=self.use_metadata_clustermap_ani,
                                                                       watch=True))
         self.color_by_feature_ani = pn.widgets.Select(options=['Select feature'], name="Color rows by:", width=150)
+        self.is_continuous_clustermap_ani = pn.widgets.Checkbox(name='Continuous feature', value=False)
         self.feature_colormap_ani = pn.widgets.ColorMap(name="Select colormap:",
                                                         options=config.categorical_colormap_dict,
                                                         value=config.categorical_colormap_dict['cet_glasbey'])
@@ -602,7 +608,7 @@ class StrainVisApp:
                                                                           chkbox_state=self.use_metadata_network,
                                                                           watch=True))
         self.nodes_color_by = pn.widgets.Select(options=['Select feature'], name="Color nodes by:", width=130)
-        self.is_continuous = pn.widgets.Checkbox(name='Continuous feature', value=False)
+        self.is_continuous_network = pn.widgets.Checkbox(name='Continuous feature', value=False)
         self.nodes_colormap = pn.widgets.ColorMap(name="Select colormap for nodes:",
                                                   options=config.categorical_colormap_dict,
                                                   value=config.categorical_colormap_dict['cet_glasbey'])
@@ -1617,6 +1623,8 @@ class StrainVisApp:
         if self.visited_ANI_tab and self.is_metadata:
             self.feature_colormap_ani.param.unwatch(self.feature_colormap_ani_watcher)
             self.custom_colormap_input_clustermap_ani.param.unwatch(self.custom_colormap_clustermap_ani_watcher)
+            self.color_by_feature_ani.param.unwatch(self.color_by_feature_clustermap_ani_watcher)
+            self.is_continuous_clustermap_ani.param.unwatch(self.continuous_clustermap_ani_watcher)
             self.jitter_feature_select_ani.param.unwatch(self.jitter_feature_ani_watcher)
             self.visited_ANI_tab = 1
 
@@ -1797,7 +1805,8 @@ class StrainVisApp:
         self.metadata_colorby_card.clear()
         self.metadata_jitter_card.clear()
         self.network_iterations.value = config.network_iterations_options[0]
-        self.is_continuous.value = False
+        self.is_continuous_network.value = False
+        self.is_continuous_clustermap.value = False
         self.nodes_colormap.options = config.categorical_colormap_dict
         self.nodes_colormap.value = config.categorical_colormap_dict['cet_glasbey']
 
@@ -1807,12 +1816,14 @@ class StrainVisApp:
             self.network_threshold_input.param.unwatch(self.threshold_input_watcher)
             self.network_threshold_input.value = config.APSS_connections_threshold_default
             if self.is_metadata:
-                self.is_continuous.param.unwatch(self.continuous_watcher)
+                self.is_continuous_network.param.unwatch(self.continuous_network_watcher)
                 self.nodes_colormap.param.unwatch(self.colormap_watcher)
                 self.custom_colormap_input.param.unwatch(self.custom_colormap_watcher)
                 self.nodes_color_by.param.unwatch(self.nodes_colorby_watcher)
                 self.feature_colormap.param.unwatch(self.feature_colormap_watcher)
                 self.custom_colormap_input_clustermap.param.unwatch(self.custom_colormap_clustermap_watcher)
+                self.color_by_feature.param.unwatch(self.color_by_feature_clustermap_watcher)
+                self.is_continuous_clustermap.param.unwatch(self.continuous_clustermap_watcher)
                 self.jitter_feature_select.param.unwatch(self.jitter_feature_watcher)
 
         self.clicked_button_display_APSS = 1
@@ -2289,7 +2300,9 @@ class StrainVisApp:
         self.clustermap_method.value = config.clustering_methods[0]
 
         styling_title = "Heatmap customization options:"
-        metadata_coloring_col = pn.Column(self.color_by_feature,
+        continuous_col = pn.Column(pn.Spacer(height=20), self.is_continuous_clustermap)
+        color_by_feature_row = pn.Row(self.color_by_feature, continuous_col)
+        metadata_coloring_col = pn.Column(color_by_feature_row,
                                           self.feature_colormap,
                                           self.custom_colormap_input_clustermap,
                                           styles={'padding': "10x"})
@@ -2365,7 +2378,11 @@ class StrainVisApp:
                 self.color_by_feature.options = self.metadata_features_list
                 self.color_by_feature.value = self.metadata_features_list[0]
 
-                # Define a watcher for the colormap widget
+                # Define watchers for the metadata widgets
+                self.color_by_feature_clustermap_watcher = self.color_by_feature.param.watch(
+                    self.set_not_continuous_clustermap, 'value', onlychanged=True)
+                self.continuous_clustermap_watcher = self.is_continuous_clustermap.param.watch(
+                    self.change_continuous_state_clustermap, 'value', onlychanged=True)
                 self.feature_colormap_watcher = self.feature_colormap.param.watch(self.change_colormap_clustermap,
                                                                                   'value', onlychanged=True)
                 self.custom_colormap_clustermap_watcher = \
@@ -2376,10 +2393,11 @@ class StrainVisApp:
             else:
                 self.use_metadata_clustermap.disabled = True
 
-            self.clustermap_plot = pn.bind(ps.create_clustermap, matrix=self.scores_matrix,
+            self.clustermap_plot = pn.bind(ps.create_clustermap, matrix=self.scores_matrix, type="APSS",
                                            cmap=self.clustermap_cmap, method=self.clustermap_method,
                                            is_metadata=self.use_metadata_clustermap,
-                                           feature=self.color_by_feature,
+                                           feature=self.color_by_feature.value,
+                                           is_continuous=self.is_continuous_clustermap.value,
                                            cmap_metadata=self.feature_colormap.value_name,
                                            custom_cmap=self.custom_colormap_input_clustermap.value,
                                            metadata_dict=self.metadata_dict)
@@ -2396,13 +2414,49 @@ class StrainVisApp:
     def get_custom_colormap_clustermap(self, event):
         self.update_clustermap_plot()
 
+    def change_continuous_state_clustermap(self, event):
+        # Continuous feature
+        if self.is_continuous_clustermap.value:
+            #print("\nIn change_continuous_state. Continuous feature")
+
+            # Verify that the feature is indeed continuous
+            feature = self.color_by_feature.value
+            unique_groups = sorted(
+                list(set([self.metadata_dict[feature][sample] for sample in self.scores_matrix.iloc[:, 0].index])))
+            str_type = 0
+            for group in unique_groups:
+                if isinstance(group, str):
+                    str_type = 1
+
+            # Feature is not really continuous, treat as categorical
+            if str_type == 1:
+                #print("The feature is not really continuous - uncheck...")
+                self.is_continuous_clustermap.value = False
+
+            # Feature is indeed really continuous
+            else:
+                self.feature_colormap.options = config.continuous_colormap_dict
+                self.feature_colormap.value = config.continuous_colormap_dict['cet_rainbow4_r']
+
+        # Categorical feature
+        else:
+            #print("\nIn change_continuous_state. Categorical feature")
+            self.feature_colormap.options = config.categorical_colormap_dict
+            self.feature_colormap.value = config.categorical_colormap_dict['cet_glasbey']
+
+    def set_not_continuous_clustermap(self, event):
+        #print("\nIn set_not_continuous")
+        self.is_continuous_clustermap.value = False
+        self.update_clustermap_plot()
+
     # Update the clustermap plot
     def update_clustermap_plot(self):
         #print("\nIn update_clustermap_plot")
-        self.clustermap_plot = pn.bind(ps.create_clustermap, matrix=self.scores_matrix,
+        self.clustermap_plot = pn.bind(ps.create_clustermap, matrix=self.scores_matrix, type="APSS",
                                        cmap=self.clustermap_cmap, method=self.clustermap_method,
                                        is_metadata=self.use_metadata_clustermap,
-                                       feature=self.color_by_feature,
+                                       feature=self.color_by_feature.value,
+                                       is_continuous=self.is_continuous_clustermap.value,
                                        cmap_metadata=self.feature_colormap.value_name,
                                        custom_cmap=self.custom_colormap_input_clustermap.value,
                                        metadata_dict=self.metadata_dict)
@@ -2476,7 +2530,9 @@ class StrainVisApp:
         self.clustermap_method_ani.value = config.clustering_methods[0]
 
         styling_title = "Heatmap customization options:"
-        metadata_coloring_col = pn.Column(self.color_by_feature_ani,
+        continuous_col = pn.Column(pn.Spacer(height=20), self.is_continuous_clustermap_ani)
+        color_by_feature_row = pn.Row(self.color_by_feature_ani, continuous_col)
+        metadata_coloring_col = pn.Column(color_by_feature_row,
                                           self.feature_colormap_ani,
                                           self.custom_colormap_input_clustermap_ani,
                                           styles={'padding': "10x"})
@@ -2552,7 +2608,11 @@ class StrainVisApp:
                 self.color_by_feature_ani.options = self.metadata_features_list
                 self.color_by_feature_ani.value = self.metadata_features_list[0]
 
-                # Define a watcher for the colormap widget
+                # Define watchers for the metadata widgets
+                self.color_by_feature_clustermap_ani_watcher = self.color_by_feature_ani.param.watch(
+                    self.set_not_continuous_clustermap_ani, 'value', onlychanged=True)
+                self.continuous_clustermap_ani_watcher = self.is_continuous_clustermap_ani.param.watch(
+                    self.change_continuous_state_clustermap_ani, 'value', onlychanged=True)
                 self.feature_colormap_ani_watcher = \
                     self.feature_colormap_ani.param.watch(self.change_colormap_clustermap_ani,
                                                           'value', onlychanged=True)
@@ -2564,10 +2624,11 @@ class StrainVisApp:
             else:
                 self.use_metadata_clustermap_ani.disabled = True
 
-            self.clustermap_plot_ani = pn.bind(ps.create_clustermap, matrix=self.scores_matrix_ani,
+            self.clustermap_plot_ani = pn.bind(ps.create_clustermap, matrix=self.scores_matrix_ani, type="ANI",
                                                cmap=self.clustermap_cmap_ani, method=self.clustermap_method_ani,
                                                is_metadata=self.use_metadata_clustermap_ani,
-                                               feature=self.color_by_feature_ani,
+                                               feature=self.color_by_feature_ani.value,
+                                               is_continuous=self.is_continuous_clustermap_ani.value,
                                                cmap_metadata=self.feature_colormap_ani.value_name,
                                                custom_cmap=self.custom_colormap_input_clustermap_ani.value,
                                                metadata_dict=self.metadata_dict)
@@ -2585,13 +2646,49 @@ class StrainVisApp:
     def get_custom_colormap_clustermap_ani(self, event):
         self.update_clustermap_plot_ani()
 
+    def change_continuous_state_clustermap_ani(self, event):
+        # Continuous feature
+        if self.is_continuous_clustermap_ani.value:
+            #print("\nIn change_continuous_state. Continuous feature")
+
+            # Verify that the feature is indeed continuous
+            feature = self.color_by_feature_ani.value
+            unique_groups = sorted(
+                list(set([self.metadata_dict[feature][sample] for sample in self.scores_matrix_ani.iloc[:, 0].index])))
+            str_type = 0
+            for group in unique_groups:
+                if isinstance(group, str):
+                    str_type = 1
+
+            # Feature is not really continuous, treat as categorical
+            if str_type == 1:
+                #print("The feature is not really continuous - uncheck...")
+                self.is_continuous_clustermap_ani.value = False
+
+            # Feature is indeed really continuous
+            else:
+                self.feature_colormap_ani.options = config.continuous_colormap_dict
+                self.feature_colormap_ani.value = config.continuous_colormap_dict['cet_rainbow4_r']
+
+        # Categorical feature
+        else:
+            #print("\nIn change_continuous_state. Categorical feature")
+            self.feature_colormap_ani.options = config.categorical_colormap_dict
+            self.feature_colormap_ani.value = config.categorical_colormap_dict['cet_glasbey']
+
+    def set_not_continuous_clustermap_ani(self, event):
+        #print("\nIn set_not_continuous")
+        self.is_continuous_clustermap_ani.value = False
+        self.update_clustermap_plot_ani()
+
     # Update the clustermap plot
     def update_clustermap_plot_ani(self):
         print("\nIn update_clustermap_plot_ani")
-        self.clustermap_plot_ani = pn.bind(ps.create_clustermap, matrix=self.scores_matrix_ani,
+        self.clustermap_plot_ani = pn.bind(ps.create_clustermap, matrix=self.scores_matrix_ani, type="ANI",
                                            cmap=self.clustermap_cmap_ani, method=self.clustermap_method_ani,
                                            is_metadata=self.use_metadata_clustermap_ani,
-                                           feature=self.color_by_feature_ani,
+                                           feature=self.color_by_feature_ani.value,
+                                           is_continuous=self.is_continuous_clustermap_ani.value,
                                            cmap_metadata=self.feature_colormap_ani.value_name,
                                            custom_cmap=self.custom_colormap_input_clustermap_ani.value,
                                            metadata_dict=self.metadata_dict)
@@ -2662,9 +2759,9 @@ class StrainVisApp:
         self.download_matrix_column_ani.pop(2)
         self.download_matrix_column_ani.append(download_floatpanel)
 
-    def change_continuous_state(self, event):
+    def change_continuous_state_network(self, event):
         # Continuous feature
-        if self.is_continuous.value:
+        if self.is_continuous_network.value:
             #print("\nIn change_continuous_state. Continuous feature")
 
             # Verify that the feature is indeed continuous
@@ -2678,7 +2775,7 @@ class StrainVisApp:
             # Feature is not really continuous, treat as categorical
             if str_type == 1:
                 #print("The feature is not really continuous - uncheck...")
-                self.is_continuous.value = False
+                self.is_continuous_network.value = False
 
             # Feature is indeed really continuous
             else:
@@ -2691,17 +2788,17 @@ class StrainVisApp:
             self.nodes_colormap.options = config.categorical_colormap_dict
             self.nodes_colormap.value = config.categorical_colormap_dict['cet_glasbey']
 
-    def change_colormap(self, event):
+    def change_colormap_network(self, event):
         #print("\nIn change_colormap. Continuous state = " + str(self.is_continuous.value))
         self.update_network_plot()
 
-    def get_custom_colormap(self, event):
+    def get_custom_colormap_network(self, event):
         #print("\nIn change_colormap. Continuous state = " + str(self.is_continuous.value))
         self.update_network_plot()
 
-    def set_not_continuous(self, event):
+    def set_not_continuous_network(self, event):
         #print("\nIn set_not_continuous")
-        self.is_continuous.value = False
+        self.is_continuous_network.value = False
         self.update_network_plot()
 
     def create_network_pane(self, selected_genome_and_size_avg_df):
@@ -2717,7 +2814,7 @@ class StrainVisApp:
 
         styling_title = "Network customization options:"
         no_metadata_colors_row = pn.Row(self.network_node_color, pn.Spacer(width=10), self.network_edge_color)
-        continuous_col = pn.Column(pn.Spacer(height=20), self.is_continuous)
+        continuous_col = pn.Column(pn.Spacer(height=20), self.is_continuous_network)
         nodes_color_by_row = pn.Row(self.nodes_color_by, continuous_col)
         edges_color_by_row = pn.Row(self.edges_color_by, self.network_within_color, pn.Spacer(width=3),
                                     self.network_between_color)
@@ -2881,13 +2978,13 @@ class StrainVisApp:
                 self.edges_color_by.options = self.metadata_features_list
                 self.edges_color_by.value = self.metadata_features_list[0]
 
-                self.nodes_colorby_watcher = self.nodes_color_by.param.watch(self.set_not_continuous, 'value',
+                self.nodes_colorby_watcher = self.nodes_color_by.param.watch(self.set_not_continuous_network, 'value',
                                                                              onlychanged=True)
-                self.continuous_watcher = self.is_continuous.param.watch(self.change_continuous_state, 'value',
-                                                                         onlychanged=True)
-                self.colormap_watcher = self.nodes_colormap.param.watch(self.change_colormap, 'value',
+                self.continuous_network_watcher = self.is_continuous_network.param.watch(self.change_continuous_state_network, 'value',
+                                                                                         onlychanged=True)
+                self.colormap_watcher = self.nodes_colormap.param.watch(self.change_colormap_network, 'value',
                                                                         onlychanged=True)
-                self.custom_colormap_watcher = self.custom_colormap_input.param.watch(self.get_custom_colormap,
+                self.custom_colormap_watcher = self.custom_colormap_input.param.watch(self.get_custom_colormap_network,
                                                                                       'value', onlychanged=True)
 
                 # Insert the features information as nodes attributes
@@ -2910,7 +3007,7 @@ class StrainVisApp:
             self.network_plot_hv = pn.bind(ps.cretae_network_plot, network=self.network,
                                            is_metadata=self.use_metadata_network,
                                            nodes_feature=self.nodes_color_by.value,
-                                           is_continuous=self.is_continuous.value,
+                                           is_continuous=self.is_continuous_network.value,
                                            cmap=self.nodes_colormap.value,
                                            custom_cmap=self.custom_colormap_input.value,
                                            node_color=self.network_node_color,
@@ -2969,7 +3066,7 @@ class StrainVisApp:
         self.network_plot_matplotlib = pn.bind(ps.cretae_network_plot_matplotlib, network=self.network,
                                                is_metadata=self.use_metadata_network,
                                                nodes_feature=self.nodes_color_by.value,
-                                               is_continuous=self.is_continuous.value,
+                                               is_continuous=self.is_continuous_network.value,
                                                cmap=self.nodes_colormap.value_name,
                                                custom_cmap=self.custom_colormap_input.value,
                                                node_color=self.network_node_color,
@@ -3114,7 +3211,7 @@ class StrainVisApp:
         #print("\nIn update_network_plot")
         self.network_plot_hv = pn.bind(ps.cretae_network_plot, network=self.network,
                                        is_metadata=self.use_metadata_network, nodes_feature=self.nodes_color_by.value,
-                                       is_continuous=self.is_continuous.value, cmap=self.nodes_colormap.value,
+                                       is_continuous=self.is_continuous_network.value, cmap=self.nodes_colormap.value,
                                        custom_cmap=self.custom_colormap_input.value,
                                        node_color=self.network_node_color, edge_color=self.network_edge_color,
                                        is_edge_colorby=self.color_edges_by_feature, edges_feature=self.edges_color_by,

@@ -85,7 +85,8 @@ def create_jitter_plot_bokeh(avg_df, color):
     return plot
 
 
-def create_clustermap(matrix, cmap, method, is_metadata, feature, cmap_metadata, custom_cmap, metadata_dict):
+def create_clustermap(matrix, type, cmap, method, is_metadata, feature, is_continuous, cmap_metadata, custom_cmap,
+                      metadata_dict):
 
     # The number of columns doesn't exceed the defined maximum - continue creating the clustermap plot
     col_num = len(matrix.columns)
@@ -102,52 +103,115 @@ def create_clustermap(matrix, cmap, method, is_metadata, feature, cmap_metadata,
 
     if is_metadata:
 
-        # Get the unique groups of the selected feature
-        unique_groups = sorted(list(set([str(metadata_dict[feature][sample]) for sample in matrix.iloc[:, 0].index])))
-        groups_num = len(unique_groups)
+        # In case of numeric continuous feature:
+        if is_continuous:
+            print("\ncreate_clustermap: Continuous feature")
 
-        # Move the 'nan' group (if any) to the end of the list
-        if 'nan' in unique_groups:
-            unique_groups.remove('nan')
-            unique_groups.append('nan')
-        #print(unique_groups)
+            # Extract non-missing values
+            non_missing_values = [metadata_dict[feature][sample] for sample in matrix.iloc[:, 0].index
+                                  if not np.isnan(metadata_dict[feature][sample])]
 
-        # If the user defined a custom cmap - process it and turn it into a cmap
-        if cmap_metadata == 'Define custom colormap':
-            if custom_cmap != "":
-                custom_colors_list = custom_cmap
-                cmap_metadata_mpl = re.split(r'\s*,\s*', custom_colors_list)
-                cmap_length = len(cmap_metadata_mpl)
-                print("\nCustom cmap:")
-                print(cmap_metadata_mpl)
+            # Define min and max values based only on non-missing values
+            min_value = min(non_missing_values)
+            max_value = max(non_missing_values)
+            print("Min value: " + str(min_value))
+            print("Max value: " + str(max_value))
+
+            feature_array = np.array([metadata_dict[feature][sample] for sample in matrix.iloc[:, 0].index])
+            normalized_values = (feature_array - min_value) / (max_value - min_value)
+
+            # Get the colormap for the metadata feature
+            cmap_metadata_mpl = plt.get_cmap(cmap_metadata)
+
+            # Map the feature values to colors using the colormap
+            feature_colors = []
+            for i, sample in enumerate(matrix.iloc[:, 0].index):
+                value = metadata_dict[feature][sample]
+                if np.isnan(value):  # If the value is NaN, use the default color
+                    feature_colors.append(config.nodes_default_color)
+                else:
+                    feature_colors.append(cmap_metadata_mpl(normalized_values[i]))  # Apply the colormap to the value
+            feature_colors_df = pd.DataFrame({feature: feature_colors}, index=matrix.index)
+
+            clustermap = sns.clustermap(matrix, metric=method, cmap=colmap, row_cluster=True, linewidths=.5,
+                                        cbar_pos=(0.04, 0.82, 0.02, 0.15), xticklabels=1, yticklabels=1,
+                                        dendrogram_ratio=(0.2, 0.2), mask=mask_array, row_colors=feature_colors_df)
+
+            # Create a ScalarMappable to associate the colormap with the normalized values
+            norm = Normalize(vmin=min_value, vmax=max_value)
+            sm = plt.cm.ScalarMappable(cmap=cmap_metadata_mpl, norm=norm)
+            sm.set_array([])  # Empty array as we don't need to pass actual data to the ScalarMappable
+
+            # Add the colorbar next to the heatmap
+            # [left, bottom, width, height] in figure coordinates
+            cbar_ax = clustermap.fig.add_axes([0.95, 0.82, 0.02, 0.15])
+
+            cbar = clustermap.fig.colorbar(
+                sm, cax=cbar_ax, orientation='vertical'
+            )
+
+            # Customize the colorbar label
+            cbar.set_label(label=feature, labelpad=8)
+
+        # Categorical feature
+        else:
+
+            # Get the unique groups of the selected feature
+            unique_groups = sorted(list(set([str(metadata_dict[feature][sample]) for sample in matrix.iloc[:, 0].index])))
+            groups_num = len(unique_groups)
+
+            # Move the 'nan' group (if any) to the end of the list
+            if 'nan' in unique_groups:
+                unique_groups.remove('nan')
+                unique_groups.append('nan')
+            #print(unique_groups)
+
+            # If the user defined a custom cmap - process it and turn it into a cmap
+            if cmap_metadata == 'Define custom colormap':
+                if custom_cmap != "":
+                    custom_colors_list = custom_cmap
+                    cmap_metadata_mpl = re.split(r'\s*,\s*', custom_colors_list)
+                    cmap_length = len(cmap_metadata_mpl)
+                    print("\nCustom cmap:")
+                    print(cmap_metadata_mpl)
+
+                    # Assign each group with a color, according to the colormap order
+                    group_to_color = {group: cmap_metadata_mpl[i % cmap_length] for i, group in enumerate(unique_groups)}
+
+                # Custom colormap is not defined yet
+                else:
+                    print("\nCustom cmap is not defined yet")
+                    # Assign each group with black, according to the colormap order
+                    group_to_color = {group: 'black' for i, group in enumerate(unique_groups)}
+
+            # Standard colormap
+            else:
+                cmap_metadata_mpl = plt.get_cmap(cmap_metadata)
+                cmap_length = cmap_metadata_mpl.N
 
                 # Assign each group with a color, according to the colormap order
-                group_to_color = {group: cmap_metadata_mpl[i % cmap_length] for i, group in enumerate(unique_groups)}
+                group_to_color = {group: cmap_metadata_mpl(i % cmap_length) for i, group in enumerate(unique_groups)}
 
-            # Custom colormap is not defined yet
-            else:
-                print("\nCustom cmap is not defined yet")
-                # Assign each group with black, according to the colormap order
-                group_to_color = {group: 'black' for i, group in enumerate(unique_groups)}
+            #print("cmap length: " + str(cmap_length))
 
-        # Standard colormap
-        else:
-            cmap_metadata_mpl = plt.get_cmap(cmap_metadata)
-            cmap_length = cmap_metadata_mpl.N
+            # Create a colors dataframe, with sample names as indices
+            colors = [group_to_color[str(metadata_dict[feature][sample])] for sample in matrix.iloc[:, 0].index]
+            colors_df = pd.DataFrame({feature: colors}, index=matrix.index)
+            #print(colors_df)
 
-            # Assign each group with a color, according to the colormap order
-            group_to_color = {group: cmap_metadata_mpl(i % cmap_length) for i, group in enumerate(unique_groups)}
+            clustermap = sns.clustermap(matrix, metric=method, cmap=colmap, row_cluster=True, linewidths=.5,
+                                        cbar_pos=(0.04, 0.82, 0.02, 0.15), xticklabels=1, yticklabels=1,
+                                        dendrogram_ratio=(0.2, 0.2), mask=mask_array, row_colors=colors_df)
 
-        #print("cmap length: " + str(cmap_length))
+            # If number of groups <= 10, add legend
+            if groups_num <= 10:
+                legend_handles = [
+                    Line2D([0], [0], marker='o', color='w', markerfacecolor=group_to_color[group], markersize=8,
+                           markeredgecolor='black', markeredgewidth=0.1, label=group) for group in unique_groups]
 
-        # Create a colors dataframe, with sample names as indices
-        colors = [group_to_color[str(metadata_dict[feature][sample])] for sample in matrix.iloc[:, 0].index]
-        colors_df = pd.DataFrame({feature: colors}, index=matrix.index)
-        #print(colors_df)
-
-        clustermap = sns.clustermap(matrix, metric=method, cmap=colmap, row_cluster=True, linewidths=.5,
-                                    cbar_pos=(0.04, 0.82, 0.02, 0.15), xticklabels=1, yticklabels=1,
-                                    dendrogram_ratio=(0.2, 0.2), mask=mask_array, row_colors=colors_df)
+                # Add the legend to the plot
+                clustermap.ax_heatmap.legend(handles=legend_handles, title=feature, loc="upper left",
+                                             bbox_to_anchor=(1.06, 1.25), fontsize=10)
 
     # No metadata
     else:
@@ -183,21 +247,19 @@ def create_clustermap(matrix, cmap, method, is_metadata, feature, cmap_metadata,
     clustermap.ax_heatmap.set_yticklabels(clustermap.ax_heatmap.get_xticklabels(), fontsize=font_size,
                                           rotation='horizontal')
 
+    # Access the colorbar and add a label
+    clustermap.cax.set_ylabel(type, labelpad=8)
+    # Turn on the colorbar border
+    clustermap.cax.spines['top'].set_visible(True)
+    clustermap.cax.spines['right'].set_visible(True)
+    clustermap.cax.spines['bottom'].set_visible(True)
+    clustermap.cax.spines['left'].set_visible(True)
+
     # Set the font size of the feature label to be the same as the xticklabels
     if is_metadata:
         for ax in clustermap.fig.axes:
             if len(ax.get_xticklabels()) > 0:
                 ax.set_xticklabels(ax.get_xticklabels(), fontsize=font_size)
-
-        # If number of groups <= 10, add legend
-        if groups_num <= 10:
-            legend_handles = [
-                Line2D([0], [0], marker='o', color='w', markerfacecolor=group_to_color[group], markersize=8,
-                       markeredgecolor='black', markeredgewidth=0.1, label=group) for group in unique_groups]
-
-            # Add the legend to the plot
-            clustermap.ax_heatmap.legend(handles=legend_handles, title=feature, loc="upper left",
-                                         bbox_to_anchor=(1.06, 1.25), fontsize=10)
 
     plt.close(clustermap.figure)
 
