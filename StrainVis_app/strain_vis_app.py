@@ -1435,7 +1435,8 @@ class StrainVisApp:
 
         if self.input_mode == "SynTracker" or self.input_mode == "both":
             # Stop watching the contig-related widgets
-            if self.visited_synteny_per_pos_tab and self.finished_initial_synteny_per_pos_plot and len(self.contigs_list_by_name) > 1:
+            if self.visited_synteny_per_pos_tab and self.finished_initial_synteny_per_pos_plot and \
+                    len(self.contigs_list_by_name) > 1:
                 # print("\nUnwatching contig_select and sorting_select widgets")
                 self.contig_select.param.unwatch(self.contig_select_watcher)
                 self.sorting_select.param.unwatch(self.sorting_select_watcher)
@@ -1626,7 +1627,11 @@ class StrainVisApp:
             self.color_by_feature_ani.param.unwatch(self.color_by_feature_clustermap_ani_watcher)
             self.is_continuous_clustermap_ani.param.unwatch(self.continuous_clustermap_ani_watcher)
             self.jitter_feature_select_ani.param.unwatch(self.jitter_feature_ani_watcher)
-            self.visited_ANI_tab = 1
+        self.visited_ANI_tab = 1
+
+        self.is_continuous_clustermap_ani.value = False
+        self.feature_colormap_ani.options = config.categorical_colormap_dict
+        self.feature_colormap_ani.value = config.categorical_colormap_dict['cet_glasbey']
 
         # Verify that the current ref-genome is found in the ANI input
         if self.ref_genome in self.ref_genomes_list_ani:
@@ -1805,10 +1810,6 @@ class StrainVisApp:
         self.metadata_colorby_card.clear()
         self.metadata_jitter_card.clear()
         self.network_iterations.value = config.network_iterations_options[0]
-        self.is_continuous_network.value = False
-        self.is_continuous_clustermap.value = False
-        self.nodes_colormap.options = config.categorical_colormap_dict
-        self.nodes_colormap.value = config.categorical_colormap_dict['cet_glasbey']
 
         # Unwatch watchers (if it's not the first time that this function is called)
         if self.clicked_button_display_APSS:
@@ -1825,8 +1826,14 @@ class StrainVisApp:
                 self.color_by_feature.param.unwatch(self.color_by_feature_clustermap_watcher)
                 self.is_continuous_clustermap.param.unwatch(self.continuous_clustermap_watcher)
                 self.jitter_feature_select.param.unwatch(self.jitter_feature_watcher)
-
         self.clicked_button_display_APSS = 1
+
+        self.is_continuous_network.value = False
+        self.is_continuous_clustermap.value = False
+        self.nodes_colormap.options = config.categorical_colormap_dict
+        self.nodes_colormap.value = config.categorical_colormap_dict['cet_glasbey']
+        self.feature_colormap.options = config.categorical_colormap_dict
+        self.feature_colormap.value = config.categorical_colormap_dict['cet_glasbey']
 
         # Check if the requested genome and size have already been calculated. If so, fetch the specific dataframe
         if self.calculated_APSS_genome_size_dict[self.sampling_size]:
@@ -2980,8 +2987,8 @@ class StrainVisApp:
 
                 self.nodes_colorby_watcher = self.nodes_color_by.param.watch(self.set_not_continuous_network, 'value',
                                                                              onlychanged=True)
-                self.continuous_network_watcher = self.is_continuous_network.param.watch(self.change_continuous_state_network, 'value',
-                                                                                         onlychanged=True)
+                self.continuous_network_watcher = self.is_continuous_network.param.watch(
+                    self.change_continuous_state_network, 'value', onlychanged=True)
                 self.colormap_watcher = self.nodes_colormap.param.watch(self.change_colormap_network, 'value',
                                                                         onlychanged=True)
                 self.custom_colormap_watcher = self.custom_colormap_input.param.watch(self.get_custom_colormap_network,
