@@ -77,13 +77,6 @@ def generate_rand_pos():
     return rand
 
 
-def category_by_feature(row, feature, metadata_dict):
-    if metadata_dict[feature][row['Sample1']] == metadata_dict[feature][row['Sample2']]:
-        return 'Same ' + feature
-    else:
-        return 'Different ' + feature
-
-
 def return_p_value(data1, data2):
     stat, p_val = ranksums(data1, data2)
     return p_val
@@ -101,6 +94,25 @@ def return_significance(row):
             return "NS"
     else:
         return ""
+
+
+def is_missing_value(val):
+    str_val = str(val)
+    if str_val == 'nan' or str_val == 'NA' or str_val == 'NAN' or re.search(r'^unknown', str_val, flags=re.IGNORECASE):
+        return True
+    else:
+        return False
+
+
+def category_by_feature(row, feature, metadata_dict):
+    if is_missing_value(metadata_dict[feature][row['Sample1']]) \
+            or is_missing_value(metadata_dict[feature][row['Sample2']]):
+        return 'NA'
+    else:
+        if metadata_dict[feature][row['Sample1']] == metadata_dict[feature][row['Sample2']]:
+            return 'Same ' + feature
+        else:
+            return 'Different ' + feature
 
 
 class StrainVisApp:
@@ -2048,10 +2060,14 @@ class StrainVisApp:
         self.jitter_card_ani.append(jitter_row)
 
     def category_by_feature(self, row, feature):
-        if self.metadata_dict[feature][row['Sample1']] == self.metadata_dict[feature][row['Sample2']]:
-            return 'Same ' + feature
+        if is_missing_value(self.metadata_dict[feature][row['Sample1']]) \
+                or is_missing_value(self.metadata_dict[feature][row['Sample2']]):
+            return 'NA'
         else:
-            return 'Different ' + feature
+            if self.metadata_dict[feature][row['Sample1']] == self.metadata_dict[feature][row['Sample2']]:
+                return 'Same ' + feature
+            else:
+                return 'Different ' + feature
 
     def change_jitter_feature_ani(self, ani_df, event):
         self.update_jitter_plot_ani(ani_df)
@@ -2078,9 +2094,9 @@ class StrainVisApp:
             diff_feature = 'Different ' + feature
             if type == 'Boxplot':
                 plot = sns.catplot(data=self.df_for_jitter, kind='box', x="Category", y="APSS",
-                                   order=[same_feature, diff_feature],
-                                   hue="Category", hue_order=[same_feature, diff_feature],
-                                   palette=[same_color, different_color], width=0.5)
+                                   order=[same_feature, diff_feature, 'NA'],
+                                   hue="Category", hue_order=[same_feature, diff_feature, 'NA'],
+                                   palette=[same_color, different_color, 'gray'], width=0.5)
 
                 # Calculate the P-value of the comparison
                 same_array = self.df_for_jitter[self.df_for_jitter['Category'] == same_feature]['APSS']
@@ -2107,9 +2123,10 @@ class StrainVisApp:
                     print("\nCannot calculate P-value for feature " + feature + ": Sample size is not enough.")
 
             else:
-                plot = sns.catplot(data=self.df_for_jitter, x="Category", y="APSS", order=[same_feature, diff_feature],
-                                   hue="Category", hue_order=[same_feature, diff_feature],
-                                   palette=[same_color, different_color], linewidth=0.1)
+                plot = sns.catplot(data=self.df_for_jitter, x="Category", y="APSS",
+                                   order=[same_feature, diff_feature, 'NA'],
+                                   hue="Category", hue_order=[same_feature, diff_feature, 'NA'],
+                                   palette=[same_color, different_color, 'gray'], linewidth=0.1)
 
         # Do not use metadata in plot - show all the comparisons together
         else:
@@ -2121,6 +2138,8 @@ class StrainVisApp:
 
         # Remove the x-axis label
         plot.set_axis_labels("", "APSS")  # Sets x-label to empty string
+        ax = plot.ax
+        ax.set_xticklabels(ax.get_xticklabels(), fontsize=10, rotation='vertical')
 
         #print("\nDF for jitter plot:")
         #print(self.df_for_jitter)
@@ -2144,9 +2163,9 @@ class StrainVisApp:
             # Boxplot
             if type == 'Boxplot':
                 plot = sns.catplot(data=self.df_for_jitter_ani, kind='box', x="Category", y="ANI",
-                                   order=[same_feature, diff_feature],
-                                   hue="Category", hue_order=[same_feature, diff_feature],
-                                   palette=[same_color, different_color], width=0.5)
+                                   order=[same_feature, diff_feature, 'NA'],
+                                   hue="Category", hue_order=[same_feature, diff_feature, 'NA'],
+                                   palette=[same_color, different_color, 'gray'], width=0.5)
 
                 # Calculate the P-value of the comparison
                 same_array = self.df_for_jitter_ani[self.df_for_jitter_ani['Category'] == same_feature]['ANI']
@@ -2162,7 +2181,7 @@ class StrainVisApp:
                         ax = plot.ax  # get the underlying matplotlib axis
 
                         # Place the p-value text between the two boxes, slightly above the max APSS
-                        y_max = self.df_for_jitter["ANI"].max()
+                        y_max = self.df_for_jitter_ani["ANI"].max()
                         ax.text(
                             0.5, y_max * 1.01,  # x = middle of the two boxes, y = above max
                             f"p = {p_val:.2e}",  # format p-value in scientific notation
@@ -2175,9 +2194,9 @@ class StrainVisApp:
             # Jitterplot
             else:
                 plot = sns.catplot(data=self.df_for_jitter_ani, x="Category", y="ANI",
-                                   order=[same_feature, diff_feature],
-                                   hue="Category", hue_order=[same_feature, diff_feature],
-                                   palette=[same_color, different_color], linewidth=0.1)
+                                   order=[same_feature, diff_feature, 'NA'],
+                                   hue="Category", hue_order=[same_feature, diff_feature, 'NA'],
+                                   palette=[same_color, different_color, 'gray'], linewidth=0.1)
 
         # Do not use metadata in plot - show all the comparisons together
         else:
@@ -2200,6 +2219,15 @@ class StrainVisApp:
 
     def download_jitter(self, event):
         fformat = self.jitter_image_format.value
+        plot_type = self.jitter_type_select.value
+        if plot_type != 'Boxplot':
+            plot_type = 'Jitter_plot'
+
+        # Update the placeholder of the filename for download.
+        jitter_file = plot_type + "_" + self.ref_genome + "_" + self.sampling_size + "_regions"
+        if self.use_metadata_jitter.value:
+            jitter_file += "_separate_by_" + self.jitter_feature_select.value
+        self.save_jitter_file_path.placeholder = jitter_file
 
         # Set the directory for saving
         if self.save_jitter_file_path.value == "":
@@ -2226,6 +2254,15 @@ class StrainVisApp:
 
     def download_jitter_ani(self, event):
         fformat = self.jitter_image_format_ani.value
+        plot_type = self.jitter_type_select.value
+        if plot_type != 'Boxplot':
+            plot_type = 'Jitter_plot'
+
+        # Update the placeholder of the filename for download.
+        jitter_file = "ANI_" + plot_type + "_" + self.ref_genome
+        if self.use_metadata_jitter_ani.value:
+            jitter_file += "_separate_by_" + self.jitter_feature_select_ani.value
+        self.save_jitter_file_path_ani.placeholder = jitter_file
 
         # Set the directory for saving
         if self.save_jitter_file_path_ani.value == "":
@@ -3387,10 +3424,14 @@ class StrainVisApp:
         self.download_combined_scatter_table_column.append(download_floatpanel)
 
     def category_by_feature_scatter(self, row, feature, same_color, diff_color):
-        if self.metadata_dict[feature][row['Sample1']] == self.metadata_dict[feature][row['Sample2']]:
-            return same_color
+        if is_missing_value(self.metadata_dict[feature][row['Sample1']]) \
+                or is_missing_value(self.metadata_dict[feature][row['Sample2']]):
+            return 'gray'
         else:
-            return diff_color
+            if self.metadata_dict[feature][row['Sample1']] == self.metadata_dict[feature][row['Sample2']]:
+                return same_color
+            else:
+                return diff_color
 
     def create_combined_scatter_plot(self, combined_df, color, use_metadata, feature, same_color, different_color):
 
@@ -3410,7 +3451,8 @@ class StrainVisApp:
             # Define the color-to-category (same/different) mapping
             color_to_category = {
                 same_color: 'Same ' + feature,
-                different_color: 'Different ' + feature
+                different_color: 'Different ' + feature,
+                'gray': 'NA'
             }
 
             # Create legend handles

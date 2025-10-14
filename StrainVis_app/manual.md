@@ -208,7 +208,7 @@ The colors can be provided as standard names (like: red, blue) or Hex-RGB values
 A detailed guide for color notations: https://www.w3.org/TR/css-color-4/#named-colors .
 
 
-Please note that in case the number of samples exceeds the limit of 150, the heatmap plot cannot be 
+Please note that in case the number of samples exceeds the limit of 200, the heatmap plot cannot be 
 displayed properly. The scoring matrix is provided for download and can be used in another visualization program.
 
 ### Network plot
