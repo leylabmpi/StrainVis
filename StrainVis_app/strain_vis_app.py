@@ -107,7 +107,7 @@ def is_missing_value(val):
 def category_by_feature(row, feature, metadata_dict):
     if is_missing_value(metadata_dict[feature][row['Sample1']]) \
             or is_missing_value(metadata_dict[feature][row['Sample2']]):
-        return 'NA'
+        return 'Unknown'
     else:
         if metadata_dict[feature][row['Sample1']] == metadata_dict[feature][row['Sample2']]:
             return 'Same ' + feature
@@ -1961,7 +1961,7 @@ class StrainVisApp:
                                    use_metadata=self.use_metadata_jitter, feature=self.jitter_feature_select.value,
                                    same_color=self.jitter_same_color, different_color=self.jitter_different_color)
 
-        self.jitter_pane = pn.pane.Matplotlib(self.jitter_plot, height=550, dpi=300, tight=True, format='png')
+        self.jitter_pane = pn.pane.Matplotlib(self.jitter_plot, width=520, dpi=300, tight=True, format='png')
 
         jitter_table_file = "Data_for_dist_plot_" + self.ref_genome + "_" + self.sampling_size + "_regions"
         self.save_jitter_table_path.placeholder = jitter_table_file
@@ -2043,7 +2043,7 @@ class StrainVisApp:
                                        same_color=self.jitter_same_color_ani,
                                        different_color=self.jitter_different_color_ani)
 
-        self.jitter_pane_ani = pn.pane.Matplotlib(self.jitter_plot_ani, height=550, dpi=300, tight=True, format='png')
+        self.jitter_pane_ani = pn.pane.Matplotlib(self.jitter_plot_ani, width=520, dpi=300, tight=True, format='png')
 
         jitter_table_file = "Data_for_ANI_dist_plot_" + self.ref_genome
         self.save_jitter_table_path_ani.placeholder = jitter_table_file
@@ -2062,7 +2062,7 @@ class StrainVisApp:
     def category_by_feature(self, row, feature):
         if is_missing_value(self.metadata_dict[feature][row['Sample1']]) \
                 or is_missing_value(self.metadata_dict[feature][row['Sample2']]):
-            return 'NA'
+            return 'Unknown'
         else:
             if self.metadata_dict[feature][row['Sample1']] == self.metadata_dict[feature][row['Sample2']]:
                 return 'Same ' + feature
@@ -2094,39 +2094,43 @@ class StrainVisApp:
             diff_feature = 'Different ' + feature
             if type == 'Boxplot':
                 plot = sns.catplot(data=self.df_for_jitter, kind='box', x="Category", y="APSS",
-                                   order=[same_feature, diff_feature, 'NA'],
-                                   hue="Category", hue_order=[same_feature, diff_feature, 'NA'],
+                                   order=[same_feature, diff_feature, 'Unknown'],
+                                   hue="Category", hue_order=[same_feature, diff_feature, 'Unknown'],
                                    palette=[same_color, different_color, 'gray'], width=0.5)
-
-                # Calculate the P-value of the comparison
-                same_array = self.df_for_jitter[self.df_for_jitter['Category'] == same_feature]['APSS']
-                diff_array = self.df_for_jitter[self.df_for_jitter['Category'] == diff_feature]['APSS']
-
-                # Sample size is enough for P-value calculation
-                if len(same_array) >= 1 and len(diff_array) >= 1:
-                    p_val = return_p_value(same_array, diff_array)
-                    print("\nP-value for " + feature + " comparison = " + str(p_val))
-
-                    # P-value is valid and significant
-                    if str(p_val) != "nan" and p_val < 0.05:
-                        ax = plot.ax  # get the underlying matplotlib axis
-
-                        # Place the p-value text between the two boxes, slightly above the max APSS
-                        y_max = self.df_for_jitter["APSS"].max()
-                        ax.text(
-                            0.5, y_max * 1.01,  # x = middle of the two boxes, y = above max
-                            f"p = {p_val:.2e}",  # format p-value in scientific notation
-                            ha="center", va="bottom", fontsize=10
-                        )
-                # Sample size is not enough for P-value calculation
-                else:
-                    print("\nCannot calculate P-value for feature " + feature + ": Sample size is not enough.")
 
             else:
                 plot = sns.catplot(data=self.df_for_jitter, x="Category", y="APSS",
-                                   order=[same_feature, diff_feature, 'NA'],
-                                   hue="Category", hue_order=[same_feature, diff_feature, 'NA'],
+                                   order=[same_feature, diff_feature, 'Unknown'],
+                                   hue="Category", hue_order=[same_feature, diff_feature, 'Unknown'],
                                    palette=[same_color, different_color, 'gray'], linewidth=0.1)
+
+            # Calculate the P-value of the comparison
+            same_array = self.df_for_jitter[self.df_for_jitter['Category'] == same_feature]['APSS']
+            diff_array = self.df_for_jitter[self.df_for_jitter['Category'] == diff_feature]['APSS']
+
+            # Sample size is enough for P-value calculation
+            if len(same_array) >= 1 and len(diff_array) >= 1:
+                p_val = return_p_value(same_array, diff_array)
+                print("\nP-value for " + feature + " comparison = " + str(p_val))
+
+                # Pvalue is valid and significant
+                if str(p_val) != "nan" and p_val < 0.05:
+                    ax = plot.ax  # get the underlying matplotlib axis
+
+                    # Place the p-value text between the two boxes, slightly above the max APSS
+                    y_max = self.df_for_jitter["APSS"].max()
+                    ax.text(
+                        0.5, y_max * 1.02,  # x = middle of the two boxes, y = above max
+                        f"p = {p_val:.2e}",  # format p-value in scientific notation
+                        ha="center", va="bottom", fontsize=10
+                    )
+            # Sample size is not enough for P-value calculation
+            else:
+                print("\nCannot calculate P-value for feature " + feature + ": Sample size is not enough.")
+
+            # Rotate the x-axis labels in 45 degrees
+            ax = plot.ax
+            plt.setp(ax.get_xticklabels(), rotation=45)
 
         # Do not use metadata in plot - show all the comparisons together
         else:
@@ -2138,8 +2142,6 @@ class StrainVisApp:
 
         # Remove the x-axis label
         plot.set_axis_labels("", "APSS")  # Sets x-label to empty string
-        ax = plot.ax
-        ax.set_xticklabels(ax.get_xticklabels(), fontsize=10, rotation='vertical')
 
         #print("\nDF for jitter plot:")
         #print(self.df_for_jitter)
@@ -2163,40 +2165,44 @@ class StrainVisApp:
             # Boxplot
             if type == 'Boxplot':
                 plot = sns.catplot(data=self.df_for_jitter_ani, kind='box', x="Category", y="ANI",
-                                   order=[same_feature, diff_feature, 'NA'],
-                                   hue="Category", hue_order=[same_feature, diff_feature, 'NA'],
+                                   order=[same_feature, diff_feature, 'Unknown'],
+                                   hue="Category", hue_order=[same_feature, diff_feature, 'Unknown'],
                                    palette=[same_color, different_color, 'gray'], width=0.5)
-
-                # Calculate the P-value of the comparison
-                same_array = self.df_for_jitter_ani[self.df_for_jitter_ani['Category'] == same_feature]['ANI']
-                diff_array = self.df_for_jitter_ani[self.df_for_jitter_ani['Category'] == diff_feature]['ANI']
-
-                # Sample size is enough for P-value calculation
-                if len(same_array) >= 1 and len(diff_array) >= 1:
-                    p_val = return_p_value(same_array, diff_array)
-                    print("\nP-value for " + feature + " comparison = " + str(p_val))
-
-                    # P-value is valid and significant
-                    if str(p_val) != "nan" and p_val < 0.05:
-                        ax = plot.ax  # get the underlying matplotlib axis
-
-                        # Place the p-value text between the two boxes, slightly above the max APSS
-                        y_max = self.df_for_jitter_ani["ANI"].max()
-                        ax.text(
-                            0.5, y_max * 1.01,  # x = middle of the two boxes, y = above max
-                            f"p = {p_val:.2e}",  # format p-value in scientific notation
-                            ha="center", va="bottom", fontsize=10
-                        )
-                # Sample size is not enough for P-value calculation
-                else:
-                    print("\nCannot calculate P-value for feature " + feature + ": Sample size is not enough.")
 
             # Jitterplot
             else:
                 plot = sns.catplot(data=self.df_for_jitter_ani, x="Category", y="ANI",
-                                   order=[same_feature, diff_feature, 'NA'],
-                                   hue="Category", hue_order=[same_feature, diff_feature, 'NA'],
+                                   order=[same_feature, diff_feature, 'Unknown'],
+                                   hue="Category", hue_order=[same_feature, diff_feature, 'Unknown'],
                                    palette=[same_color, different_color, 'gray'], linewidth=0.1)
+
+            # Calculate the P-value of the comparison
+            same_array = self.df_for_jitter_ani[self.df_for_jitter_ani['Category'] == same_feature]['ANI']
+            diff_array = self.df_for_jitter_ani[self.df_for_jitter_ani['Category'] == diff_feature]['ANI']
+
+            # Sample size is enough for P-value calculation
+            if len(same_array) >= 1 and len(diff_array) >= 1:
+                p_val = return_p_value(same_array, diff_array)
+                print("\nP-value for " + feature + " comparison = " + str(p_val))
+
+                # P-value is valid and significant
+                if str(p_val) != "nan" and p_val < 0.05:
+                    ax = plot.ax  # get the underlying matplotlib axis
+
+                    # Place the p-value text between the two boxes, slightly above the max APSS
+                    y_max = self.df_for_jitter_ani["ANI"].max()
+                    ax.text(
+                        0.5, y_max * 1.02,  # x = middle of the two boxes, y = above max
+                        f"p = {p_val: .2e}",  # format p-value in scientific notation
+                        ha="center", va="bottom", fontsize=10
+                    )
+                # Sample size is not enough for P-value calculation
+                else:
+                    print("\nCannot calculate P-value for feature " + feature + ": Sample size is not enough.")
+
+            # Rotate the x-axis labels in case of more than one category
+            ax = plot.ax
+            plt.setp(ax.get_xticklabels(), rotation=45)
 
         # Do not use metadata in plot - show all the comparisons together
         else:
@@ -2211,7 +2217,7 @@ class StrainVisApp:
         plot.set_axis_labels("", "ANI")  # Sets x-label to empty string
 
         # print("\nDF for jitter plot:")
-        # print(self.df_for_jitter)
+        # print(self.df_for_jitter_ani)
 
         plt.close(plot.figure)
 
@@ -3452,7 +3458,7 @@ class StrainVisApp:
             color_to_category = {
                 same_color: 'Same ' + feature,
                 different_color: 'Different ' + feature,
-                'gray': 'NA'
+                'gray': 'Unknown'
             }
 
             # Create legend handles
