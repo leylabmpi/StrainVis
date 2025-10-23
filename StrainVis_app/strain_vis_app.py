@@ -2092,17 +2092,33 @@ class StrainVisApp:
                                                                       axis=1)
             same_feature = 'Same ' + feature
             diff_feature = 'Different ' + feature
-            if type == 'Boxplot':
-                plot = sns.catplot(data=self.df_for_jitter, kind='box', x="Category", y="APSS",
-                                   order=[same_feature, diff_feature, 'Unknown'],
-                                   hue="Category", hue_order=[same_feature, diff_feature, 'Unknown'],
-                                   palette=[same_color, different_color, 'gray'], width=0.5)
 
+            # The selected feature contains 'Unknown' values - present them as a third category
+            if (self.df_for_jitter['Category'] == 'Unknown').any():
+                if type == 'Boxplot':
+                    plot = sns.catplot(data=self.df_for_jitter, kind='box', x="Category", y="APSS",
+                                       order=[same_feature, diff_feature, 'Unknown'],
+                                       hue="Category", hue_order=[same_feature, diff_feature, 'Unknown'],
+                                       palette=[same_color, different_color, 'gray'], width=0.5)
+
+                else:
+                    plot = sns.catplot(data=self.df_for_jitter, x="Category", y="APSS",
+                                       order=[same_feature, diff_feature, 'Unknown'],
+                                       hue="Category", hue_order=[same_feature, diff_feature, 'Unknown'],
+                                       palette=[same_color, different_color, 'gray'], linewidth=0.1)
+            # No Unknowns - present only two categories
             else:
-                plot = sns.catplot(data=self.df_for_jitter, x="Category", y="APSS",
-                                   order=[same_feature, diff_feature, 'Unknown'],
-                                   hue="Category", hue_order=[same_feature, diff_feature, 'Unknown'],
-                                   palette=[same_color, different_color, 'gray'], linewidth=0.1)
+                if type == 'Boxplot':
+                    plot = sns.catplot(data=self.df_for_jitter, kind='box', x="Category", y="APSS",
+                                       order=[same_feature, diff_feature],
+                                       hue="Category", hue_order=[same_feature, diff_feature],
+                                       palette=[same_color, different_color], width=0.5)
+
+                else:
+                    plot = sns.catplot(data=self.df_for_jitter, x="Category", y="APSS",
+                                       order=[same_feature, diff_feature],
+                                       hue="Category", hue_order=[same_feature, diff_feature],
+                                       palette=[same_color, different_color], linewidth=0.1)
 
             # Calculate the P-value of the comparison
             same_array = self.df_for_jitter[self.df_for_jitter['Category'] == same_feature]['APSS']
@@ -2114,14 +2130,14 @@ class StrainVisApp:
                 print("\nP-value for " + feature + " comparison = " + str(p_val))
 
                 # Pvalue is valid and significant
-                if str(p_val) != "nan" and p_val < 0.05:
+                if str(p_val) != "nan" and p_val <= 0.05:
                     ax = plot.ax  # get the underlying matplotlib axis
 
                     # Place the p-value text between the two boxes, slightly above the max APSS
                     y_max = self.df_for_jitter["APSS"].max()
                     ax.text(
                         0.5, y_max * 1.02,  # x = middle of the two boxes, y = above max
-                        f"p = {p_val:.2e}",  # format p-value in scientific notation
+                        f"p <= {p_val: .2e}",  # format p-value in scientific notation
                         ha="center", va="bottom", fontsize=10
                     )
             # Sample size is not enough for P-value calculation
@@ -2159,22 +2175,43 @@ class StrainVisApp:
             self.df_for_jitter_ani['Category'] = self.df_for_jitter_ani.apply(
                 lambda row: self.category_by_feature(row, feature),
                 axis=1)
+            print("\ndf_for_jitter_ani:")
+            print(self.df_for_jitter_ani)
+
             same_feature = 'Same ' + feature
             diff_feature = 'Different ' + feature
 
-            # Boxplot
-            if type == 'Boxplot':
-                plot = sns.catplot(data=self.df_for_jitter_ani, kind='box', x="Category", y="ANI",
-                                   order=[same_feature, diff_feature, 'Unknown'],
-                                   hue="Category", hue_order=[same_feature, diff_feature, 'Unknown'],
-                                   palette=[same_color, different_color, 'gray'], width=0.5)
+            # The selected feature contains 'Unknown' values - present them as a third category
+            if (self.df_for_jitter_ani['Category'] == 'Unknown').any():
+                # Boxplot
+                if type == 'Boxplot':
+                    plot = sns.catplot(data=self.df_for_jitter_ani, kind='box', x="Category", y="ANI",
+                                       order=[same_feature, diff_feature, 'Unknown'],
+                                       hue="Category", hue_order=[same_feature, diff_feature, 'Unknown'],
+                                       palette=[same_color, different_color, 'gray'], width=0.5)
 
-            # Jitterplot
+                # Jitterplot
+                else:
+                    plot = sns.catplot(data=self.df_for_jitter_ani, x="Category", y="ANI",
+                                       order=[same_feature, diff_feature, 'Unknown'],
+                                       hue="Category", hue_order=[same_feature, diff_feature, 'Unknown'],
+                                       palette=[same_color, different_color, 'gray'], linewidth=0.1)
+
+            # No Unknowns - present only two categories
             else:
-                plot = sns.catplot(data=self.df_for_jitter_ani, x="Category", y="ANI",
-                                   order=[same_feature, diff_feature, 'Unknown'],
-                                   hue="Category", hue_order=[same_feature, diff_feature, 'Unknown'],
-                                   palette=[same_color, different_color, 'gray'], linewidth=0.1)
+                # Boxplot
+                if type == 'Boxplot':
+                    plot = sns.catplot(data=self.df_for_jitter_ani, kind='box', x="Category", y="ANI",
+                                       order=[same_feature, diff_feature],
+                                       hue="Category", hue_order=[same_feature, diff_feature],
+                                       palette=[same_color, different_color], width=0.5)
+
+                # Jitterplot
+                else:
+                    plot = sns.catplot(data=self.df_for_jitter_ani, x="Category", y="ANI",
+                                       order=[same_feature, diff_feature],
+                                       hue="Category", hue_order=[same_feature, diff_feature],
+                                       palette=[same_color, different_color], linewidth=0.1)
 
             # Calculate the P-value of the comparison
             same_array = self.df_for_jitter_ani[self.df_for_jitter_ani['Category'] == same_feature]['ANI']
@@ -2186,19 +2223,19 @@ class StrainVisApp:
                 print("\nP-value for " + feature + " comparison = " + str(p_val))
 
                 # P-value is valid and significant
-                if str(p_val) != "nan" and p_val < 0.05:
+                if str(p_val) != "nan" and p_val <= 0.05:
                     ax = plot.ax  # get the underlying matplotlib axis
 
                     # Place the p-value text between the two boxes, slightly above the max APSS
                     y_max = self.df_for_jitter_ani["ANI"].max()
                     ax.text(
-                        0.5, y_max * 1.02,  # x = middle of the two boxes, y = above max
-                        f"p = {p_val: .2e}",  # format p-value in scientific notation
+                        0.5, y_max * 1.001,  # x = middle of the two boxes, y = above max
+                        f"p <= {p_val: .2e}",  # format p-value in scientific notation
                         ha="center", va="bottom", fontsize=10
                     )
-                # Sample size is not enough for P-value calculation
-                else:
-                    print("\nCannot calculate P-value for feature " + feature + ": Sample size is not enough.")
+            # Sample size is not enough for P-value calculation
+            else:
+                print("\nCannot calculate P-value for feature " + feature + ": Sample size is not enough.")
 
             # Rotate the x-axis labels in case of more than one category
             ax = plot.ax
@@ -2260,7 +2297,7 @@ class StrainVisApp:
 
     def download_jitter_ani(self, event):
         fformat = self.jitter_image_format_ani.value
-        plot_type = self.jitter_type_select.value
+        plot_type = self.jitter_type_select_ani.value
         if plot_type != 'Boxplot':
             plot_type = 'Jitter_plot'
 
@@ -3011,7 +3048,12 @@ class StrainVisApp:
                         mean_std_only = 1
 
             self.network_threshold_select.options.append(config.network_thresholds_options[3])
-            self.network_threshold_select.value = self.network_threshold_select.options[0]
+            # Only mean - set this as the default
+            if mean_only:
+                self.network_threshold_select.value = self.network_threshold_select.options[0]
+            # At least mean+std option available -> set this as the default
+            else:
+                self.network_threshold_select.value = self.network_threshold_select.options[1]
 
             # Set watchers for the threshold widgets
             self.threshold_select_watcher = self.network_threshold_select.param.watch(partial(
@@ -3458,8 +3500,10 @@ class StrainVisApp:
             color_to_category = {
                 same_color: 'Same ' + feature,
                 different_color: 'Different ' + feature,
-                'gray': 'Unknown'
             }
+            # The selected feature contains 'Unknown' values - add this category to the legend
+            if (self.df_for_combined_scatter['Color'] == 'gray').any():
+                color_to_category['gray'] = 'Unknown'
 
             # Create legend handles
             handles = [

@@ -194,7 +194,8 @@ The features are derived from the upoaded metadata file and can be interactively
         </li>
         <li>
           Custom colormap: here the user can enter a list of colors, separated by commas.
-          The colors can be provided as standard names (like: red, blue) or Hex-RGB values (like: #FF0000).<br />
+          The colors can be provided as standard names (like: red, blue) or Hex-RGB values (like: #FF0000).
+          The groups are ordered alphabetically, so the list of colors should be given in the same order.<br />
           A detailed guide for color notations can be found : <a href="https://www.w3.org/TR/css-color-4/#named-colors" target="_blank">here</a>.</li>
       </ul>
 <p>Please note that in case the number of samples exceeds the limit of 200, the heatmap plot cannot be displayed properly. The scoring matrix is provided for download and can be used in another visualization program.</p>
@@ -230,7 +231,7 @@ By selecting the ‘Define another threshold’ option, it is possible to set a 
 <li><strong>Continuous feature:</strong> If the selected feature has numeric continuous values (for example: age), this checkbox should be checked. The variety of colormaps available for selection changes accordingly and a colorbar is added to the network plot.<br />
 Note that only features which numerical values can be checked as continuous.</li>
 <li><strong>Select colormap for nodes:</strong> Select a colormap from the drop-down menu to color the nodes by the different groups of the selected metadata feature. A different set of colormaps is provided for categorical data and for continuous data.</li>
-<li><strong>Define custom colormap:</strong> For categorical features, it is also possible to define a custom list of colors for the different groups. This option becomes active when selecting the ‘Define custom colormap’ option from the colormaps drop-down menu. A list of colors, separated by commas, can be entered to the text-input widget. The colors can be provided as standard names (like: red, blue) or Hex-RGB values (like: #FF0000).<br />
+<li><strong>Define custom colormap:</strong> For categorical features, it is also possible to define a custom list of colors for the different groups. This option becomes active when selecting the ‘Define custom colormap’ option from the colormaps drop-down menu. A list of colors, separated by commas, can be entered to the text-input widget. The colors can be provided as standard names (like: red, blue) or Hex-RGB values (like: #FF0000). The groups are ordered alphabetically, so the list of colors should be given in the same order.<br />
 A detailed guide for color notations can be found : <a href="https://www.w3.org/TR/css-color-4/#named-colors" target="_blank">here</a>.</li>
 <li><strong>Color edges by feature (same/different):</strong> Checking this option enables to select a feature, by which the edges (connections) are divided into two categories and can be colored differently. One category is the connections between samples that belong to the same group and the other is the connections between samples that belong to a different group (of the selected feature). For example, if the selected feature is ‘country’, the edges between nodes that belong to the same country can be colored differently than the edges between the nodes that belong to a different country.</li>
 <li><strong>Color edges by:</strong> Select the feature, by which the edges are divided into two categories.</li>

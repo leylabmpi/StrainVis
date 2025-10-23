@@ -205,6 +205,7 @@ can be added when checking the 'Use metadata for coloring' option.
 When selecting the 'Define custom colormap' option, the 'Custom colormap' text input widget becomes active. 
 - Custom colormap: here the user can enter a list of colors, separated by commas. 
 The colors can be provided as standard names (like: red, blue) or Hex-RGB values (like: #FF0000).  
+The groups are ordered alphabetically, so the list of colors should be given in the same order.  
 A detailed guide for color notations: https://www.w3.org/TR/css-color-4/#named-colors .
 
 
@@ -263,6 +264,7 @@ A different set of colormaps is provided for categorical data and for continuous
 This option becomes active when selecting the 'Define custom colormap' option from the colormaps drop-down menu.
 A list of colors, separated by commas, can be entered to the text-input widget. 
 The colors can be provided as standard names (like: red, blue) or Hex-RGB values (like: #FF0000).  
+The groups are ordered alphabetically, so the list of colors should be given in the same order.  
 A detailed guide for color notations: https://www.w3.org/TR/css-color-4/#named-colors .
 - **Color edges by feature (same/different):** Checking this option enables to select a feature, by which the edges (connections) 
  are divided into two categories and can be colored differently. 
