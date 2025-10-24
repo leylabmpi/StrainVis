@@ -2961,11 +2961,15 @@ class StrainVisApp:
         self.df_for_network.loc[(self.df_for_network['APSS'] == 1), 'APSS'] = 0.999999
 
         # Set a score threshold for the connections (below it zero the weight).
-        # Currently the threshold is the mean APSS
+        # The default threshold is the mean APSS + 1std
         mean_APSS = self.df_for_network.loc[:, 'APSS'].mean().round(2)
         std_APSS = self.df_for_network.loc[:, 'APSS'].std().round(2)
-        if mean_APSS < 1.0:
-            self.APSS_connections_threshold = mean_APSS
+
+        if mean_APSS < 0.99:
+            if mean_APSS + std_APSS < 0.99:
+                self.APSS_connections_threshold = mean_APSS + std_APSS
+            else:
+                self.APSS_connections_threshold = 0.99
         else:
             self.APSS_connections_threshold = 0.99
         self.df_for_network['weight'] = np.where(self.df_for_network['APSS'] >= self.APSS_connections_threshold,
