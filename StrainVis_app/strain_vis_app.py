@@ -186,6 +186,7 @@ class StrainVisApp:
         self.genomes_sort_select_multi_watcher = ""
         self.threshold_select_watcher = ""
         self.threshold_input_watcher = ""
+        self.highlight_sample_watcher = ""
         self.feature_select_watcher = ""
         self.feature_select_ani_watcher = ""
         self.continuous_network_watcher = ""
@@ -601,7 +602,6 @@ class StrainVisApp:
         self.df_for_network = pd.DataFrame()
         self.use_metadata_network = pn.widgets.Checkbox(name='Or, use metadata for coloring', value=False,
                                                         styles={'font-size': "14px"})
-        self.color_edges_by_feature = pn.widgets.Checkbox(name='Color edges by feature (same/different)', value=False)
         self.layout_parameters_card = pn.Card(title='Layout parameters', header_background="#ffffff",
                                               styles={'background': "#ffffff", 'margin': "5px 0 5px 10px",
                                                       'width': "350px", 'padding': "7px"})
@@ -623,20 +623,23 @@ class StrainVisApp:
         self.is_continuous_network = pn.widgets.Checkbox(name='Continuous feature', value=False)
         self.nodes_colormap = pn.widgets.ColorMap(name="Select colormap for nodes:",
                                                   options=config.categorical_colormap_dict,
-                                                  value=config.categorical_colormap_dict['cet_glasbey'])
+                                                  value=config.categorical_colormap_dict['cet_glasbey'],
+                                                  styles={'margin': "5px 0 0 15px"})
         self.custom_colormap_input = pn.widgets.TextInput(name='Custom colormap: enter a list of colors separated by '
-                                                               'comma:',
+                                                               'comma',
                                                           placeholder='color1, color2, color3, etc...',
                                                           disabled=pn.bind(change_disabled_state_custom_colormap,
                                                                            value=self.nodes_colormap,
-                                                                           watch=True)
+                                                                           watch=True),
+                                                          styles={'margin': "5px 0 0 15px"}
                                                           )
+        self.color_edges_by_feature = pn.widgets.Checkbox(name='Color edges by feature (same/different)', value=False,
+                                                          styles={'margin': "0 0 0 15px"})
         self.edges_color_by = pn.widgets.Select(options=['Select feature'],
                                                 name="Color edges by:", width=100,
                                                 disabled=pn.bind(change_disabled_state_inverse,
                                                                  chkbox_state=self.color_edges_by_feature,
-                                                                 watch=True)
-                                                )
+                                                                 watch=True))
         self.network_within_color = pn.widgets.ColorPicker(name='Same color:', value='#000000',
                                                            disabled=pn.bind(change_disabled_state_inverse,
                                                                             chkbox_state=self.color_edges_by_feature,
@@ -648,6 +651,14 @@ class StrainVisApp:
                                                             )
         self.show_labels_chkbox = pn.widgets.Checkbox(name='Show sample names', value=False,
                                                       styles={'font-size': "14px"})
+        self.highlight_sample_chkbox = pn.widgets.Checkbox(name='Highlight node(s):', value=False,
+                                                           styles={'font-size': "14px", 'padding-top': "6px"})
+        self.highlight_sample_input = pn.widgets.TextInput(
+                                                           #name='Enter sampleID(s):',
+                                                           placeholder='Enter sampleID(s)', width=205,
+                                                           disabled=pn.bind(change_disabled_state_inverse,
+                                                           chkbox_state=self.highlight_sample_chkbox, watch=True),
+                                                    )
         self.network_threshold_select = pn.widgets.Select(name="Threshold for network connections:", width=200,
                                                           options=[])
         self.network_threshold_input = pn.widgets.FloatInput(name='Define threshold:',
@@ -1827,6 +1838,7 @@ class StrainVisApp:
         if self.clicked_button_display_APSS:
             self.network_threshold_select.param.unwatch(self.threshold_select_watcher)
             self.network_threshold_input.param.unwatch(self.threshold_input_watcher)
+            self.highlight_sample_input.param.unwatch(self.highlight_sample_watcher)
             self.network_threshold_input.value = config.APSS_connections_threshold_default
             if self.is_metadata:
                 self.is_continuous_network.param.unwatch(self.continuous_network_watcher)
@@ -2523,7 +2535,7 @@ class StrainVisApp:
             # Feature is indeed really continuous
             else:
                 self.feature_colormap.options = config.continuous_colormap_dict
-                self.feature_colormap.value = config.continuous_colormap_dict['cet_rainbow4_r']
+                self.feature_colormap.value = config.continuous_colormap_dict['plasma_r']
 
         # Categorical feature
         else:
@@ -2755,7 +2767,7 @@ class StrainVisApp:
             # Feature is indeed really continuous
             else:
                 self.feature_colormap_ani.options = config.continuous_colormap_dict
-                self.feature_colormap_ani.value = config.continuous_colormap_dict['cet_rainbow4_r']
+                self.feature_colormap_ani.value = config.continuous_colormap_dict['plasma_r']
 
         # Categorical feature
         else:
@@ -2900,37 +2912,43 @@ class StrainVisApp:
         init_button_row = pn.Row(init_button, align='center')
 
         styling_title = "Network customization options:"
+        nodes_cust_title = pn.pane.Markdown("Nodes customizations:",
+                                            styles={'font-size': "15px", 'font-weight': "bold", 'margin': "0 0 0 15px"})
+        edges_cust_title = pn.pane.Markdown("Edges customizations:",
+                                            styles={'font-size': "15px", 'font-weight': "bold", 'margin': "0 0 0 15px"})
         no_metadata_colors_row = pn.Row(self.network_node_color, pn.Spacer(width=10), self.network_edge_color)
         continuous_col = pn.Column(pn.Spacer(height=20), self.is_continuous_network)
-        nodes_color_by_row = pn.Row(self.nodes_color_by, continuous_col)
+        nodes_color_by_row = pn.Row(self.nodes_color_by, continuous_col, styles={'margin': "0 0 0 8px"})
         edges_color_by_row = pn.Row(self.edges_color_by, self.network_within_color, pn.Spacer(width=3),
-                                    self.network_between_color)
-        metadata_coloring_col = pn.Column(nodes_color_by_row,
+                                    self.network_between_color, styles={'margin': "0 0 10px 5px"})
+        metadata_coloring_col = pn.Column(nodes_cust_title,
+                                          nodes_color_by_row,
                                           self.nodes_colormap,
                                           self.custom_colormap_input,
                                           pn.Spacer(height=10),
+                                          edges_cust_title,
                                           self.color_edges_by_feature,
-                                          edges_color_by_row,
-                                          styles={'padding': "10x"})
+                                          edges_color_by_row)
         self.metadata_colorby_card.append(metadata_coloring_col)
         network_threshold_row = pn.Row(self.network_threshold_select, self.network_threshold_input)
         params_col = pn.Column(network_threshold_row,
                                self.network_iterations,
                                init_button_row)
         self.layout_parameters_card.append(params_col)
+        #highlight_sample_chkbox_col = pn.Column(pn.Spacer(height=5), self.highlight_sample_chkbox)
+        highlight_sample_row = pn.Row(self.highlight_sample_chkbox, self.highlight_sample_input)
         styling_col = pn.Column(pn.pane.Markdown(styling_title, styles={'font-size': "15px", 'font-weight': "bold",
                                                                         'color': config.title_blue_color,
                                                                         'margin': "0"}),
                                 self.layout_parameters_card,
+                                pn.Spacer(height=5),
                                 no_metadata_colors_row,
                                 pn.Spacer(height=5),
                                 self.use_metadata_network,
                                 self.metadata_colorby_card,
+                                pn.Spacer(height=5),
                                 self.show_labels_chkbox,
-                                #pn.Spacer(height=10),
-                                #network_threshold_row,
-                                #self.network_iterations,
-                                #init_button
+                                highlight_sample_row
                                 )
 
         save_file_title = "Plot download options:"
@@ -3065,6 +3083,8 @@ class StrainVisApp:
                 onlychanged=True)
             self.threshold_input_watcher = self.network_threshold_input.param.watch(self.changed_threshold_input,
                                                                                     'value', onlychanged=True)
+            self.highlight_sample_watcher = self.highlight_sample_input.param.watch(self.change_highlighted_sample,
+                                                                                    'value', onlychanged=True)
 
             # There is metadata
             if self.is_metadata:
@@ -3113,7 +3133,10 @@ class StrainVisApp:
                                            within_edge_color=self.network_within_color,
                                            between_edge_color=self.network_between_color,
                                            iterations=self.network_iterations, pos_dict=self.pos_dict,
-                                           show_labels=self.show_labels_chkbox, metadata_dict=self.metadata_dict)
+                                           show_labels=self.show_labels_chkbox,
+                                           is_highlight=self.highlight_sample_chkbox,
+                                           samples_to_highlight=self.highlight_sample_input.value,
+                                           metadata_dict=self.metadata_dict)
             self.network_pane = pn.pane.HoloViews(self.network_plot_hv, height=600, width=700, sizing_mode="fixed")
 
             network_row = pn.Row(controls_col, pn.Spacer(width=15), self.network_pane, styles={'padding': "15px"})
@@ -3172,7 +3195,10 @@ class StrainVisApp:
                                                within_edge_color=self.network_within_color,
                                                between_edge_color=self.network_between_color,
                                                iterations=self.network_iterations, pos_dict=self.pos_dict,
-                                               show_labels=self.show_labels_chkbox, metadata_dict=self.metadata_dict)
+                                               show_labels=self.show_labels_chkbox,
+                                               is_highlight=self.highlight_sample_chkbox,
+                                               samples_to_highlight=self.highlight_sample_input.value,
+                                               metadata_dict=self.metadata_dict)
 
         # Save the network plot in the requested format using matplotlib
         self.network_plot_matplotlib().savefig(network_file_path, format=fformat, dpi=300.0, bbox_inches='tight')
@@ -3302,6 +3328,11 @@ class StrainVisApp:
         duration = after - before
         print("Updating the network plot took " + str(duration) + " seconds.\n")
 
+    def change_highlighted_sample(self, event):
+        print("\nIn change_highlighted_sample")
+        print("Samples to highlight: " + self.highlight_sample_input.value)
+        self.update_network_plot()
+
     # Update the network plot using the selected parameters and the new positions dict
     def update_network_plot(self):
         #print("\nIn update_network_plot")
@@ -3314,7 +3345,10 @@ class StrainVisApp:
                                        within_edge_color=self.network_within_color,
                                        between_edge_color=self.network_between_color,
                                        iterations=self.network_iterations, pos_dict=self.pos_dict,
-                                       show_labels=self.show_labels_chkbox, metadata_dict=self.metadata_dict)
+                                       show_labels=self.show_labels_chkbox,
+                                       is_highlight=self.highlight_sample_chkbox,
+                                       samples_to_highlight=self.highlight_sample_input.value,
+                                       metadata_dict=self.metadata_dict)
 
         self.network_pane.object = self.network_plot_hv
 

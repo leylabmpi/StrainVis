@@ -12,12 +12,23 @@ clustering_methods = ['euclidean', 'correlation', 'cityblock', 'cosine']
 min_pairs_for_all_regions = 100
 max_clustermap_cols = 200
 max_network_nodes = 300
-network_iterations_options = ['50', '100', '150', '200', '250', '300', '350', '400', '450', '500']
-network_thresholds_options = ['Mean APSS', 'Mean APSS+1 STD', 'Mean APSS+2 STD', 'Define another threshold']
-APSS_connections_threshold_default = 0.9
 region_length = 5000
 top_percentile = 0.9
 bottom_percentile = 0.1
+
+## Network-related parameters
+network_iterations_options = ['50', '100', '150', '200', '250', '300', '350', '400', '450', '500']
+network_thresholds_options = ['Mean APSS', 'Mean APSS+1 STD', 'Mean APSS+2 STD', 'Define another threshold']
+APSS_connections_threshold_default = 0.9
+hvnx_nodes_size = 20
+hvnx_highlighted_nodes_size = 30
+nx_nodes_size = 150
+nx_highlighted_nodes_size = 300
+outline_width = 0.5
+highlighted_outline_width = 3
+highlighted_outline_width_matplotlib = 1.5
+outline_color = 'black'
+highlighted_outline_color = 'cyan'
 
 file_upload_timeout = 20
 downloads_dir = "/Downloads/"
@@ -132,9 +143,9 @@ categorical_colormap_dict = {
 }
 
 continuous_colormap_dict = {
+    'plasma_r': bp.Plasma256[::-1],
     'cet_rainbow4_r': cc.rainbow4[::-1],
     'cet_isolum_r': cc.isolum[::-1],
-    'plasma_r': bp.Plasma256[::-1],
     'viridis_r': bp.Viridis256[::-1],
     'Blues_r': bp.Blues256[::-1],
     'Reds_r': bp.Reds256[::-1],

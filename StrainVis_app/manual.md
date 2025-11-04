@@ -1,6 +1,6 @@
 # StrainVis: a Python-based web application for interactive visual analysis of strain-tracking methods
 
-### Version 1.0.3
+### Version 1.0.4
 
 - [Overview](#overview)
 - [Installation](#installation)
@@ -250,6 +250,8 @@ The slider widget allows to select the number of iterations between 50 and 500.
 and starts the clustering process from the beginning, performing the selected number of iterations.
 - **Nodes / Edges color:** Enable to set a unified color for the nodes or for the edges of the network, using a color-picker widget.
 - **Show sample names:** When checked, the sample names are displayed on top of the network nodes.
+- **Highlight node(s):** When checking this option, it is possible to enter one or more sample_IDs (separated by comma) to highlight specific nodes in the network plot.
+The highlighted nodes are displayed larger, with cyan-colored outline. Unchecking the checkbox cancels the highlighting.
 
 #### Customization options when metadata is provided:
 
