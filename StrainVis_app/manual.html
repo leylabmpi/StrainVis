@@ -33,7 +33,7 @@
 <body>
   <main>
   <h1 id="strainvis-a-python-based-web-application-for-interactive-visual-analysis-of-strain-tracking-methods">StrainVis: a Python-based web application for interactive visual analysis of strain-tracking methods</h1>
-<h4 id="version-1.0.4">Version 1.0.4</h4>
+<h4 id="version-1.0.5">Version 1.0.5</h4>
 <ul>
 <li><a href="#overview">Overview</a></li>
 <li><a href="#installation">Installation</a></li>
@@ -234,7 +234,8 @@ Note that only features which numerical values can be checked as continuous.</li
 <li><strong>Select colormap for nodes:</strong> Select a colormap from the drop-down menu to color the nodes by the different groups of the selected metadata feature. A different set of colormaps is provided for categorical data and for continuous data.</li>
 <li><strong>Define custom colormap:</strong> For categorical features, it is also possible to define a custom list of colors for the different groups. This option becomes active when selecting the ‘Define custom colormap’ option from the colormaps drop-down menu. A list of colors, separated by commas, can be entered to the text-input widget. The colors can be provided as standard names (like: red, blue) or Hex-RGB values (like: #FF0000). The groups are ordered alphabetically, so the list of colors should be given in the same order.<br />
 A detailed guide for color notations can be found : <a href="https://www.w3.org/TR/css-color-4/#named-colors" target="_blank">here</a>.</li>
-<li><strong>Color edges by feature (same/different):</strong> Checking this option enables to select a feature, by which the edges (connections) are divided into two categories and can be colored differently. One category is the connections between samples that belong to the same group and the other is the connections between samples that belong to a different group (of the selected feature). For example, if the selected feature is ‘country’, the edges between nodes that belong to the same country can be colored differently than the edges between the nodes that belong to a different country.</li>
+<li><strong>Highlight nodes by feature:</strong> Checking this option enables to select a metadata feature and a specific category of this feature and highlight nodes that belong to the selected category. The selection of the feature and the desired category is done by the 'Highlight nodes by' and 'Select group' widgets respectively. The highlighted nodes are displayed larger, with cyan-colored outline. Unchecking the checkbox cancels the highlighting.</li>
+    <li><strong>Color edges by feature (same/different):</strong> Checking this option enables to select a feature, by which the edges (connections) are divided into two categories and can be colored differently. One category is the connections between samples that belong to the same group and the other is the connections between samples that belong to a different group (of the selected feature). For example, if the selected feature is ‘country’, the edges between nodes that belong to the same country can be colored differently than the edges between the nodes that belong to a different country.</li>
 <li><strong>Color edges by:</strong> Select the feature, by which the edges are divided into two categories.</li>
 <li><strong>Same color / Different color:</strong> Select the color that will be applied on each category of edges.</li>
 </ul>

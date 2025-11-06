@@ -193,6 +193,7 @@ class StrainVisApp:
         self.colormap_watcher = ""
         self.custom_colormap_watcher = ""
         self.nodes_colorby_watcher = ""
+        self.nodes_highlight_by_watcher = ""
         self.feature_colormap_watcher = ""
         self.custom_colormap_clustermap_watcher = ""
         self.feature_colormap_ani_watcher = ""
@@ -633,6 +634,18 @@ class StrainVisApp:
                                                                            watch=True),
                                                           styles={'margin': "5px 0 0 15px"}
                                                           )
+        self.highlight_nodes_by_feature = pn.widgets.Checkbox(name='Highlight nodes by feature', value=False,
+                                                              styles={'margin': "0 0 0 15px"})
+        self.nodes_highlight_by = pn.widgets.Select(options=['Select feature'], name="Highlight nodes by:", width=140,
+                                                    disabled=pn.bind(change_disabled_state_inverse,
+                                                                     chkbox_state=self.highlight_nodes_by_feature,
+                                                                     watch=True)
+                                                    )
+        self.nodes_highlight_group_select = pn.widgets.Select(options=['Select group'], name="Select group:", width=140,
+                                                              disabled=pn.bind(change_disabled_state_inverse,
+                                                              chkbox_state=self.highlight_nodes_by_feature,
+                                                              watch=True)
+                                                             )
         self.color_edges_by_feature = pn.widgets.Checkbox(name='Color edges by feature (same/different)', value=False,
                                                           styles={'margin': "0 0 0 15px"})
         self.edges_color_by = pn.widgets.Select(options=['Select feature'],
@@ -654,11 +667,10 @@ class StrainVisApp:
         self.highlight_sample_chkbox = pn.widgets.Checkbox(name='Highlight node(s):', value=False,
                                                            styles={'font-size': "14px", 'padding-top': "6px"})
         self.highlight_sample_input = pn.widgets.TextInput(
-                                                           #name='Enter sampleID(s):',
                                                            placeholder='Enter sampleID(s)', width=205,
                                                            disabled=pn.bind(change_disabled_state_inverse,
                                                            chkbox_state=self.highlight_sample_chkbox, watch=True),
-                                                    )
+                                                          )
         self.network_threshold_select = pn.widgets.Select(name="Threshold for network connections:", width=200,
                                                           options=[])
         self.network_threshold_input = pn.widgets.FloatInput(name='Define threshold:',
@@ -1480,6 +1492,9 @@ class StrainVisApp:
             self.visited_synteny_per_pos_tab = 0
             self.finished_initial_synteny_per_pos_plot = 0
             self.synteny_single_tabs.active = 0
+            self.highlight_sample_chkbox.value = False
+            self.highlight_nodes_by_feature.value = False
+            self.color_edges_by_feature.value = False
             if self.input_mode == "both":
                 self.synteny_ani_single_tabs.active = 0
                 #self.synteny_ani_multi_tabs.active = 0
@@ -1833,6 +1848,9 @@ class StrainVisApp:
         self.metadata_colorby_card.clear()
         self.metadata_jitter_card.clear()
         self.network_iterations.value = config.network_iterations_options[0]
+        self.highlight_sample_chkbox.value = False
+        self.highlight_nodes_by_feature.value = False
+        self.color_edges_by_feature.value = False
 
         # Unwatch watchers (if it's not the first time that this function is called)
         if self.clicked_button_display_APSS:
@@ -1845,6 +1863,7 @@ class StrainVisApp:
                 self.nodes_colormap.param.unwatch(self.colormap_watcher)
                 self.custom_colormap_input.param.unwatch(self.custom_colormap_watcher)
                 self.nodes_color_by.param.unwatch(self.nodes_colorby_watcher)
+                self.nodes_highlight_by.param.unwatch(self.nodes_highlight_by_watcher)
                 self.feature_colormap.param.unwatch(self.feature_colormap_watcher)
                 self.custom_colormap_input_clustermap.param.unwatch(self.custom_colormap_clustermap_watcher)
                 self.color_by_feature.param.unwatch(self.color_by_feature_clustermap_watcher)
@@ -2879,7 +2898,7 @@ class StrainVisApp:
             # Feature is indeed really continuous
             else:
                 self.nodes_colormap.options = config.continuous_colormap_dict
-                self.nodes_colormap.value = config.continuous_colormap_dict['cet_rainbow4_r']
+                self.nodes_colormap.value = config.continuous_colormap_dict['plasma_r']
 
         # Categorical feature
         else:
@@ -2898,6 +2917,19 @@ class StrainVisApp:
     def set_not_continuous_network(self, event):
         #print("\nIn set_not_continuous")
         self.is_continuous_network.value = False
+        self.update_network_plot()
+
+    def fill_feature_groups(self, event):
+        feature = self.nodes_highlight_by.value
+        unique_groups = sorted(list(set([str(self.network.nodes[node][feature]) for node in self.network.nodes()])))
+        # print("\nUnique groups:")
+        # print(unique_groups)
+        if 'nan' in unique_groups:
+            unique_groups.remove('nan')
+            unique_groups.append('nan')
+        self.nodes_highlight_group_select.options = unique_groups
+        self.nodes_highlight_group_select.value = unique_groups[0]
+
         self.update_network_plot()
 
     def create_network_pane(self, selected_genome_and_size_avg_df):
@@ -2921,10 +2953,15 @@ class StrainVisApp:
         nodes_color_by_row = pn.Row(self.nodes_color_by, continuous_col, styles={'margin': "0 0 0 8px"})
         edges_color_by_row = pn.Row(self.edges_color_by, self.network_within_color, pn.Spacer(width=3),
                                     self.network_between_color, styles={'margin': "0 0 10px 5px"})
+        highlight_nodes_row = pn.Row(self.nodes_highlight_by, self.nodes_highlight_group_select,
+                                     styles={'margin': "0 0 0 5px"})
         metadata_coloring_col = pn.Column(nodes_cust_title,
                                           nodes_color_by_row,
                                           self.nodes_colormap,
                                           self.custom_colormap_input,
+                                          pn.Spacer(height=15),
+                                          self.highlight_nodes_by_feature,
+                                          highlight_nodes_row,
                                           pn.Spacer(height=10),
                                           edges_cust_title,
                                           self.color_edges_by_feature,
@@ -2935,7 +2972,6 @@ class StrainVisApp:
                                self.network_iterations,
                                init_button_row)
         self.layout_parameters_card.append(params_col)
-        #highlight_sample_chkbox_col = pn.Column(pn.Spacer(height=5), self.highlight_sample_chkbox)
         highlight_sample_row = pn.Row(self.highlight_sample_chkbox, self.highlight_sample_input)
         styling_col = pn.Column(pn.pane.Markdown(styling_title, styles={'font-size': "15px", 'font-weight': "bold",
                                                                         'color': config.title_blue_color,
@@ -3088,11 +3124,30 @@ class StrainVisApp:
 
             # There is metadata
             if self.is_metadata:
-                # Update the color nodes by- drop-down menu with the available metadata features
+
+                # Insert the features information as nodes attributes
+                for node in self.nodes_list:
+                    for feature in self.metadata_features_list:
+                        self.network.nodes[node][feature] = self.metadata_dict[feature][node]
+
+                    # Add node attribute 'SampleID' for the hover tooltip
+                    self.network.nodes[node]['SampleID'] = node
+
+                # Update the color by- drop-down menus with the available metadata features
+                first_feature = self.metadata_features_list[0]
                 self.nodes_color_by.options = self.metadata_features_list
-                self.nodes_color_by.value = self.metadata_features_list[0]
+                self.nodes_color_by.value = first_feature
                 self.edges_color_by.options = self.metadata_features_list
-                self.edges_color_by.value = self.metadata_features_list[0]
+                self.edges_color_by.value = first_feature
+                self.nodes_highlight_by.options = self.metadata_features_list
+                self.nodes_highlight_by.value = first_feature
+                # Fill the groups for the first feature
+                unique_groups = sorted(list(set([str(self.network.nodes[node][first_feature]) for node in self.network.nodes()])))
+                if 'nan' in unique_groups:
+                    unique_groups.remove('nan')
+                    unique_groups.append('nan')
+                self.nodes_highlight_group_select.options = unique_groups
+                self.nodes_highlight_group_select.value = unique_groups[0]
 
                 self.nodes_colorby_watcher = self.nodes_color_by.param.watch(self.set_not_continuous_network, 'value',
                                                                              onlychanged=True)
@@ -3102,14 +3157,8 @@ class StrainVisApp:
                                                                         onlychanged=True)
                 self.custom_colormap_watcher = self.custom_colormap_input.param.watch(self.get_custom_colormap_network,
                                                                                       'value', onlychanged=True)
-
-                # Insert the features information as nodes attributes
-                for node in self.nodes_list:
-                    for feature in self.metadata_features_list:
-                        self.network.nodes[node][feature] = self.metadata_dict[feature][node]
-
-                    # Add node attribute 'SampleID' for the hover tooltip
-                    self.network.nodes[node]['SampleID'] = node
+                self.nodes_highlight_by_watcher = self.nodes_highlight_by.param.watch(self.fill_feature_groups,
+                                                                                      'value', onlychanged=True)
 
             # No metadata
             else:
@@ -3128,13 +3177,16 @@ class StrainVisApp:
                                            custom_cmap=self.custom_colormap_input.value,
                                            node_color=self.network_node_color,
                                            edge_color=self.network_edge_color,
+                                           is_highlight_group=self.highlight_nodes_by_feature,
+                                           highlight_feature=self.nodes_highlight_by.value,
+                                           highlight_group=self.nodes_highlight_group_select,
                                            is_edge_colorby=self.color_edges_by_feature,
                                            edges_feature=self.edges_color_by,
                                            within_edge_color=self.network_within_color,
                                            between_edge_color=self.network_between_color,
                                            iterations=self.network_iterations, pos_dict=self.pos_dict,
                                            show_labels=self.show_labels_chkbox,
-                                           is_highlight=self.highlight_sample_chkbox,
+                                           is_highlight_samples=self.highlight_sample_chkbox,
                                            samples_to_highlight=self.highlight_sample_input.value,
                                            metadata_dict=self.metadata_dict)
             self.network_pane = pn.pane.HoloViews(self.network_plot_hv, height=600, width=700, sizing_mode="fixed")
@@ -3190,13 +3242,16 @@ class StrainVisApp:
                                                custom_cmap=self.custom_colormap_input.value,
                                                node_color=self.network_node_color,
                                                edge_color=self.network_edge_color,
+                                               is_highlight_group=self.highlight_nodes_by_feature,
+                                               highlight_feature=self.nodes_highlight_by.value,
+                                               highlight_group=self.nodes_highlight_group_select,
                                                is_edge_colorby=self.color_edges_by_feature,
                                                edges_feature=self.edges_color_by,
                                                within_edge_color=self.network_within_color,
                                                between_edge_color=self.network_between_color,
                                                iterations=self.network_iterations, pos_dict=self.pos_dict,
                                                show_labels=self.show_labels_chkbox,
-                                               is_highlight=self.highlight_sample_chkbox,
+                                               is_highlight_samples=self.highlight_sample_chkbox,
                                                samples_to_highlight=self.highlight_sample_input.value,
                                                metadata_dict=self.metadata_dict)
 
@@ -3341,12 +3396,15 @@ class StrainVisApp:
                                        is_continuous=self.is_continuous_network.value, cmap=self.nodes_colormap.value,
                                        custom_cmap=self.custom_colormap_input.value,
                                        node_color=self.network_node_color, edge_color=self.network_edge_color,
+                                       is_highlight_group=self.highlight_nodes_by_feature,
+                                       highlight_feature=self.nodes_highlight_by.value,
+                                       highlight_group=self.nodes_highlight_group_select,
                                        is_edge_colorby=self.color_edges_by_feature, edges_feature=self.edges_color_by,
                                        within_edge_color=self.network_within_color,
                                        between_edge_color=self.network_between_color,
                                        iterations=self.network_iterations, pos_dict=self.pos_dict,
                                        show_labels=self.show_labels_chkbox,
-                                       is_highlight=self.highlight_sample_chkbox,
+                                       is_highlight_samples=self.highlight_sample_chkbox,
                                        samples_to_highlight=self.highlight_sample_input.value,
                                        metadata_dict=self.metadata_dict)
 

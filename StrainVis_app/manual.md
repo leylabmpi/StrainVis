@@ -1,6 +1,6 @@
 # StrainVis: a Python-based web application for interactive visual analysis of strain-tracking methods
 
-### Version 1.0.4
+### Version 1.0.5
 
 - [Overview](#overview)
 - [Installation](#installation)
@@ -268,6 +268,9 @@ A list of colors, separated by commas, can be entered to the text-input widget.
 The colors can be provided as standard names (like: red, blue) or Hex-RGB values (like: #FF0000).  
 The groups are ordered alphabetically, so the list of colors should be given in the same order.  
 A detailed guide for color notations: https://www.w3.org/TR/css-color-4/#named-colors .
+- **Highlight nodes by feature:** Checking this option enables to select a metadata feature and a specific category of this feature and highlight nodes that belong to the selected category.
+The selection of the feature and the desired category is done by the 'Highlight nodes by' and 'Select group' widgets respectively.
+The highlighted nodes are displayed larger, with cyan-colored outline. Unchecking the checkbox cancels the highlighting.
 - **Color edges by feature (same/different):** Checking this option enables to select a feature, by which the edges (connections) 
  are divided into two categories and can be colored differently. 
 One category is the connections between samples that belong to the same group and the other is the connections between samples that belong to a different group (of the selected feature).

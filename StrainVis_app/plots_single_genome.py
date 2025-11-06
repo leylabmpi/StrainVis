@@ -267,8 +267,9 @@ def create_clustermap(matrix, type, cmap, method, is_metadata, feature, is_conti
 
 
 def cretae_network_plot(network, is_metadata, nodes_feature, is_continuous, cmap, custom_cmap, node_color, edge_color,
+                        is_highlight_group, highlight_feature, highlight_group,
                         is_edge_colorby, edges_feature, within_edge_color, between_edge_color, iterations, pos_dict,
-                        show_labels, is_highlight, samples_to_highlight, metadata_dict):
+                        show_labels, is_highlight_samples, samples_to_highlight, metadata_dict):
     iter_num = int(iterations)
     #print("\nIn cretae_network_plot.\nIterations number = " + str(iter_num) + "\nFeature: " + nodes_feature)
 
@@ -276,24 +277,28 @@ def cretae_network_plot(network, is_metadata, nodes_feature, is_continuous, cmap
 
     is_legend = False
 
-    for i, node in enumerate(network.nodes):
+    for node in network.nodes:
+        # Set the default size and outline first
+        network.nodes[node]['node_size'] = config.hvnx_nodes_size
+        network.nodes[node]['outline_color'] = config.outline_color
+        network.nodes[node]['outline_width'] = config.outline_width
+
         # If the 'highlight samples' checkbox is checked - set highlighted nodes differently
-        if is_highlight:
+        if is_highlight_samples:
             highlighted_samples_list = re.split(r'\s*,\s*', samples_to_highlight)
             # Highlighted node
             if node in highlighted_samples_list:
                 network.nodes[node]['node_size'] = config.hvnx_highlighted_nodes_size
                 network.nodes[node]['outline_color'] = config.highlighted_outline_color
                 network.nodes[node]['outline_width'] = config.highlighted_outline_width
-            # Normal node
-            else:
-                network.nodes[node]['node_size'] = config.hvnx_nodes_size
-                network.nodes[node]['outline_color'] = config.outline_color
-                network.nodes[node]['outline_width'] = config.outline_width
-        else:
-            network.nodes[node]['node_size'] = config.hvnx_nodes_size
-            network.nodes[node]['outline_color'] = config.outline_color
-            network.nodes[node]['outline_width'] = config.outline_width
+
+        # In case the 'highlight nodes by feature' checkbox is checked,
+        # highlight the nodes that belong to the selected group
+        if is_metadata and is_highlight_group:
+            if str(network.nodes[node][highlight_feature]) == highlight_group:
+                network.nodes[node]['node_size'] = config.hvnx_highlighted_nodes_size
+                network.nodes[node]['outline_color'] = config.highlighted_outline_color
+                network.nodes[node]['outline_width'] = config.highlighted_outline_width
 
     if is_metadata:
         tooltips = [
@@ -368,8 +373,8 @@ def cretae_network_plot(network, is_metadata, nodes_feature, is_continuous, cmap
 
             network_plot = hvnx.draw(network, pos, node_color=colors, edge_width=hv.dim('weight')/5)
 
-            # Add a legend if there are up to 10 groups
-            if groups_num <= 10:
+            # Add a legend if there are up to max. groups allowed (value is defined in the config file)
+            if groups_num <= config.max_groups_for_legend:
                 legend_items = []
                 for i, group in enumerate(unique_groups):
                     legend_items.append(hv.Scatter((0, 1 - i * 0.1), label=str(group)).opts(
@@ -415,8 +420,9 @@ def cretae_network_plot(network, is_metadata, nodes_feature, is_continuous, cmap
 
 
 def cretae_network_plot_matplotlib(network, is_metadata, nodes_feature, is_continuous, cmap, custom_cmap, node_color,
-                                   edge_color, is_edge_colorby, edges_feature, within_edge_color, between_edge_color,
-                                   iterations, pos_dict, show_labels, is_highlight, samples_to_highlight,
+                                   edge_color, is_highlight_group, highlight_feature, highlight_group,
+                                   is_edge_colorby, edges_feature, within_edge_color, between_edge_color,
+                                   iterations, pos_dict, show_labels, is_highlight_samples, samples_to_highlight,
                                    metadata_dict):
     iter_num = int(iterations)
     #print("\nIn cretae_network_plot_matplotlib. Iterations number = " + str(iter_num))
@@ -432,21 +438,34 @@ def cretae_network_plot_matplotlib(network, is_metadata, nodes_feature, is_conti
     if cmap != 'Define custom colormap':
         cmap_mpl = plt.get_cmap(cmap)
 
-    outline_width_array = [config.outline_width for node in network.nodes]
-    outline_color_array = [config.outline_color for node in network.nodes]
-    nodes_size_array = [config.nx_nodes_size for node in network.nodes]
+    outline_width_array = []
+    outline_color_array = []
+    nodes_size_array = []
 
-    # If the 'highlight samples' checkbox is checked - create a list of sampleIDs
-    if is_highlight:
-        highlighted_samples_list = re.split(r'\s*,\s*', samples_to_highlight)
-        for i, node in enumerate(network.nodes):
+    for i, node in enumerate(network.nodes):
+        # Set the default size and outline first
+        outline_width_array.append(config.outline_width)
+        outline_color_array.append(config.outline_color)
+        nodes_size_array.append(config.nx_nodes_size)
+
+        # If the 'highlight samples' checkbox is checked - set highlighted nodes differently
+        if is_highlight_samples:
+            highlighted_samples_list = re.split(r'\s*,\s*', samples_to_highlight)
+            # Highlighted node
             if node in highlighted_samples_list:
                 outline_width_array[i] = config.highlighted_outline_width_matplotlib
                 outline_color_array[i] = config.highlighted_outline_color
                 nodes_size_array[i] = config.nx_highlighted_nodes_size
 
-    if is_metadata:
+        # In case the 'highlight nodes by feature' checkbox is checked,
+        # highlight the nodes that belong to the selected group
+        if is_metadata and is_highlight_group:
+            if str(network.nodes[node][highlight_feature]) == highlight_group:
+                outline_width_array[i] = config.highlighted_outline_width_matplotlib
+                outline_color_array[i] = config.highlighted_outline_color
+                nodes_size_array[i] = config.nx_highlighted_nodes_size
 
+    if is_metadata:
         # Set the colors of the edges
         edges = network.edges()
         for u, v in edges:
@@ -548,8 +567,8 @@ def cretae_network_plot_matplotlib(network, is_metadata, nodes_feature, is_conti
                         edge_color=list(edge_colors), width=list(widths), with_labels=False,
                         linewidths=outline_width_array, edgecolors=outline_color_array)
 
-            # If number of groups <= 10, add legend
-            if groups_num <= 10:
+            # Add a legend if there are up to max. groups allowed (value is defined in the config file)
+            if groups_num <= config.max_groups_for_legend:
                 legend_handles = [
                     Line2D([0], [0], marker='o', color='w', markerfacecolor=group_to_color[group], markersize=8,
                            markeredgecolor='black', markeredgewidth=0.1, label=group)
