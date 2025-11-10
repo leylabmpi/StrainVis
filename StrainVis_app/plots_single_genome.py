@@ -269,7 +269,7 @@ def create_clustermap(matrix, type, cmap, method, is_metadata, feature, is_conti
 def cretae_network_plot(network, is_metadata, nodes_feature, is_continuous, cmap, custom_cmap, node_color, edge_color,
                         is_highlight_group, highlight_feature, highlight_group,
                         is_edge_colorby, edges_feature, within_edge_color, between_edge_color, iterations, pos_dict,
-                        show_labels, is_highlight_samples, samples_to_highlight, metadata_dict):
+                        show_labels, all_or_highlighted, is_highlight_samples, samples_to_highlight, metadata_dict):
     iter_num = int(iterations)
     #print("\nIn cretae_network_plot.\nIterations number = " + str(iter_num) + "\nFeature: " + nodes_feature)
 
@@ -277,6 +277,7 @@ def cretae_network_plot(network, is_metadata, nodes_feature, is_continuous, cmap
 
     is_legend = False
 
+    nodes_to_label = []
     for node in network.nodes:
         # Set the default size and outline first
         network.nodes[node]['node_size'] = config.hvnx_nodes_size
@@ -291,6 +292,7 @@ def cretae_network_plot(network, is_metadata, nodes_feature, is_continuous, cmap
                 network.nodes[node]['node_size'] = config.hvnx_highlighted_nodes_size
                 network.nodes[node]['outline_color'] = config.highlighted_outline_color
                 network.nodes[node]['outline_width'] = config.highlighted_outline_width
+                nodes_to_label.append(node)
 
         # In case the 'highlight nodes by feature' checkbox is checked,
         # highlight the nodes that belong to the selected group
@@ -299,6 +301,7 @@ def cretae_network_plot(network, is_metadata, nodes_feature, is_continuous, cmap
                 network.nodes[node]['node_size'] = config.hvnx_highlighted_nodes_size
                 network.nodes[node]['outline_color'] = config.highlighted_outline_color
                 network.nodes[node]['outline_width'] = config.highlighted_outline_width
+                nodes_to_label.append(node)
 
     if is_metadata:
         tooltips = [
@@ -402,14 +405,34 @@ def cretae_network_plot(network, is_metadata, nodes_feature, is_continuous, cmap
                       )
 
     if show_labels:
-        labels = hv.Labels(network_plot.nodes, ['x', 'y'], 'index').opts(text_font_size='8pt', text_color='black',
-                                                                         yoffset=-0.05)
+        # Show labels for all nodes
+        if all_or_highlighted == 'All':
+            labels = hv.Labels(network_plot.nodes, ['x', 'y'], 'index').opts(text_font_size='8pt', text_color='black')
 
-        # Display legend and sample names
-        if is_legend:
-            hv_layout = network_plot * legend * labels
+            # Display legend and sample names
+            if is_legend:
+                hv_layout = network_plot * legend * labels
+            else:
+                hv_layout = network_plot * labels
+
+        # Show labels for highlighted nodes only (if any)
+        elif len(nodes_to_label) > 0:
+            nodes_df = network_plot.nodes.data  # this is a pandas DataFrame
+            subset_df = nodes_df[nodes_df['index'].isin(nodes_to_label)]
+            labels = hv.Labels(subset_df, ['x', 'y'], 'index').opts(text_font_size='8pt', text_color='black')
+
+            # Display legend and sample names
+            if is_legend:
+                hv_layout = network_plot * legend * labels
+            else:
+                hv_layout = network_plot * labels
+
         else:
-            hv_layout = network_plot * labels
+            if is_legend:
+                hv_layout = network_plot * legend
+            else:
+                hv_layout = network_plot
+
     else:
         if is_legend:
             hv_layout = network_plot * legend
@@ -422,8 +445,8 @@ def cretae_network_plot(network, is_metadata, nodes_feature, is_continuous, cmap
 def cretae_network_plot_matplotlib(network, is_metadata, nodes_feature, is_continuous, cmap, custom_cmap, node_color,
                                    edge_color, is_highlight_group, highlight_feature, highlight_group,
                                    is_edge_colorby, edges_feature, within_edge_color, between_edge_color,
-                                   iterations, pos_dict, show_labels, is_highlight_samples, samples_to_highlight,
-                                   metadata_dict):
+                                   iterations, pos_dict, show_labels, all_or_highlighted, is_highlight_samples,
+                                   samples_to_highlight, metadata_dict):
     iter_num = int(iterations)
     #print("\nIn cretae_network_plot_matplotlib. Iterations number = " + str(iter_num))
     #print("cmap: " + str(cmap))
@@ -442,6 +465,7 @@ def cretae_network_plot_matplotlib(network, is_metadata, nodes_feature, is_conti
     outline_color_array = []
     nodes_size_array = []
 
+    nodes_to_label = []
     for i, node in enumerate(network.nodes):
         # Set the default size and outline first
         outline_width_array.append(config.outline_width)
@@ -456,6 +480,7 @@ def cretae_network_plot_matplotlib(network, is_metadata, nodes_feature, is_conti
                 outline_width_array[i] = config.highlighted_outline_width_matplotlib
                 outline_color_array[i] = config.highlighted_outline_color
                 nodes_size_array[i] = config.nx_highlighted_nodes_size
+                nodes_to_label.append(node)
 
         # In case the 'highlight nodes by feature' checkbox is checked,
         # highlight the nodes that belong to the selected group
@@ -464,6 +489,7 @@ def cretae_network_plot_matplotlib(network, is_metadata, nodes_feature, is_conti
                 outline_width_array[i] = config.highlighted_outline_width_matplotlib
                 outline_color_array[i] = config.highlighted_outline_color
                 nodes_size_array[i] = config.nx_highlighted_nodes_size
+                nodes_to_label.append(node)
 
     if is_metadata:
         # Set the colors of the edges
@@ -512,16 +538,10 @@ def cretae_network_plot_matplotlib(network, is_metadata, nodes_feature, is_conti
             sm = plt.cm.ScalarMappable(cmap=cmap_mpl, norm=norm)
             sm.set_array([])  # Empty array as we don't need to pass actual data to the ScalarMappable
 
-            if show_labels:
-                nx.draw(network, pos, node_size=nodes_size_array, node_color=node_colors, alpha=0.95,
-                        edge_color=list(edge_colors), width=list(widths), vmin=min_value, vmax=max_value,
-                        with_labels=True, linewidths=outline_width_array, edgecolors=outline_color_array,
-                        font_size=6)
-            else:
-                nx.draw(network, pos, node_size=nodes_size_array, node_color=node_colors, alpha=0.95,
-                        edge_color=list(edge_colors), width=list(widths), with_labels=False,
-                        vmin=min_value, vmax=max_value, linewidths=outline_width_array,
-                        edgecolors=outline_color_array)
+            nx.draw(network, pos, node_size=nodes_size_array, node_color=node_colors, alpha=0.95,
+                    edge_color=list(edge_colors), width=list(widths), with_labels=False,
+                    vmin=min_value, vmax=max_value, linewidths=outline_width_array,
+                    edgecolors=outline_color_array)
 
             plt.colorbar(ax=ax1, mappable=sm, label=nodes_feature)
 
@@ -558,14 +578,9 @@ def cretae_network_plot_matplotlib(network, is_metadata, nodes_feature, is_conti
             # Get a list of colors for all the nodes
             colors = [group_to_color[str(network.nodes[node][nodes_feature])] for node in network.nodes()]
 
-            if show_labels:
-                nx.draw(network, pos, node_size=nodes_size_array, node_color=colors, alpha=0.95,
-                        edge_color=list(edge_colors), width=list(widths), with_labels=True,
-                        linewidths=outline_width_array, edgecolors=outline_color_array, font_size=6)
-            else:
-                nx.draw(network, pos, node_size=nodes_size_array, node_color=colors, alpha=0.95,
-                        edge_color=list(edge_colors), width=list(widths), with_labels=False,
-                        linewidths=outline_width_array, edgecolors=outline_color_array)
+            nx.draw(network, pos, node_size=nodes_size_array, node_color=colors, alpha=0.95,
+                    edge_color=list(edge_colors), width=list(widths), with_labels=False,
+                    linewidths=outline_width_array, edgecolors=outline_color_array)
 
             # Add a legend if there are up to max. groups allowed (value is defined in the config file)
             if groups_num <= config.max_groups_for_legend:
@@ -579,14 +594,26 @@ def cretae_network_plot_matplotlib(network, is_metadata, nodes_feature, is_conti
 
     # No metadata coloring
     else:
-        if show_labels:
-            nx.draw(network, pos, node_size=nodes_size_array, node_color=node_color, alpha=0.95,
-                    edge_color=edge_color, width=list(widths), with_labels=True, linewidths=outline_width_array,
-                    edgecolors=outline_color_array, font_size=6)
+        nx.draw(network, pos, node_size=nodes_size_array, node_color=node_color, alpha=0.95,
+                edge_color=edge_color, width=list(widths), with_labels=False, linewidths=outline_width_array,
+                edgecolors=outline_color_array)
+
+    # Add the labels to the desired nodes
+    if show_labels:
+        # Show labels for all nodes
+        if all_or_highlighted == 'All':
+            labels_dict = {n: n for n in network.nodes}
+        # Show labels for highlighted nodes only (if any)
+        elif len(nodes_to_label) > 0:
+            labels_dict = {n: n for n in nodes_to_label}
         else:
-            nx.draw(network, pos, node_size=nodes_size_array, node_color=node_color, alpha=0.95,
-                    edge_color=edge_color, width=list(widths), with_labels=False, linewidths=outline_width_array,
-                    edgecolors=outline_color_array)
+            labels_dict = {}
+
+        nx.draw_networkx_labels(
+            network, pos,
+            labels=labels_dict,
+            font_size=5, font_weight='bold'
+        )
 
     plt.close(fig)
 

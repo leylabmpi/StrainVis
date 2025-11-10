@@ -664,6 +664,10 @@ class StrainVisApp:
                                                             )
         self.show_labels_chkbox = pn.widgets.Checkbox(name='Show sample names', value=False,
                                                       styles={'font-size': "14px"})
+        self.all_or_highlighted_select = pn.widgets.Select(options=['All', 'Highlighted only'], width=140,
+                                                           disabled=pn.bind(change_disabled_state_inverse,
+                                                                            chkbox_state=self.show_labels_chkbox,
+                                                                            watch=True))
         self.highlight_sample_chkbox = pn.widgets.Checkbox(name='Highlight node(s):', value=False,
                                                            styles={'font-size': "14px", 'padding-top': "6px"})
         self.highlight_sample_input = pn.widgets.TextInput(
@@ -2973,6 +2977,8 @@ class StrainVisApp:
                                init_button_row)
         self.layout_parameters_card.append(params_col)
         highlight_sample_row = pn.Row(self.highlight_sample_chkbox, self.highlight_sample_input)
+        show_labels_col = pn.Column(pn.Spacer(height=5), self.show_labels_chkbox)
+        show_labels_row = pn.Row(show_labels_col, self.all_or_highlighted_select)
         styling_col = pn.Column(pn.pane.Markdown(styling_title, styles={'font-size': "15px", 'font-weight': "bold",
                                                                         'color': config.title_blue_color,
                                                                         'margin': "0"}),
@@ -2983,8 +2989,8 @@ class StrainVisApp:
                                 self.use_metadata_network,
                                 self.metadata_colorby_card,
                                 pn.Spacer(height=5),
-                                self.show_labels_chkbox,
-                                highlight_sample_row
+                                highlight_sample_row,
+                                show_labels_row
                                 )
 
         save_file_title = "Plot download options:"
@@ -3186,6 +3192,7 @@ class StrainVisApp:
                                            between_edge_color=self.network_between_color,
                                            iterations=self.network_iterations, pos_dict=self.pos_dict,
                                            show_labels=self.show_labels_chkbox,
+                                           all_or_highlighted=self.all_or_highlighted_select,
                                            is_highlight_samples=self.highlight_sample_chkbox,
                                            samples_to_highlight=self.highlight_sample_input.value,
                                            metadata_dict=self.metadata_dict)
@@ -3213,6 +3220,9 @@ class StrainVisApp:
             network_file = "Network_plot_" + self.ref_genome + "_" + self.sampling_size + "_regions_" + \
                            self.network_iterations.value + "_iterations_threshold_" + \
                            str(self.APSS_connections_threshold)
+        if self.show_labels_chkbox.value:
+            network_file += "_with_labels"
+
         self.save_network_plot_path.placeholder = network_file
         table_file = "Network_" + self.ref_genome + "_" + self.sampling_size + "_regions_threshold_" + \
                      str(self.APSS_connections_threshold)
@@ -3251,6 +3261,7 @@ class StrainVisApp:
                                                between_edge_color=self.network_between_color,
                                                iterations=self.network_iterations, pos_dict=self.pos_dict,
                                                show_labels=self.show_labels_chkbox,
+                                               all_or_highlighted=self.all_or_highlighted_select,
                                                is_highlight_samples=self.highlight_sample_chkbox,
                                                samples_to_highlight=self.highlight_sample_input.value,
                                                metadata_dict=self.metadata_dict)
@@ -3404,6 +3415,7 @@ class StrainVisApp:
                                        between_edge_color=self.network_between_color,
                                        iterations=self.network_iterations, pos_dict=self.pos_dict,
                                        show_labels=self.show_labels_chkbox,
+                                       all_or_highlighted=self.all_or_highlighted_select,
                                        is_highlight_samples=self.highlight_sample_chkbox,
                                        samples_to_highlight=self.highlight_sample_input.value,
                                        metadata_dict=self.metadata_dict)
