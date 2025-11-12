@@ -187,6 +187,9 @@ class StrainVisApp:
         self.threshold_select_watcher = ""
         self.threshold_input_watcher = ""
         self.highlight_sample_watcher = ""
+        self.threshold_select_ani_watcher = ""
+        self.threshold_input_ani_watcher = ""
+        self.highlight_sample_ani_watcher = ""
         self.feature_select_watcher = ""
         self.feature_select_ani_watcher = ""
         self.continuous_network_watcher = ""
@@ -194,6 +197,11 @@ class StrainVisApp:
         self.custom_colormap_watcher = ""
         self.nodes_colorby_watcher = ""
         self.nodes_highlight_by_watcher = ""
+        self.continuous_network_ani_watcher = ""
+        self.colormap_ani_watcher = ""
+        self.custom_colormap_ani_watcher = ""
+        self.nodes_colorby_ani_watcher = ""
+        self.nodes_highlight_by_ani_watcher = ""
         self.feature_colormap_watcher = ""
         self.custom_colormap_clustermap_watcher = ""
         self.feature_colormap_ani_watcher = ""
@@ -399,8 +407,10 @@ class StrainVisApp:
                                        header_background="#2e86c1", header_color="#ffffff")
         self.jitter_card_ani = pn.Card(title='ANI distribution plot', styles=config.plot_card_style,
                                    header_background="#2e86c1", header_color="#ffffff")
-        self.network_card = pn.Card(title='Network', styles=config.plot_card_style, header_background="#2e86c1",
+        self.network_card = pn.Card(title='Network plot', styles=config.plot_card_style, header_background="#2e86c1",
                                     header_color="#ffffff")
+        self.network_card_ani = pn.Card(title='Network plot', styles=config.plot_card_style, header_background="#2e86c1",
+                                        header_color="#ffffff")
         self.combined_scatter_card = pn.Card(title='ANI/APSS scatter plot', styles=config.plot_card_style,
                                              header_background="#2e86c1", header_color="#ffffff")
         self.box_plot_card = pn.Card(title='APSS distribution among species', styles=config.plot_card_style,
@@ -597,7 +607,6 @@ class StrainVisApp:
 
         # Network plot elements
         self.network = ""
-        self.network_bound_func = ""
         self.network_plot_hv = ""
         self.network_plot_matplotlib = ""
         self.df_for_network = pd.DataFrame()
@@ -697,6 +706,109 @@ class StrainVisApp:
         self.nodes_list = []
         self.network = ""
         self.APSS_connections_threshold = config.APSS_connections_threshold_default
+
+        # Network plot ANI elements
+        self.network_ani = ""
+        self.network_plot_hv_ani = ""
+        self.network_plot_matplotlib_ani = ""
+        self.df_for_network_ani = pd.DataFrame()
+        self.use_metadata_network_ani = pn.widgets.Checkbox(name='Or, use metadata for coloring', value=False,
+                                                            styles={'font-size': "14px"})
+        self.layout_parameters_card_ani = pn.Card(title='Layout parameters', header_background="#ffffff",
+                                                  styles={'background': "#ffffff", 'margin': "5px 0 5px 10px",
+                                                          'width': "350px", 'padding': "7px"})
+        self.metadata_colorby_card_ani = pn.Card(title='Set the coloring by metadata', header_background="#ffffff",
+                                                 styles={'background': "#ffffff", 'margin': "5px 0 5px 10px",
+                                                         'width': "350px"}, hide_header=True,
+                                                 collapsed=pn.bind(change_disabled_state_inverse,
+                                                                   chkbox_state=self.use_metadata_network_ani,
+                                                                   watch=True))
+        self.network_node_color_ani = pn.widgets.ColorPicker(name='Nodes color:', value='#459ED9',
+                                                             disabled=pn.bind(change_disabled_state_straight,
+                                                                              chkbox_state=self.use_metadata_network_ani,
+                                                                              watch=True))
+        self.network_edge_color_ani = pn.widgets.ColorPicker(name='Edges color:', value='#000000',
+                                                             disabled=pn.bind(change_disabled_state_straight,
+                                                                              chkbox_state=self.use_metadata_network_ani,
+                                                                              watch=True))
+        self.nodes_color_by_ani = pn.widgets.Select(options=['Select feature'], name="Color nodes by:", width=130)
+        self.is_continuous_network_ani = pn.widgets.Checkbox(name='Continuous feature', value=False)
+        self.nodes_colormap_ani = pn.widgets.ColorMap(name="Select colormap for nodes:",
+                                                      options=config.categorical_colormap_dict,
+                                                      value=config.categorical_colormap_dict['cet_glasbey'],
+                                                      styles={'margin': "5px 0 0 15px"})
+        self.custom_colormap_input_ani = pn.widgets.TextInput(name='Custom colormap: enter a list of colors separated '
+                                                                   'by comma',
+                                                              placeholder='color1, color2, color3, etc...',
+                                                              disabled=pn.bind(change_disabled_state_custom_colormap,
+                                                                               value=self.nodes_colormap_ani,
+                                                                               watch=True),
+                                                              styles={'margin': "5px 0 0 15px"}
+                                                             )
+        self.highlight_nodes_by_feature_ani = pn.widgets.Checkbox(name='Highlight nodes by feature', value=False,
+                                                                  styles={'margin': "0 0 0 15px"})
+        self.nodes_highlight_by_ani = pn.widgets.Select(options=['Select feature'], name="Highlight nodes by:", width=140,
+                                                        disabled=pn.bind(change_disabled_state_inverse,
+                                                                         chkbox_state=self.highlight_nodes_by_feature_ani,
+                                                                         watch=True)
+                                                        )
+        self.nodes_highlight_group_select_ani = pn.widgets.Select(options=['Select group'], name="Select group:",
+                                                                  width=140,
+                                                                  disabled=pn.bind(change_disabled_state_inverse,
+                                                                                   chkbox_state=self.highlight_nodes_by_feature_ani,
+                                                                                   watch=True)
+                                                                 )
+        self.color_edges_by_feature_ani = pn.widgets.Checkbox(name='Color edges by feature (same/different)',
+                                                              value=False, styles={'margin': "0 0 0 15px"})
+        self.edges_color_by_ani = pn.widgets.Select(options=['Select feature'],
+                                                    name="Color edges by:", width=100,
+                                                    disabled=pn.bind(change_disabled_state_inverse,
+                                                                     chkbox_state=self.color_edges_by_feature_ani,
+                                                                     watch=True))
+        self.network_within_color_ani = pn.widgets.ColorPicker(name='Same color:', value='#000000',
+                                                               disabled=pn.bind(change_disabled_state_inverse,
+                                                                                chkbox_state=self.color_edges_by_feature_ani,
+                                                                                watch=True))
+        self.network_between_color_ani = pn.widgets.ColorPicker(name='Different color:', value='#000000',
+                                                                disabled=pn.bind(change_disabled_state_inverse,
+                                                                                 chkbox_state=self.color_edges_by_feature_ani,
+                                                                                 watch=True)
+                                                            )
+        self.show_labels_chkbox_ani = pn.widgets.Checkbox(name='Show sample names', value=False,
+                                                          styles={'font-size': "14px"})
+        self.all_or_highlighted_select_ani = pn.widgets.Select(options=['All', 'Highlighted only'], width=140,
+                                                               disabled=pn.bind(change_disabled_state_inverse,
+                                                                                chkbox_state=self.show_labels_chkbox_ani,
+                                                                                watch=True))
+        self.highlight_sample_chkbox_ani = pn.widgets.Checkbox(name='Highlight node(s):', value=False,
+                                                               styles={'font-size': "14px", 'padding-top': "6px"})
+        self.highlight_sample_input_ani = pn.widgets.TextInput(placeholder='Enter sampleID(s)', width=205,
+                                                               disabled=pn.bind(change_disabled_state_inverse,
+                                                                                chkbox_state=self.highlight_sample_chkbox_ani,
+                                                                                watch=True),
+                                                               )
+        self.network_threshold_select_ani = pn.widgets.Select(name="Threshold for network connections:", width=200,
+                                                              options=[])
+        self.network_threshold_input_ani = pn.widgets.FloatInput(name='Define threshold:',
+                                                                 value=config.ANI_connections_threshold_default,
+                                                                 step=0.001, start=0.800, end=0.999, width=100,
+                                                                 disabled=True
+                                                                 )
+        self.network_iterations_ani = pn.widgets.DiscreteSlider(name='Number of iterations',
+                                                                options=config.network_iterations_options,
+                                                                bar_color='white')
+        self.network_image_format_ani = pn.widgets.Select(value=config.matplotlib_file_formats[0],
+                                                          options=config.matplotlib_file_formats,
+                                                          name="Select image format:")
+        self.save_network_plot_path_ani = pn.widgets.TextInput(name=download_image_text)
+        self.download_network_column_ani = pn.Column()
+        self.save_network_table_path_ani = pn.widgets.TextInput(name=download_table_text)
+        self.download_network_table_column_ani = pn.Column()
+        self.network_pane_ani = ""
+        self.pos_dict_ani = dict()
+        self.nodes_list_ani = []
+        self.network_ani = ""
+        self.ani_connections_threshold = config.ANI_connections_threshold_default
 
         # Box-plot elements
         self.box_plot = ""
@@ -1661,14 +1773,33 @@ class StrainVisApp:
         self.metadata_jitter_card_ani.clear()
         self.clustermap_card_ani.clear()
         self.metadata_clustermap_card_ani.clear()
+        self.network_card_ani.clear()
+        self.metadata_colorby_card_ani.clear()
+        self.layout_parameters_card_ani.clear()
+        self.network_iterations_ani.value = config.network_iterations_options[0]
+        self.highlight_sample_chkbox_ani.value = False
+        self.highlight_nodes_by_feature_ani.value = False
+        self.color_edges_by_feature_ani.value = False
 
         # Unwatch ANI plots related watchers (if it's not the first time that this function is called)
-        if self.visited_ANI_tab and self.is_metadata:
-            self.feature_colormap_ani.param.unwatch(self.feature_colormap_ani_watcher)
-            self.custom_colormap_input_clustermap_ani.param.unwatch(self.custom_colormap_clustermap_ani_watcher)
-            self.color_by_feature_ani.param.unwatch(self.color_by_feature_clustermap_ani_watcher)
-            self.is_continuous_clustermap_ani.param.unwatch(self.continuous_clustermap_ani_watcher)
-            self.jitter_feature_select_ani.param.unwatch(self.jitter_feature_ani_watcher)
+        if self.visited_ANI_tab:
+            self.network_threshold_select_ani.param.unwatch(self.threshold_select_ani_watcher)
+            self.network_threshold_input_ani.param.unwatch(self.threshold_input_ani_watcher)
+            self.highlight_sample_input_ani.param.unwatch(self.highlight_sample_ani_watcher)
+            self.network_threshold_input_ani.value = config.ANI_connections_threshold_default
+            
+            if self.is_metadata:
+                self.feature_colormap_ani.param.unwatch(self.feature_colormap_ani_watcher)
+                self.custom_colormap_input_clustermap_ani.param.unwatch(self.custom_colormap_clustermap_ani_watcher)
+                self.color_by_feature_ani.param.unwatch(self.color_by_feature_clustermap_ani_watcher)
+                self.is_continuous_clustermap_ani.param.unwatch(self.continuous_clustermap_ani_watcher)
+                self.jitter_feature_select_ani.param.unwatch(self.jitter_feature_ani_watcher)
+                self.is_continuous_network_ani.param.unwatch(self.continuous_network_ani_watcher)
+                self.nodes_colormap_ani.param.unwatch(self.colormap_ani_watcher)
+                self.custom_colormap_input_ani.param.unwatch(self.custom_colormap_ani_watcher)
+                self.nodes_color_by_ani.param.unwatch(self.nodes_colorby_ani_watcher)
+                self.nodes_highlight_by_ani.param.unwatch(self.nodes_highlight_by_ani_watcher)
+
         self.visited_ANI_tab = 1
 
         self.is_continuous_clustermap_ani.value = False
@@ -1698,8 +1829,15 @@ class StrainVisApp:
             # Add the plots to the layout
             self.create_jitter_pane_ani(self.ani_scores_selected_genome_df)
             self.create_clustermap_pane_ani(self.ani_scores_selected_genome_df)
+            self.create_network_pane_ani(self.ani_scores_selected_genome_df)
 
-            plots_column = pn.Column(self.jitter_card_ani, pn.Spacer(height=20), self.clustermap_card_ani)
+            plots_column = pn.Column(
+                self.jitter_card_ani,
+                pn.Spacer(height=20),
+                self.clustermap_card_ani,
+                pn.Spacer(height=20),
+                self.network_card_ani
+            )
             self.ani_single_plots_column.append(plots_column)
 
         # Display a message that the species is not found in the ANI input file
@@ -3421,6 +3559,547 @@ class StrainVisApp:
                                        metadata_dict=self.metadata_dict)
 
         self.network_pane.object = self.network_plot_hv
+    def change_continuous_state_network_ani(self, event):
+        # Continuous feature
+        if self.is_continuous_network_ani.value:
+            #print("\nIn change_continuous_state. Continuous feature")
+
+            # Verify that the feature is indeed continuous
+            nodes_feature = self.nodes_color_by_ani.value
+            unique_groups = list(set([self.network_ani.nodes[node][nodes_feature] for node in self.network_ani.nodes()]))
+            str_type = 0
+            for group in unique_groups:
+                if isinstance(group, str):
+                    str_type = 1
+
+            # Feature is not really continuous, treat as categorical
+            if str_type == 1:
+                #print("The feature is not really continuous - uncheck...")
+                self.is_continuous_network_ani.value = False
+
+            # Feature is indeed really continuous
+            else:
+                self.nodes_colormap_ani.options = config.continuous_colormap_dict
+                self.nodes_colormap_ani.value = config.continuous_colormap_dict['plasma_r']
+
+        # Categorical feature
+        else:
+            #print("\nIn change_continuous_state. Categorical feature")
+            self.nodes_colormap_ani.options = config.categorical_colormap_dict
+            self.nodes_colormap_ani.value = config.categorical_colormap_dict['cet_glasbey']
+
+    def change_colormap_network_ani(self, event):
+        #print("\nIn change_colormap. Continuous state = " + str(self.is_continuous.value))
+        self.update_network_plot_ani()
+
+    def get_custom_colormap_network_ani(self, event):
+        #print("\nIn change_colormap. Continuous state = " + str(self.is_continuous.value))
+        self.update_network_plot_ani()
+
+    def set_not_continuous_network_ani(self, event):
+        #print("\nIn set_not_continuous")
+        self.is_continuous_network_ani.value = False
+        self.update_network_plot_ani()
+
+    def fill_feature_groups_ani(self, event):
+        feature = self.nodes_highlight_by_ani.value
+        unique_groups = sorted(list(set([str(self.network_ani.nodes[node][feature]) for node in self.network_ani.nodes()])))
+        # print("\nUnique groups:")
+        # print(unique_groups)
+        if 'nan' in unique_groups:
+            unique_groups.remove('nan')
+            unique_groups.append('nan')
+        self.nodes_highlight_group_select_ani.options = unique_groups
+        self.nodes_highlight_group_select_ani.value = unique_groups[0]
+
+        self.update_network_plot_ani()
+
+    def create_network_pane_ani(self, ani_scores_selected_genome_df):
+        mean_only = 0
+        mean_std_only = 0
+        mean_std = 0
+        mean_2_std = 0
+
+        init_button = pn.widgets.Button(name='Initialize nodes positions', button_type='primary',
+                                        button_style='outline')
+        init_button.on_click(self.init_positions_ani)
+        init_button_row = pn.Row(init_button, align='center')
+
+        styling_title = "Network customization options:"
+        nodes_cust_title = pn.pane.Markdown("Nodes customizations:",
+                                            styles={'font-size': "15px", 'font-weight': "bold", 'margin': "0 0 0 15px"})
+        edges_cust_title = pn.pane.Markdown("Edges customizations:",
+                                            styles={'font-size': "15px", 'font-weight': "bold", 'margin': "0 0 0 15px"})
+        no_metadata_colors_row = pn.Row(self.network_node_color_ani, pn.Spacer(width=10), self.network_edge_color_ani)
+        continuous_col = pn.Column(pn.Spacer(height=20), self.is_continuous_network_ani)
+        nodes_color_by_row = pn.Row(self.nodes_color_by_ani, continuous_col, styles={'margin': "0 0 0 8px"})
+        edges_color_by_row = pn.Row(self.edges_color_by_ani, self.network_within_color_ani, pn.Spacer(width=3),
+                                    self.network_between_color_ani, styles={'margin': "0 0 10px 5px"})
+        highlight_nodes_row = pn.Row(self.nodes_highlight_by_ani, self.nodes_highlight_group_select_ani,
+                                     styles={'margin': "0 0 0 5px"})
+        metadata_coloring_col = pn.Column(nodes_cust_title,
+                                          nodes_color_by_row,
+                                          self.nodes_colormap_ani,
+                                          self.custom_colormap_input_ani,
+                                          pn.Spacer(height=15),
+                                          self.highlight_nodes_by_feature_ani,
+                                          highlight_nodes_row,
+                                          pn.Spacer(height=10),
+                                          edges_cust_title,
+                                          self.color_edges_by_feature_ani,
+                                          edges_color_by_row)
+        self.metadata_colorby_card_ani.append(metadata_coloring_col)
+        network_threshold_row = pn.Row(self.network_threshold_select_ani, self.network_threshold_input_ani)
+        params_col = pn.Column(network_threshold_row,
+                               self.network_iterations_ani,
+                               init_button_row)
+        self.layout_parameters_card_ani.append(params_col)
+        highlight_sample_row = pn.Row(self.highlight_sample_chkbox_ani, self.highlight_sample_input_ani)
+        show_labels_col = pn.Column(pn.Spacer(height=5), self.show_labels_chkbox_ani)
+        show_labels_row = pn.Row(show_labels_col, self.all_or_highlighted_select_ani)
+        styling_col = pn.Column(pn.pane.Markdown(styling_title, styles={'font-size': "15px", 'font-weight': "bold",
+                                                                        'color': config.title_blue_color,
+                                                                        'margin': "0"}),
+                                self.layout_parameters_card_ani,
+                                pn.Spacer(height=5),
+                                no_metadata_colors_row,
+                                pn.Spacer(height=5),
+                                self.use_metadata_network_ani,
+                                self.metadata_colorby_card_ani,
+                                pn.Spacer(height=5),
+                                highlight_sample_row,
+                                show_labels_row
+                                )
+
+        save_file_title = "Plot download options:"
+        download_button = pn.widgets.Button(name='Download high-resolution image', button_type='primary')
+        download_button.on_click(self.download_network_ani)
+
+        self.download_network_column_ani = pn.Column(pn.pane.Markdown(save_file_title,
+                                                                      styles={'font-size': "15px",
+                                                                              'font-weight': "bold",
+                                                                              'color': config.title_blue_color,
+                                                                              'margin': "0"}),
+                                                     self.network_image_format_ani, self.save_network_plot_path_ani,
+                                                     download_button, pn.pane.Markdown())
+        download_table_button = pn.widgets.Button(name='Download network data in tsv format', button_type='primary')
+        download_table_button.on_click(self.download_network_table_ani)
+
+        self.download_network_table_column_ani = pn.Column(self.save_network_table_path_ani, download_table_button,
+                                                           pn.pane.Markdown())
+
+        controls_col = pn.Column(styling_col, pn.Spacer(height=30), self.download_network_column_ani,
+                                 self.download_network_table_column_ani)
+
+        ########################################################
+        # Create a table for the network
+        self.df_for_network_ani = ani_scores_selected_genome_df.loc[:, ['Sample1', 'Sample2', 'ANI']].copy()
+
+        self.df_for_network_ani.loc[(self.df_for_network_ani['ANI'] < 0), 'ANI'] = 0
+        self.df_for_network_ani.loc[(self.df_for_network_ani['ANI'] == 1), 'ANI'] = 0.999999
+
+        # Set a score threshold for the connections (below it zero the weight).
+        # The default threshold is the mean APSS + 1std
+        mean_ANI = self.df_for_network_ani.loc[:, 'ANI'].mean().round(3)
+        std_ANI = self.df_for_network_ani.loc[:, 'ANI'].std().round(3)
+
+        # Set the default connections threshold
+        if mean_ANI <= 0.999:
+            self.ani_connections_threshold = mean_ANI
+        else:
+            self.ani_connections_threshold = 0.999
+        self.df_for_network_ani['weight'] = np.where(self.df_for_network_ani['ANI'] >= self.ani_connections_threshold,
+                                                     np.negative(np.log(1 - self.df_for_network_ani['ANI'])), 0)
+        #print("\nDF for network:")
+        #print(self.df_for_network)
+        print("\ncreate_network_pane_ani:")
+        print("Mean ANI: " + str(mean_ANI))
+        print("Standard deviation ANI: " + str(std_ANI) + "\n")
+
+        # Update the placeholder of the filenames for download with the default threshold.
+        network_file = "Network_plot_ANI_" + self.ref_genome + "_" + self.network_iterations_ani.value + \
+                       "_iterations_threshold_" + str(self.ani_connections_threshold)
+        self.save_network_plot_path_ani.placeholder = network_file
+        table_file = "Network_" + self.ref_genome + "_threshold_" + str(self.ani_connections_threshold)
+        self.save_network_table_path_ani.placeholder = table_file
+
+        # Create a network using networkx
+        self.network_ani = nx.from_pandas_edgelist(self.df_for_network_ani, source='Sample1', target='Sample2',
+                                                   edge_attr='weight')
+        self.nodes_list_ani = list(self.network_ani.nodes)
+        nodes_num = len(self.nodes_list_ani)
+        #print("\nNumber of nodes in the network = " + str(nodes_num))
+
+        # If the number of nodes in the network exceeds the defined maximum, do not create the plot
+        # and display only a message + a possibility to download the network data in tsv format
+        if nodes_num > config.max_network_nodes:
+            error = "The number of samples exceeds the limit of 300, so the network cannot be presented with all its " \
+                    "interactive features."
+            suggestion = "It ia possible to download the network data in tsv format and visualize it using another " \
+                         "program."
+            network_col = pn.Column(
+                pn.pane.Markdown(error, styles={'font-size': "16px",
+                                                'color': config.title_red_color,
+                                                'margin-bottom': "0"}),
+                pn.pane.Markdown(suggestion,
+                                 styles={'font-size': "14px", 'margin-top': "0"}),
+                self.download_network_table_column_ani,
+                styles={'padding': "15px"})
+
+            self.network_card_ani.append(network_col)
+
+        # Display the full network pane, including the plot
+        else:
+            # Initialize the network positions
+            self.generate_rand_positions_ani()
+
+            # Add the actual threshold value to the network_threshold_select widget
+            self.network_threshold_input_ani.disabled = True
+            self.network_threshold_select_ani.options = []
+
+            if mean_ANI >= 0.999:
+                mean_ANI = 0.999
+                str_mean = config.network_thresholds_options_ani[0] + " (ANI=0.999)"
+                self.network_threshold_select_ani.options.append(str_mean)
+                mean_only = 1
+
+            else:
+                str_mean = config.network_thresholds_options_ani[0] + " (ANI=" + str(mean_ANI) + ")"
+                self.network_threshold_select_ani.options.append(str_mean)
+
+                mean_std = round((mean_ANI + std_ANI), 3)
+                if mean_std >= 0.999:
+                    mean_std = 0.999
+                    str_mean_std = config.network_thresholds_options_ani[1] + " (ANI=0.999)"
+                    self.network_threshold_select_ani.options.append(str_mean_std)
+                    mean_std_only = 1
+
+                else:
+                    str_mean_std = config.network_thresholds_options_ani[1] + " (ANI=" + str(mean_std) + ")"
+                    self.network_threshold_select_ani.options.append(str_mean_std)
+
+                    # Add the mean + 2std option only if it's <= 0.999 (and mean + 1std also <= 0.99)
+                    mean_2_std = round((mean_ANI + 2 * std_ANI), 3)
+                    if mean_2_std <= 0.999:
+                        str_mean_2_std = config.network_thresholds_options_ani[2] + " (ANI=" + str(mean_2_std) + ")"
+                        self.network_threshold_select_ani.options.append(str_mean_2_std)
+                    else:
+                        mean_std_only = 1
+
+            self.network_threshold_select_ani.options.append(config.network_thresholds_options_ani[3])
+            # Only mean - set this as the default
+            #if mean_only:
+            self.network_threshold_select_ani.value = self.network_threshold_select_ani.options[0]
+            # At least mean+std option available -> set this as the default
+            #else:
+            #    self.network_threshold_select_ani.value = self.network_threshold_select_ani.options[1]
+
+            # Set watchers for the threshold widgets
+            self.threshold_select_ani_watcher = self.network_threshold_select_ani.param.watch(partial(
+                self.changed_threshold_select_ani, mean_ANI, mean_std, mean_2_std, mean_only, mean_std_only), 'value',
+                onlychanged=True)
+            self.threshold_input_ani_watcher = self.network_threshold_input_ani.param.watch(self.changed_threshold_input_ani,
+                                                                                            'value', onlychanged=True)
+            self.highlight_sample_ani_watcher = self.highlight_sample_input_ani.param.watch(self.change_highlighted_sample_ani,
+                                                                                            'value', onlychanged=True)
+
+            # There is metadata
+            if self.is_metadata:
+
+                # Insert the features information as nodes attributes
+                for node in self.nodes_list_ani:
+                    for feature in self.metadata_features_list:
+                        self.network_ani.nodes[node][feature] = self.metadata_dict[feature][node]
+
+                    # Add node attribute 'SampleID' for the hover tooltip
+                    self.network_ani.nodes[node]['SampleID'] = node
+
+                # Update the color by- drop-down menus with the available metadata features
+                first_feature = self.metadata_features_list[0]
+                self.nodes_color_by_ani.options = self.metadata_features_list
+                self.nodes_color_by_ani.value = first_feature
+                self.edges_color_by_ani.options = self.metadata_features_list
+                self.edges_color_by_ani.value = first_feature
+                self.nodes_highlight_by_ani.options = self.metadata_features_list
+                self.nodes_highlight_by_ani.value = first_feature
+                # Fill the groups for the first feature
+                unique_groups = sorted(list(set([str(self.network_ani.nodes[node][first_feature])
+                                                 for node in self.network_ani.nodes()])))
+                if 'nan' in unique_groups:
+                    unique_groups.remove('nan')
+                    unique_groups.append('nan')
+                self.nodes_highlight_group_select_ani.options = unique_groups
+                self.nodes_highlight_group_select_ani.value = unique_groups[0]
+
+                self.nodes_colorby_ani_watcher = self.nodes_color_by_ani.param.watch(
+                    self.set_not_continuous_network_ani, 'value', onlychanged=True)
+                self.continuous_network_ani_watcher = self.is_continuous_network_ani.param.watch(
+                    self.change_continuous_state_network_ani, 'value', onlychanged=True)
+                self.colormap_ani_watcher = self.nodes_colormap_ani.param.watch(self.change_colormap_network_ani,
+                                                                                'value', onlychanged=True)
+                self.custom_colormap_ani_watcher = self.custom_colormap_input_ani.param.watch(
+                    self.get_custom_colormap_network_ani, 'value', onlychanged=True)
+                self.nodes_highlight_by_ani_watcher = self.nodes_highlight_by_ani.param.watch(
+                    self.fill_feature_groups_ani, 'value', onlychanged=True)
+
+            # No metadata
+            else:
+                self.use_metadata_network_ani.disabled = True
+
+                # Add node attribute 'SampleID' for the hover tooltip
+                for node in self.nodes_list_ani:
+                    self.network_ani.nodes[node]['SampleID'] = node
+
+            # Create the network plot using the selected parameters
+            self.network_plot_hv_ani = pn.bind(ps.cretae_network_plot, network=self.network_ani,
+                                               is_metadata=self.use_metadata_network_ani,
+                                               nodes_feature=self.nodes_color_by_ani.value,
+                                               is_continuous=self.is_continuous_network_ani.value,
+                                               cmap=self.nodes_colormap_ani.value,
+                                               custom_cmap=self.custom_colormap_input_ani.value,
+                                               node_color=self.network_node_color_ani,
+                                               edge_color=self.network_edge_color_ani,
+                                               is_highlight_group=self.highlight_nodes_by_feature_ani,
+                                               highlight_feature=self.nodes_highlight_by_ani.value,
+                                               highlight_group=self.nodes_highlight_group_select_ani,
+                                               is_edge_colorby=self.color_edges_by_feature_ani,
+                                               edges_feature=self.edges_color_by_ani,
+                                               within_edge_color=self.network_within_color_ani,
+                                               between_edge_color=self.network_between_color_ani,
+                                               iterations=self.network_iterations_ani, pos_dict=self.pos_dict_ani,
+                                               show_labels=self.show_labels_chkbox_ani,
+                                               all_or_highlighted=self.all_or_highlighted_select_ani,
+                                               is_highlight_samples=self.highlight_sample_chkbox_ani,
+                                               samples_to_highlight=self.highlight_sample_input_ani.value,
+                                               metadata_dict=self.metadata_dict)
+            self.network_pane_ani = pn.pane.HoloViews(self.network_plot_hv_ani, height=600, width=700,
+                                                      sizing_mode="fixed")
+
+            network_row = pn.Row(controls_col, pn.Spacer(width=15), self.network_pane_ani, styles={'padding': "15px"})
+            self.network_card_ani.append(network_row)
+
+    def download_network_ani(self, event):
+        fformat = self.network_image_format_ani.value
+
+        # Update the placeholder of the filenames for download with the default threshold.
+        if self.use_metadata_network_ani.value:
+            if self.nodes_colormap_ani.value_name == 'Define custom colormap':
+                network_file = "Network_plot_ANI_" + self.ref_genome + "_" + \
+                               self.network_iterations_ani.value + "_iterations_threshold_" + \
+                               str(self.ani_connections_threshold) + "_colorby_" + self.nodes_color_by_ani.value + \
+                               "_custom_colormap"
+            else:
+                network_file = "Network_plot_ANI_" + self.ref_genome + "_" + \
+                               self.network_iterations.value + "_iterations_threshold_" + \
+                               str(self.ani_connections_threshold) + "_colorby_" + self.nodes_color_by_ani.value + "_" + \
+                               self.nodes_colormap_ani.value_name
+        else:
+            network_file = "Network_plot_ANI_" + self.ref_genome + "_" + \
+                           self.network_iterations_ani.value + "_iterations_threshold_" + \
+                           str(self.ani_connections_threshold)
+        if self.show_labels_chkbox_ani.value:
+            network_file += "_with_labels"
+
+        self.save_network_plot_path_ani.placeholder = network_file
+        table_file = "Network_ANI_" + self.ref_genome + "_threshold_" + str(self.ani_connections_threshold)
+        self.save_network_table_path_ani.placeholder = table_file
+
+        # Set the directory for saving
+        if self.save_network_plot_path_ani.value == "":
+            network_file_path = self.downloads_dir_path + self.save_network_plot_path_ani.placeholder + "." + fformat
+        else:
+            network_file_path = self.save_network_plot_path_ani.value
+
+            # Add a .png suffix if there is none
+            regex = r"^\S+\." + re.escape(fformat) + r"$"
+            if not re.search(regex, network_file_path, re.IGNORECASE):
+                network_file_path += "." + fformat
+
+            # If path is not absolute - save file basename under the downloads dir
+            if not os.path.isabs(network_file_path):
+                network_file_path = self.downloads_dir_path + network_file_path
+
+        # Get the updated matplotlib plot
+        self.network_plot_matplotlib_ani = pn.bind(ps.cretae_network_plot_matplotlib, network=self.network_ani,
+                                                   is_metadata=self.use_metadata_network_ani,
+                                                   nodes_feature=self.nodes_color_by_ani.value,
+                                                   is_continuous=self.is_continuous_network_ani.value,
+                                                   cmap=self.nodes_colormap_ani.value_name,
+                                                   custom_cmap=self.custom_colormap_input_ani.value,
+                                                   node_color=self.network_node_color_ani,
+                                                   edge_color=self.network_edge_color_ani,
+                                                   is_highlight_group=self.highlight_nodes_by_feature_ani,
+                                                   highlight_feature=self.nodes_highlight_by_ani.value,
+                                                   highlight_group=self.nodes_highlight_group_select_ani,
+                                                   is_edge_colorby=self.color_edges_by_feature_ani,
+                                                   edges_feature=self.edges_color_by_ani,
+                                                   within_edge_color=self.network_within_color_ani,
+                                                   between_edge_color=self.network_between_color_ani,
+                                                   iterations=self.network_iterations_ani, pos_dict=self.pos_dict_ani,
+                                                   show_labels=self.show_labels_chkbox_ani,
+                                                   all_or_highlighted=self.all_or_highlighted_select_ani,
+                                                   is_highlight_samples=self.highlight_sample_chkbox_ani,
+                                                   samples_to_highlight=self.highlight_sample_input_ani.value,
+                                                   metadata_dict=self.metadata_dict)
+
+        # Save the network plot in the requested format using matplotlib
+        self.network_plot_matplotlib_ani().savefig(network_file_path, format=fformat, dpi=300.0, bbox_inches='tight')
+
+        download_message = "The image is successfully saved under:\n" + network_file_path
+        markdown = pn.pane.Markdown(download_message, styles={'font-size': "12px", 'color': config.title_red_color})
+        download_floatpanel = pn.layout.FloatPanel(markdown, name='Download message', margin=10)
+        self.download_network_column_ani.pop(4)
+        self.download_network_column_ani.append(download_floatpanel)
+
+    def download_network_table_ani(self, event):
+        fformat = "txt"
+
+        # Set the directory for saving
+        if self.save_network_table_path_ani.value == "":
+            network_table_path = self.downloads_dir_path + self.save_network_table_path_ani.placeholder + "." + fformat
+        else:
+            network_table_path = self.save_network_table_path_ani.value
+
+            # Add a file-format suffix if there is none
+            regex = r"^\S+\." + re.escape(fformat) + r"$"
+            if not re.search(regex, network_table_path, re.IGNORECASE):
+                network_table_path += "." + fformat
+
+            # If path is not absolute - save file basename under the downloads dir
+            if not os.path.isabs(network_table_path):
+                network_table_path = self.downloads_dir_path + network_table_path
+
+        self.df_for_network_ani.to_csv(network_table_path, index=False, sep='\t')
+
+        download_message = "The table is successfully saved under:\n" + network_table_path
+        markdown = pn.pane.Markdown(download_message, styles={'font-size': "12px", 'color': config.title_red_color})
+        download_floatpanel = pn.layout.FloatPanel(markdown, name='Download message', margin=10)
+        self.download_network_table_column_ani.pop(2)
+        self.download_network_table_column_ani.append(download_floatpanel)
+
+    def init_positions_ani(self, event):
+        self.generate_rand_positions_ani()
+        self.update_network_plot_ani()
+
+    def generate_rand_positions_ani(self):
+        self.pos_dict_ani = {}
+
+        for node in self.nodes_list_ani:
+            pos_x = generate_rand_pos()
+            pos_y = generate_rand_pos()
+            pos_tuple = (pos_x, pos_y)
+            self.pos_dict_ani[node] = pos_tuple
+
+    def changed_threshold_select_ani(self, mean, mean_std, mean_2_std, mean_only, mean_std_only, event):
+        #print("\nchanged_threshold_select:")
+        #print("Current mean: " + str(mean))
+
+        if self.network_threshold_select_ani.value == self.network_threshold_select_ani.options[0]:
+            self.ani_connections_threshold = mean
+            self.network_threshold_input_ani.disabled = True
+
+        elif self.network_threshold_select_ani.value == self.network_threshold_select_ani.options[1]:
+            # The second option is the custom threshold
+            if mean_only:
+                self.ani_connections_threshold = self.network_threshold_input_ani.value
+                self.network_threshold_input_ani.disabled = False
+            else:
+                self.ani_connections_threshold = mean_std
+                self.network_threshold_input_ani.disabled = True
+
+        elif self.network_threshold_select_ani.value == self.network_threshold_select_ani.options[2]:
+            # The third option is the custom threshold
+            if mean_std_only:
+                self.ani_connections_threshold = self.network_threshold_input_ani.value
+                self.network_threshold_input_ani.disabled = False
+            else:
+                self.ani_connections_threshold = mean_2_std
+                self.network_threshold_input_ani.disabled = True
+        else:
+            self.ani_connections_threshold = self.network_threshold_input_ani.value
+            self.network_threshold_input_ani.disabled = False
+
+        self.change_weight_attribute_ani()
+
+    def changed_threshold_input_ani(self, event):
+        #print("\nIn changed_threshold_input")
+        self.ani_connections_threshold = self.network_threshold_input_ani.value
+        self.change_weight_attribute_ani()
+
+    def change_weight_attribute_ani(self):
+
+        self.ani_connections_threshold = round(self.ani_connections_threshold, 3)
+        print("\nchange_weight_attribute_ani:")
+        print("ANI_connections_threshold = " + str(self.ani_connections_threshold))
+
+        # Update the threshold in the deafult filenames for download
+        network_file = "Network_plot_ANI_" + self.ref_genome + "_" + \
+                       self.network_iterations_ani.value + "_iterations_threshold_" + str(self.ani_connections_threshold)
+        self.save_network_plot_path_ani.placeholder = network_file
+        table_file = "Network_" + self.ref_genome + "_threshold_" + str(self.ani_connections_threshold)
+        self.save_network_table_path_ani.placeholder = table_file
+
+        # Recalculate the weights
+        self.df_for_network_ani['weight'] = np.where(self.df_for_network_ani['ANI'] >= self.ani_connections_threshold,
+                                                     np.negative(np.log(1 - self.df_for_network_ani['ANI'])), 0)
+        #print(self.df_for_network)
+
+        before = time.time()
+        # Create a new network from the updated df using networkx
+        self.network_ani = nx.from_pandas_edgelist(self.df_for_network_ani, source='Sample1', target='Sample2',
+                                                   edge_attr='weight')
+        self.nodes_list_ani = list(self.network_ani.nodes)
+
+        if self.is_metadata:
+            # Insert the features information as nodes attributes to the new network
+            for node in self.nodes_list_ani:
+                for feature in self.metadata_features_list:
+                    self.network_ani.nodes[node][feature] = self.metadata_dict[feature][node]
+
+                # Add node attribute 'SampleID' for the hover tooltip
+                self.network_ani.nodes[node]['SampleID'] = node
+
+        after = time.time()
+        duration = after - before
+        #print("Creating a new network took " + str(duration) + " seconds.\n")
+
+        before = time.time()
+        self.update_network_plot_ani()
+        after = time.time()
+        duration = after - before
+        print("Updating the network plot took " + str(duration) + " seconds.\n")
+
+    def change_highlighted_sample_ani(self, event):
+        print("\nIn change_highlighted_sample_ani")
+        print("Samples to highlight: " + self.highlight_sample_input_ani.value)
+        self.update_network_plot_ani()
+
+    # Update the network plot using the selected parameters and the new positions dict
+    def update_network_plot_ani(self):
+        #print("\nIn update_network_plot")
+        self.network_plot_hv_ani = pn.bind(ps.cretae_network_plot, network=self.network_ani,
+                                           is_metadata=self.use_metadata_network_ani,
+                                           nodes_feature=self.nodes_color_by_ani.value,
+                                           is_continuous=self.is_continuous_network_ani.value,
+                                           cmap=self.nodes_colormap_ani.value,
+                                           custom_cmap=self.custom_colormap_input_ani.value,
+                                           node_color=self.network_node_color_ani,
+                                           edge_color=self.network_edge_color_ani,
+                                           is_highlight_group=self.highlight_nodes_by_feature_ani,
+                                           highlight_feature=self.nodes_highlight_by_ani.value,
+                                           highlight_group=self.nodes_highlight_group_select_ani,
+                                           is_edge_colorby=self.color_edges_by_feature_ani,
+                                           edges_feature=self.edges_color_by_ani,
+                                           within_edge_color=self.network_within_color_ani,
+                                           between_edge_color=self.network_between_color_ani,
+                                           iterations=self.network_iterations_ani, pos_dict=self.pos_dict_ani,
+                                           show_labels=self.show_labels_chkbox_ani,
+                                           all_or_highlighted=self.all_or_highlighted_select_ani,
+                                           is_highlight_samples=self.highlight_sample_chkbox_ani,
+                                           samples_to_highlight=self.highlight_sample_input_ani.value,
+                                           metadata_dict=self.metadata_dict)
+
+        self.network_pane_ani.object = self.network_plot_hv_ani
 
     def create_combined_scatter_pane(self, APSS_ANI_selected_genome_df):
 

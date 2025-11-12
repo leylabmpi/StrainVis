@@ -1,6 +1,6 @@
 # StrainVis: a Python-based web application for interactive visual analysis of strain-tracking methods
 
-### Version 1.0.6
+### Version 1.0.7
 
 - [Overview](#overview)
 - [Installation](#installation)
@@ -330,7 +330,9 @@ They appear in at least 50% of the compared sample-pairs.
 The following analyses are provided for the ANI results:
 - **ANI distribution plot**: Shows the ANI distribution among all the sample pairs.
 - **Clustered heatmap plot**: Presents the ANI of the pairwise comparisons as a clustered heatmap.
+- **Network plot**: Presents the samples as a 2D network using the Fruchterman-Reingold force-directed graph layout.
 
+These plots are similar to the ones created for the SynTracker results.
 Detailed information about these plots and their customization options can be found under the section 
 'APSS-based analyses' of the SynTracker results.
 

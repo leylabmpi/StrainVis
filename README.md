@@ -1,6 +1,6 @@
 # StrainVis: a Python-based web application for interactive visual analysis of strain-tracking methods
 
-### Version 1.0.6
+### Version 1.0.7
 
 ## Overview
 

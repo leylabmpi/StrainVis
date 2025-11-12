@@ -107,8 +107,8 @@ def create_sorted_by_pairs_genomes_list_ani(ani_scores_all_genomes_df):
     print(pairs_num_df)
 
     genomes_list_by_pairs_num = list(pairs_num_df['Ref_genome'])
-    print("\nGenomes list sorted by pairs number:")
-    print(genomes_list_by_pairs_num)
+    #print("\nGenomes list sorted by pairs number:")
+    #print(genomes_list_by_pairs_num)
 
     return genomes_list_by_pairs_num
 
