@@ -22,6 +22,8 @@ import StrainVis_app.data_manipulation_multi as dm
 import StrainVis_app.plots_single_genome as ps
 import StrainVis_app.plots_multi_genomes as pm
 import StrainVis_app.widgets as widgets
+import matplotlib
+matplotlib.use('agg')
 pn.extension(disconnect_notification='Connection lost, try reloading the page!')
 pn.extension('floatpanel')
 
