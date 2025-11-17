@@ -1,6 +1,6 @@
 # StrainVis: a Python-based web application for interactive visual analysis of strain-tracking methods
 
-### Version 1.0.7
+### Version 1.0.9
 
 - [Overview](#overview)
 - [Installation](#installation)
@@ -121,6 +121,9 @@ be typed into the TextInput field.
 #### Optional input:
 A metadata file in tab-delimited format. The first column must contain the sample IDs, that should match the sample IDs
 in the uploaded input file(s). The metadata file may contain an unlimited number of columns (features).
+
+#### Sample input:
+Sample input files of all three kinds are found under the 'Input_example/' directory.
 
 ## Visual analyses
 

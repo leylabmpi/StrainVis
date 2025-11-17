@@ -1,0 +1,1218 @@
+ParticipantID	FamilyID	InfantAdult	SamplingLocation	CurrLocation	CurrCountry	CurrState_Province	CurrVillage_City	Age_years(adults_only)	Age_years	Age_months	Sex	Expat	BirthContinent	BirthCountry	ProfessionCategory	Smoker	Alcohol
+G0001	G0001	Adult	CERMEL	"Cher, France"	France	Centre-Loire_Valley	Cher	51	51	NA	F	1	Europe	France	Non_officeworker	1	1
+G0002	G0002	Adult	CERMEL	"Munchwilen, Switzerland"	Switzerland	Thurgau	Munchwilen	62	62	NA	F	1	Europe	Switzerland	Non_officeworker	1	1
+G0003	G0003	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	32	32	NA	F	0	Africa	Cameroon	Non_officeworker	0	0
+G0004	G0004	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	32	32	NA	F	0	Africa	Gabon	Officeworker	0	0
+G0005	G0005	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	23	23	NA	F	1	Europe	Germany	Student	0	1
+G0006	G0006	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	18	18	NA	F	0	Africa	Gabon	Student	0	0
+G0008	G0008	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	23	23	NA	F	0	Africa	Gabon	Housewife	0	1
+G0010	G0010	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	23	23	NA	F	0	Africa	Gabon	Student	0	1
+G0012	G0012	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	30	30	NA	F	0	Africa	Gabon	Non_officeworker	0	NA
+G0014	G0014	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	29	29	NA	F	0	Africa	Gabon	Other	0	0
+G0016	G0016	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	26	26	NA	F	0	Africa	NA	NA	NA	NA
+G0018	G0018	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	19	19	NA	F	0	Africa	Gabon	Unemployed	0	0
+G0020	G0020	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	23	23	NA	F	0	Africa	Gabon	Farmer	0	0
+G0023	G0023	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	24	24	NA	F	0	Africa	Gabon	Student	0	1
+G0024	G0024	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	23	23	NA	F	0	Africa	Gabon	Student	NA	1
+G0027	G0027	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	20	20	NA	F	0	Africa	Gabon	Student	0	0
+G0028	G0028	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	18	18	NA	F	0	Africa	Gabon	NA	NA	NA
+G0030	G0030	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	20	20	NA	F	0	Africa	Gabon	Student	0	0
+G0032	G0032	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	37	37	NA	F	0	Africa	Gabon	Housewife	0	0
+G0034	G0034	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	27	27	NA	F	0	Africa	Gabon	NA	NA	NA
+G0035	G0035	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	35	35	NA	F	0	Africa	Gabon	Non_officeworker	0	0
+G0038	G0038	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	24	24	NA	F	0	Africa	Gabon	Student	0	0
+G0040	G0040	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	21	21	NA	F	0	Africa	Gabon	Student	0	NA
+G0042	G0042	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	32	32	NA	F	0	Africa	Gabon	Housewife	0	1
+G0044	G0044	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	35	35	NA	F	0	Africa	Gabon	Housewife	0	0
+G0046	G0046	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	23	23	NA	F	0	Africa	Gabon	Student	0	0
+G0048	G0048	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	25	25	NA	F	0	Africa	Gabon	Housewife	0	1
+G0051	G0051	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	17	17	NA	F	0	Africa	Gabon	Farmer	0	1
+G0053	G0053	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	20	20	NA	F	0	Africa	Gabon	Unemployed	0	1
+G0055	G0055	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	42	42	NA	F	0	Africa	Gabon	Unemployed	0	0
+G0057	G0057	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	23	23	NA	F	0	Africa	Gabon	Unemployed	0	1
+G0059	G0059	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	34	34	NA	F	0	Africa	Gabon	Non_officeworker	0	1
+G0061	G0061	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	41	41	NA	F	0	Africa	Gabon	Unemployed	0	1
+G0063	G0063	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	22	22	NA	F	0	Africa	Gabon	Student	0	0
+G0065	G0065	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	21	21	NA	F	0	Africa	Gabon	Unemployed	0	0
+G0067	G0067	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	19	19	NA	F	0	Africa	Gabon	Student	0	1
+G0069	G0069	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	23	23	NA	F	0	Africa	Gabon	Unemployed	0	1
+G0071	G0071	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	20	20	NA	F	0	Africa	Gabon	Student	0	0
+G0073	G0073	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	32	32	NA	F	0	Africa	Gabon	Unemployed	0	1
+G0075	G0075	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	25	25	NA	F	0	Africa	Gabon	Unemployed	0	1
+G0078	G0078	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	19	19	NA	F	0	Africa	Gabon	Student	0	0
+G0080	G0080	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	30	30	NA	F	0	Africa	Gabon	Non_officeworker	0	1
+G0082	G0082	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	35	35	NA	F	0	Africa	Gabon	Non_officeworker	0	1
+G0085	G0085	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	30	30	NA	F	0	Africa	Gabon	Unemployed	0	1
+G0087	G0087	Adult	CERMEL	"Paga, Gabon"	Gabon	Moyen-Ogooue	Paga	30	30	NA	F	0	Africa	Gabon	Unemployed	0	1
+G0089	G0089	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	21	21	NA	F	0	Africa	Gabon	Non_officeworker	0	0
+G0091	G0091	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	23	23	NA	F	0	Africa	Gabon	Student	0	1
+G0093	G0093	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	26	26	NA	F	0	Africa	Gabon	Non_officeworker	0	1
+G0095	G0095	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	33	33	NA	F	0	Africa	Gabon	Unemployed	0	1
+G0097	G0097	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	27	27	NA	F	0	Africa	Gabon	Housewife	0	1
+G0099	G0099	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	34	34	NA	F	0	Africa	Gabon	Non_officeworker	0	1
+G0101	G0101	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	25	25	NA	F	0	Africa	Gabon	Unemployed	0	0
+G0103	G0103	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	30	30	NA	F	0	Africa	Gabon	Unemployed	0	0
+G0105	G0105	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	23	23	NA	F	0	Africa	Gabon	Student	0	0
+G0107	G0107	Adult	CERMEL	"Makouke, Gabon"	Gabon	Moyen-Ogooue	Makouke	35	35	NA	F	0	Africa	Gabon	Farmer	0	0
+G0109	G0109	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	18	18	NA	F	0	Africa	Gabon	Student	0	1
+G0111	G0111	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	25	25	NA	F	0	Africa	Gabon	Unemployed	0	1
+G0113	G0113	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	21	21	NA	F	0	Africa	Gabon	Unemployed	0	1
+G0115	G0115	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	23	23	NA	F	0	Africa	Gabon	Unemployed	0	1
+G0117	G0117	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	25	25	NA	F	0	Africa	Gabon	NA	0	0
+G0119	G0119	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	25	25	NA	F	1	Europe	Germany	Student	0	1
+G0120	G0120	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	29	29	NA	F	0	Africa	Gabon	Unemployed	0	1
+G0122	G0122	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	28	28	NA	F	1	Europe	Austria	Officeworker	0	1
+G0123	G0123	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	25	25	NA	F	1	Europe	Austria	Student	0	1
+G0124	G0124	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	30	30	NA	F	0	Africa	Gabon	Farmer	0	1
+G0126	G0126	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	19	19	NA	F	0	Africa	Gabon	Student	0	1
+G0128	G0128	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	32	32	NA	F	0	Africa	Gabon	Non_officeworker	0	0
+G0130	G0130	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	26	26	NA	F	0	Africa	Gabon	Student	0	1
+G0132	G0132	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	38	38	NA	F	0	Africa	Gabon	Officeworker	0	1
+G0134	G0134	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	25	25	NA	F	0	Africa	Gabon	Unemployed	0	1
+G0136	G0136	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	23	23	NA	F	0	Africa	Gabon	Unemployed	0	1
+G0138	G0138	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	41	41	NA	F	0	Africa	Gabon	Farmer	0	1
+G0140	G0140	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	23	23	NA	F	0	Africa	Gabon	Unemployed	0	1
+G0142	G0142	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	24	24	NA	F	0	Africa	Gabon	Unemployed	0	0
+G0144	G0144	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	31	31	NA	F	0	Africa	Gabon	Officeworker	0	1
+G0146	G0146	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	37	37	NA	F	0	Africa	Gabon	Unemployed	0	0
+G0148	G0148	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	26	26	NA	F	0	Africa	Gabon	Student	0	1
+G0150	G0150	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	23	23	NA	F	0	Africa	Gabon	Unemployed	0	0
+G0152	G0152	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	21	21	NA	F	0	Africa	Gabon	Unemployed	0	0
+G0154	G0154	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	22	22	NA	F	0	Africa	Gabon	Unemployed	0	0
+G0156	G0156	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	18	18	NA	F	0	Africa	Gabon	Student	0	1
+G0158	G0158	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	21	21	NA	F	0	Africa	Gabon	Student	0	0
+G0160	G0160	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	26	26	NA	F	0	Africa	Gabon	Unemployed	0	1
+G0162	G0162	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	23	23	NA	F	0	Africa	Gabon	Unemployed	0	1
+G0164	G0164	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	26	26	NA	F	0	Africa	Gabon	Unemployed	0	0
+G0166	G0166	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	25	25	NA	F	0	Africa	Gabon	Unemployed	0	0
+G0168	G0168	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	34	34	NA	F	0	Africa	Gabon	Unemployed	0	0
+G0170	G0170	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	21	21	NA	F	0	Africa	Gabon	Unemployed	0	0
+G0172	G0172	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	43	43	NA	F	0	Africa	Gabon	Unemployed	0	0
+G0174	G0174	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	31	31	NA	F	0	Africa	Gabon	Unemployed	0	0
+G0176	G0176	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	37	37	NA	F	0	Africa	Gabon	Non_officeworker	0	0
+G0178	G0178	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	24	24	NA	F	0	Africa	Gabon	Non_officeworker	0	1
+G0180	G0180	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	23	23	NA	F	0	Africa	Gabon	Unemployed	0	1
+G0182	G0182	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	25	25	NA	F	0	Africa	Gabon	Other	0	0
+G0184	G0184	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	40	40	NA	F	0	Africa	Gabon	Non_officeworker	0	0
+G0186	G0186	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	26	26	NA	F	0	Africa	Gabon	Student	0	0
+G0188	G0188	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	26	26	NA	F	0	Africa	Gabon	Unemployed	0	1
+G0190	G0190	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	21	21	NA	F	0	Africa	Gabon	Unemployed	0	1
+G0192	G0192	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	18	18	NA	F	0	Africa	Gabon	Student	0	0
+G0194	G0194	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	31	31	NA	F	0	Africa	Gabon	Unemployed	0	1
+G0196	G0196	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	19	19	NA	F	0	Africa	Gabon	Unemployed	0	0
+G0198	G0198	Adult	CERMEL	"Port-Gentil, Gabon"	Gabon	Ogooue-Maritime	Port-Gentil	25	25	NA	F	0	Africa	Gabon	Unemployed	0	0
+G0200	G0200	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	29	29	NA	F	0	Africa	Gabon	Housewife	0	1
+G0202	G0202	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	21	21	NA	F	0	Africa	Gabon	Unemployed	0	1
+G0204	G0204	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Lambarene	Lambarene	19	19	NA	F	0	Africa	Gabon	Unemployed	0	1
+G0206	G0206	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	22	22	NA	F	0	Africa	Gabon	Student	0	1
+G0208	G0208	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	22	22	NA	F	0	Africa	Gabon	Unemployed	0	0
+G0210	G0210	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	20	20	NA	F	0	Africa	Gabon	Unemployed	0	0
+G0212	G0212	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	31	31	NA	F	0	Africa	Gabon	Unemployed	0	1
+G0214	G0214	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	20	20	NA	F	0	Africa	Gabon	Unemployed	0	1
+G0216	G0216	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	21	21	NA	F	0	Africa	Gabon	Unemployed	0	1
+G0218	G0218	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	28	28	NA	F	0	Africa	Gabon	Student	0	0
+G0220	G0220	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	24	24	NA	F	0	Africa	Gabon	Unemployed	0	1
+G0222	G0222	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	35	35	NA	F	0	Africa	Gabon	Unemployed	0	1
+G0224	G0224	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	26	26	NA	F	0	Africa	Gabon	Non_officeworker	0	1
+G0226	G0226	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	24	24	NA	F	0	Africa	Gabon	Unemployed	0	0
+G0228	G0228	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	33	33	NA	F	0	Africa	Gabon	Farmer	0	1
+G0230	G0230	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	23	23	NA	F	0	Africa	Gabon	Unemployed	0	0
+G0232	G0232	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	23	23	NA	F	0	Africa	Gabon	Unemployed	1	1
+G0234	G0234	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	22	22	NA	F	0	Africa	Gabon	Unemployed	0	1
+G0236	G0236	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	27	27	NA	F	0	Africa	Gabon	Student	0	0
+G0238	G0238	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	21	21	NA	F	0	Africa	Gabon	Unemployed	0	0
+G0240	G0240	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	20	20	NA	F	0	Africa	Gabon	Unemployed	0	0
+G0242	G0242	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	28	28	NA	F	0	Africa	Gabon	Unemployed	0	1
+G0244	G0244	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	24	24	NA	F	1	Europe	Germany	Student	0	1
+G0245	G0245	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	22	22	NA	F	0	Africa	Gabon	Student	0	1
+G0247	G0247	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	23	23	NA	F	0	Africa	Gabon	Housewife	0	1
+G0249	G0249	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	19	19	NA	F	0	Africa	Gabon	Unemployed	0	1
+G0251	G0251	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	25	25	NA	F	0	Africa	Gabon	Unemployed	0	1
+G0253	G0253	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	19	19	NA	F	0	Africa	Gabon	Student	0	1
+G0255	G0255	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	23	23	NA	F	0	Africa	Gabon	Unemployed	0	0
+G0257	G0257	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	21	21	NA	F	1	Europe	Austria	Student	1	1
+G0258	G0258	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	31	31	NA	F	0	Africa	Gabon	Farmer	0	1
+G0260	G0260	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	20	20	NA	F	0	Africa	Gabon	Unemployed	0	0
+G0262	G0262	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	25	25	NA	F	0	Africa	Gabon	Unemployed	0	0
+G0264	G0264	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	22	22	NA	F	1	Europe	Austria	Student	1	1
+G0265	G0265	Adult	CERMEL	"Munich, Germany"	Germany	Bavaria	Munich	23	23	NA	F	1	Europe	Austria	Student	1	1
+G0266	G0266	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	40	40	NA	F	0	Africa	Gabon	Housewife	0	1
+G0268	G0268	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	31	31	NA	F	0	Africa	Cameroon	Non_officeworker	0	1
+G0270	G0270	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	38	38	NA	F	0	Africa	Gabon	Non_officeworker	0	0
+G0272	G0272	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	25	25	NA	F	0	Africa	Gabon	Unemployed	0	1
+G0274	G0274	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	23	23	NA	F	0	Africa	Gabon	Housewife	NA	NA
+G0276	G0276	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	27	27	NA	F	0	Africa	Gabon	Unemployed	NA	NA
+G0278	G0278	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	37	37	NA	F	0	Africa	Gabon	Non_officeworker	NA	NA
+G0281	G0281	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	21	21	NA	F	0	Africa	Gabon	Farmer	0	0
+G0282	G0282	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	19	19	NA	F	0	Africa	Gabon	Student	0	0
+G0283	G0283	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	30	30	NA	F	0	Africa	Gabon	Unemployed	0	0
+G0284	G0284	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	27	27	NA	F	0	Africa	Gabon	Unemployed	0	1
+G0285	G0285	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	27	27	NA	F	0	Africa	Gabon	Student	0	1
+G0286	G0286	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	35	35	NA	F	0	Africa	Gabon	Unemployed	0	1
+G0288	G0288	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	21	21	NA	F	0	Africa	Gabon	Student	0	1
+G0289	G0289	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	22	22	NA	F	0	Africa	Gabon	Student	0	0
+G0290	G0290	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	23	23	NA	F	0	Africa	Gabon	Unemployed	0	0
+G0291	G0291	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	37	37	NA	F	0	Africa	Gabon	Unemployed	0	0
+G0292	G0292	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	28	28	NA	F	0	Africa	Gabon	Housewife	1	1
+G0293	G0293	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	28	28	NA	F	0	Africa	Gabon	Unemployed	0	1
+G0295	G0295	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	30	30	NA	F	0	Africa	Gabon	Housewife	0	1
+G0297	G0297	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	33	33	NA	F	0	Africa	Gabon	Unemployed	0	0
+G0299	G0299	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	23	23	NA	F	0	Africa	Gabon	Student	0	0
+G0300	G0300	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	26	26	NA	F	0	Africa	Gabon	Unemployed	0	1
+G0301	G0301	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	34	34	NA	F	0	Africa	Gabon	Non_officeworker	0	0
+G0302	G0302	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	35	35	NA	F	0	Africa	Gabon	Non_officeworker	0	0
+G0303	G0303	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	44	44	NA	F	0	Africa	Gabon	Non_officeworker	0	1
+G0304	G0304	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	20	20	NA	F	0	Africa	Gabon	Unemployed	0	0
+G0305	G0305	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	37	37	NA	F	0	Africa	Gabon	Non_officeworker	0	0
+G0306	G0306	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	34	34	NA	F	0	Africa	Gabon	NA	0	0
+G0307	G0307	Adult	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	25	25	NA	F	0	Africa	Gabon	NA	0	1
+G0311	G0311	Adult	Field	"Tchibanga, Gabon"	Gabon	Nyanga	Tchibanga	21	21	NA	F	0	Africa	Gabon	Housewife	1	1
+G0313	G0313	Adult	Field	"Tchibanga, Gabon"	Gabon	Nyanga	Tchibanga	24	24	NA	F	0	Africa	Gabon	NA	1	1
+G0315	G0315	Adult	Field	"Tchibanga, Gabon"	Gabon	Nyanga	Tchibanga	25	25	NA	F	0	Africa	Gabon	Farmer	1	1
+G0317	G0317	Adult	Field	"Tchibanga, Gabon"	Gabon	Nyanga	Tchibanga	33	33	NA	F	0	Africa	Gabon	Farmer	1	1
+G0319	G0319	Adult	Field	"Tranquille, Gabon"	Gabon	Ngounie	Tranquille	40	40	NA	F	0	Africa	Gabon	Farmer	1	1
+G0321	G0321	Adult	Field	"Tranquille, Gabon"	Gabon	Ngounie	Tranquille	35	35	NA	F	0	Africa	Gabon	Farmer	1	1
+G0323	G0323	Adult	Field	"Tranquille, Gabon"	Gabon	Ngounie	Tranquille	30	30	NA	F	0	Africa	Gabon	Farmer	1	1
+G0325	G0325	Adult	Field	"Tranquille, Gabon"	Gabon	Ngounie	Tranquille	36	36	NA	F	0	Africa	Gabon	Farmer	1	1
+G0327	G0327	Adult	Field	"Tranquille, Gabon"	Gabon	Ngounie	Tranquille	26	26	NA	F	0	Africa	Gabon	Farmer	1	1
+G0329	G0329	Adult	Field	"Tranquille, Gabon"	Gabon	Ngounie	Tranquille	28	28	NA	F	0	Africa	Gabon	Farmer	0	1
+G0331	G0331	Adult	Field	"Tranquille, Gabon"	Gabon	Ngounie	Tranquille	35	35	NA	F	0	Africa	Gabon	Farmer	1	0
+G0333	G0333	Adult	Field	"Tranquille, Gabon"	Gabon	Ngounie	Tranquille	37	37	NA	F	0	Africa	Gabon	Farmer	1	1
+G0335	G0335	Adult	Field	"Ikobe, Gabon"	Gabon	Ngounie	Ikobe	18	18	NA	F	0	Africa	Gabon	NA	NA	NA
+G0337	G0337	Adult	Field	"Ikobe, Gabon"	Gabon	Ngounie	Ikobe	36	36	NA	F	0	Africa	Gabon	NA	NA	NA
+G0345	G0345	Adult	Field	"Soga, Gabon"	Gabon	Ngounie	Soga	22	22	NA	F	0	Africa	Gabon	Farmer	1	0
+G0348	G0348	Adult	Field	"Soga, Gabon"	Gabon	Ngounie	Soga	21	21	NA	F	0	Africa	Gabon	Farmer	1	1
+G0351	G0351	Adult	Field	"Soga, Gabon"	Gabon	Ngounie	Soga	26	26	NA	F	0	Africa	Gabon	Farmer	1	1
+G0354	G0354	Adult	Field	"Soga, Gabon"	Gabon	Ngounie	Soga	32	32	NA	F	0	Africa	Gabon	Farmer	1	1
+G0357	G0357	Adult	Field	"Soga, Gabon"	Gabon	Ngounie	Soga	22	22	NA	F	0	Africa	Gabon	Farmer	0	1
+G0361	G0361	Adult	Field	"Soga, Gabon"	Gabon	Ngounie	Soga	23	23	NA	F	0	Africa	Gabon	Farmer	0	1
+G0363	G0363	Adult	Field	"Soga, Gabon"	Gabon	Ngounie	Soga	24	24	NA	F	0	Africa	Gabon	Farmer	1	1
+G0367	G0367	Adult	Field	"Makabana, Gabon"	Gabon	Nyanga	Makabana	30	30	NA	F	0	Africa	Gabon	Farmer	1	1
+G0370	G0370	Adult	Field	"Iboundji, Gabon"	Gabon	Ngounie	Iboundji	38	38	NA	F	0	Africa	Gabon	Farmer	0	0
+G0372	G0372	Adult	Field	"Makabana, Gabon"	Gabon	Nyanga	Makabana	28	28	NA	F	0	Africa	Gabon	Farmer	0	0
+G0374	G0374	Adult	Field	"Iboundji, Gabon"	Gabon	Ngounie	Iboundji	41	41	NA	F	0	Africa	Gabon	Farmer	0	0
+G0376	G0376	Adult	Field	"Makabana, Gabon"	Gabon	Nyanga	Makabana	45	45	NA	F	0	Africa	Gabon	Farmer	0	1
+G0378	G0378	Adult	Field	"Omboue, Gabon"	Gabon	Ogooue-Maritime	Omboue	28	28	NA	F	0	Africa	Gabon	Farmer	0	1
+G0380	G0380	Adult	Field	"Omboue, Gabon"	Gabon	Ogooue-Maritime	Omboue	35	35	NA	F	0	Africa	Gabon	Farmer	0	1
+G0382	G0382	Adult	Field	"Nyoe2, Gabon"	Gabon	Ngounie	Nyoe2	33	33	NA	F	0	Africa	Gabon	Farmer	0	1
+G0384	G0384	Adult	Field	"Nyoe2, Gabon"	Gabon	Ngounie	Nyoe2	37	37	NA	F	0	Africa	Gabon	Farmer	0	1
+G0386	G0386	Adult	Field	"Nyoe2, Gabon"	Gabon	Ngounie	Nyoe2	18	18	NA	F	0	Africa	Gabon	Farmer	0	0
+G0389	G0389	Adult	Field	"Nyoe2, Gabon"	Gabon	Ngounie	Nyoe2	25	25	NA	F	0	Africa	Gabon	Farmer	0	1
+G0391	G0391	Adult	Field	"Nyoe2, Gabon"	Gabon	Ngounie	Nyoe2	23	23	NA	F	0	Africa	Gabon	Farmer	0	0
+G0393	G0393	Adult	Field	"Divinde, Gabon"	Gabon	Ngounie	Divinde	25	25	NA	F	0	Africa	Gabon	Farmer	0	0
+G0396	G0396	Adult	Field	"Divinde, Gabon"	Gabon	Ngounie	Divinde	18	18	NA	F	0	Africa	Gabon	Farmer	0	0
+G0398	G0398	Adult	Field	"Divinde, Gabon"	Gabon	Ngounie	Divinde	22	22	NA	F	0	Africa	Gabon	Unemployed	0	0
+G0400	G0400	Adult	Field	"Divinde, Gabon"	Gabon	Ngounie	Divinde	21	21	NA	F	0	Africa	Gabon	Farmer	0	1
+G0403	G0403	Adult	Field	"Divinde, Gabon"	Gabon	Ngounie	Divinde	35	35	NA	F	0	Africa	Gabon	Farmer	0	1
+G0405	G0405	Adult	Field	"Divinde, Gabon"	Gabon	Ngounie	Divinde	27	27	NA	F	0	Africa	Gabon	Farmer	0	1
+G0407	G0407	Adult	Field	"Divinde, Gabon"	Gabon	Ngounie	Divinde	37	37	NA	F	0	Africa	Gabon	Farmer	0	1
+G0411	G0411	Adult	Field	"Erouba, Gabon"	Gabon	Rural	Erouba	55	55	NA	F	0	Africa	Gabon	NA	NA	NA
+G0413	G0413	Adult	Field	"Erouba, Gabon"	Gabon	Rural	Erouba	35	35	NA	F	0	Africa	Gabon	NA	NA	NA
+G0416	G0416	Adult	Field	"Erouba, Gabon"	Gabon	Rural	Erouba	26	26	NA	F	0	Africa	Gabon	NA	NA	NA
+G0418	G0418	Adult	Field	"Erouba, Gabon"	Gabon	Rural	Erouba	24	24	NA	F	0	Africa	Gabon	NA	NA	NA
+G0420	G0420	Adult	Field	"Erouba, Gabon"	Gabon	Rural	Erouba	26	26	NA	F	0	Africa	Gabon	NA	NA	NA
+G0422	G0422	Adult	Field	"Erouba, Gabon"	Gabon	Rural	Erouba	32	32	NA	F	0	Africa	Gabon	NA	NA	NA
+G0424	G0424	Adult	Field	"Erouba, Gabon"	Gabon	Rural	Erouba	42	42	NA	F	0	Africa	Gabon	NA	NA	NA
+G0426	G0426	Adult	Field	"Sur_La_Route, Gabon"	Gabon	Rural	Sur_La_Route	NA	NA	NA	F	0	Africa	Gabon	NA	NA	NA
+G0427	G0427	Adult	Field	"Sur_La_Route, Gabon"	Gabon	Rural	Sur_La_Route	NA	NA	NA	F	0	Africa	Gabon	NA	NA	NA
+G0432	G0432	Adult	Field	"Sur_La_Route, Gabon"	Gabon	Rural	Sur_La_Route	NA	NA	NA	F	0	Africa	Gabon	NA	NA	NA
+G0433	G0433	Adult	Field	"Sur_La_Route, Gabon"	Gabon	Rural	Sur_La_Route	NA	NA	NA	F	0	Africa	Gabon	NA	NA	NA
+T001	T001	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	26	26	NA	F	0	NorthAmerica	USA	Student	0	1
+T002	T002	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	25	25	NA	F	0	Europe	France	Student	0	1
+T003	T003	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	32	32	NA	F	0	Europe	Germany	Housewife	0	0
+T005	T005	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	24	24	NA	F	0	Europe	Germany	Student	0	1
+T006	T006	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	34	34	NA	F	0	NorthAmerica	USA	Student	0	1
+T007	T007	Adult	ITM	"Nehren, Germany"	Germany	Baden-Wuerttemberg	Nehren	35	35	NA	F	0	Europe	Hungary	Officeworker	0	0
+T008	T008	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	40	40	NA	F	0	CentralAsia	Israel	Housewife	0	0
+T010	T010	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	24	24	NA	F	0	Europe	Poland	Student	0	1
+T011	T011	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	26	26	NA	F	0	Europe	CzechRepublic	Student	0	1
+T012	T012	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	24	24	NA	F	0	Europe	Germany	Student	0	0
+T013	T013	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	25	25	NA	F	0	Europe	Germany	Student	0	0
+T014	T014	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	23	23	NA	F	0	Europe	Germany	Student	0	1
+T015	T015	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	27	27	NA	F	0	Europe	Spain	Student	0	1
+T016	T016	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	25	25	NA	F	0	NorthAmerica	USA	Student	0	1
+T017	T017	Adult	ITM	"Ofterdingen, Germany"	Germany	Baden-Wuerttemberg	Ofterdingen	21	21	NA	F	0	Europe	Germany	Student	0	1
+T018	T018	Adult	ITM	"Reutlingen, Germany"	Germany	Baden-Wuerttemberg	Reutlingen	27	27	NA	F	0	CentralAsia	Kazakhstan	Student	0	1
+T019	T019	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	27	27	NA	F	0	Europe	Spain	Student	0	1
+T020	T020	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	23	23	NA	F	0	Europe	Italy	Student	0	1
+T021	T021	Adult	ITM	"NA, NA"	NA	NA	NA	33	33	NA	F	0	Europe	Germany	Non_officeworker	0	0
+T022	T022	Adult	ITM	"Boeblingen, Germany"	Germany	Baden-Wuerttemberg	Boeblingen	32	32	NA	F	0	Europe	Germany	Housewife	0	0
+T024	T024	Adult	ITM	"Pfullingen, Germany"	Germany	Baden-Wuerttemberg	Pfullingen	29	29	NA	F	0	Europe	Germany	Student	0	0
+T026	T026	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	35	35	NA	F	0	Europe	Germany	Housewife	0	0
+T027	T027	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	23	23	NA	F	0	Europe	Germany	Student	0	1
+T029	T029	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	27	27	NA	F	0	NorthAmerica	USA	Student	1	1
+T030	T030	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	35	35	NA	F	0	Europe	Italy	Officeworker	0	1
+T032	T032	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	36	36	NA	F	0	NorthAmerica	USA	Officeworker	0	1
+T033	T033	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	34	34	NA	F	0	NorthAmerica	Canada	Officeworker	0	1
+T034	T034	Adult	ITM	"Gomaringen, Germany"	Germany	Baden-Wuerttemberg	Gomaringen	29	29	NA	F	0	Europe	Germany	Student	0	0
+T036	T036	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	27	27	NA	F	0	Europe	Germany	Student	0	0
+T038	T038	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	37	37	NA	F	0	Europe	Germany	Housewife	0	0
+T040	T040	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	36	36	NA	F	0	Europe	Russia	Non_officeworker	0	0
+T042	T042	Adult	ITM	"Donaueschingen, Germany"	Germany	Baden-Wuerttemberg	Donaueschingen	27	27	NA	F	0	Europe	Germany	Student	0	0
+T044	T044	Adult	ITM	"Bad_Boll, Germany"	Germany	Baden-Wuerttemberg	Bad_Boll	34	34	NA	F	0	Europe	Belgium	Farmer	0	0
+T046	T046	Adult	ITM	"Stuttgart, Germany"	Germany	Baden-Wuerttemberg	Stuttgart	36	36	NA	F	0	Europe	Germany	Housewife	0	0
+T048	T048	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	34	34	NA	F	0	Europe	Germany	Officeworker	0	1
+T049	T049	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	28	28	NA	F	0	Europe	Germany	Student	0	1
+T050	T050	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	32	32	NA	F	0	Europe	Germany	Housewife	0	1
+T052	T052	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	33	33	NA	F	0	Europe	Germany	Housewife	0	1
+T054	T054	Adult	ITM	"Hechingen, Germany"	Germany	Baden-Wuerttemberg	Hechingen	27	27	NA	F	0	Europe	Germany	Officeworker	1	1
+T055	T055	Adult	ITM	"Rochester, USA"	USA	NY	Rochester	27	27	NA	F	1	NorthAmerica	USA	Student	0	1
+T056	T056	Adult	ITM	"Rottenburg_am_Neckar, Germany"	Germany	Baden-Wuerttemberg	Rottenburg_am_Neckar	25	25	NA	F	0	Europe	Germany	Student	1	1
+T057	T057	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	36	36	NA	F	0	Africa	Gabon	Housewife	0	1
+T058	T058	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	35	35	NA	F	0	Europe	Germany	Officeworker	0	0
+T060	T060	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	29	29	NA	F	0	Europe	Germany	Student	0	1
+T061	T061	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	29	29	NA	F	0	Europe	Germany	Housewife	0	0
+T063	T063	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	28	28	NA	F	0	Europe	Germany	Student	0	1
+T064	T064	Adult	ITM	"Nurtingen, Germany"	Germany	Baden-Wuerttemberg	Nurtingen	34	34	NA	F	0	Europe	Italy	Housewife	0	0
+T066	T066	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	36	36	NA	F	0	Europe	Germany	Housewife	0	0
+T068	T068	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	39	39	NA	F	0	Europe	Germany	Officeworker	0	0
+T069	T069	Adult	ITM	"Sindelfingen, Germany"	Germany	Baden-Wuerttemberg	Sindelfingen	31	31	NA	F	0	Europe	Poland	Non_officeworker	0	1
+T070	T070	Adult	ITM	"Gaertringen, Germany"	Germany	Baden-Wuerttemberg	Gaertringen	28	28	NA	F	0	Europe	Romania	Student	0	0
+T071	T071	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	21	21	NA	F	0	Europe	Germany	Student	1	1
+T072	T072	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	25	25	NA	F	0	Europe	Germany	Student	1	1
+T073	T073	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	40	40	NA	F	0	Europe	Germany	Officeworker	0	1
+T074	T074	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	25	25	NA	F	0	Europe	Germany	Student	0	1
+T075	T075	Adult	ITM	"Stuttgart, Germany"	Germany	Baden-Wuerttemberg	Stuttgart	21	21	NA	F	0	Europe	Germany	Student	0	1
+T076	T076	Adult	ITM	"Neuhausen, Germany"	Germany	Baden-Wuerttemberg	Neuhausen	26	26	NA	F	0	Europe	Germany	Housewife	0	1
+T078	T078	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	26	26	NA	F	0	Europe	Germany	Student	0	1
+T079	T079	Adult	ITM	"Leinfelden-Echterdingen, Germany"	Germany	Baden-Wuerttemberg	Leinfelden-Echterdingen	31	31	NA	F	0	Europe	Germany	Housewife	0	1
+T081	T081	Adult	ITM	"Waldenbuch, Germany"	Germany	Baden-Wuerttemberg	Waldenbuch	26	26	NA	F	0	Europe	Germany	Officeworker	0	NA
+T083	T083	Adult	ITM	"Weil_im_Schonbuch, Germany"	Germany	Baden-Wuerttemberg	Weil_im_Schonbuch	27	27	NA	F	0	Europe	Germany	Housewife	0	0
+T085	T085	Adult	ITM	"Reutlingen, Germany"	Germany	Baden-Wuerttemberg	Reutlingen	33	33	NA	F	0	Europe	Germany	Housewife	0	0
+T087	T087	Adult	ITM	"Reutlingen, Germany"	Germany	Baden-Wuerttemberg	Reutlingen	28	28	NA	F	0	Europe	Kosovo	Housewife	0	0
+T089	T089	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	26	26	NA	F	0	Europe	Germany	Student	0	0
+T090	T090	Adult	ITM	"Salem, Germany"	Germany	Baden-Wuerttemberg	Salem	24	24	NA	F	0	Europe	Germany	Student	0	1
+T091	T091	Adult	ITM	"Verona, Italy"	Italy	Veneto	Verona	28	28	NA	F	0	Europe	Italy	Student	0	1
+T092	T092	Adult	ITM	"Stuttgart, Germany"	Germany	Baden-Wuerttemberg	Stuttgart	27	27	NA	F	0	NorthAmerica	Canada	Student	0	1
+T093	T093	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	22	22	NA	F	0	Europe	Germany	Student	0	0
+T094	T094	Adult	ITM	"Stuttgart, Germany"	Germany	Baden-Wuerttemberg	Stuttgart	27	27	NA	F	0	Europe	Germany	Student	0	1
+T095	T095	Adult	ITM	"Mossingen, Germany"	Germany	Baden-Wuerttemberg	Mossingen	33	33	NA	F	0	Europe	Germany	Housewife	0	0
+T097	T097	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	30	30	NA	F	0	CentralAsia	Iran	Non_officeworker	0	0
+T099	T099	Adult	ITM	"Metzingen, Germany"	Germany	Baden-Wuerttemberg	Metzingen	31	31	NA	F	0	Europe	Germany	Housewife	0	0
+T101	T101	Adult	ITM	"Stuttgart, Germany"	Germany	Baden-Wuerttemberg	Stuttgart	20	20	NA	F	0	Europe	Germany	Student	0	1
+T102	T102	Adult	ITM	"Stuttgart, Germany"	Germany	Baden-Wuerttemberg	Stuttgart	24	24	NA	F	0	Europe	Bulgaria	Student	0	1
+T103	T103	Adult	ITM	"Stuttgart, Germany"	Germany	Baden-Wuerttemberg	Stuttgart	20	20	NA	F	0	Europe	Germany	Student	0	1
+T104	T104	Adult	ITM	"Stuttgart, Germany"	Germany	Baden-Wuerttemberg	Stuttgart	22	22	NA	F	0	Europe	Germany	Student	0	1
+T105	T105	Adult	ITM	"Rottenburg_am_Neckar, Germany"	Germany	Baden-Wuerttemberg	Rottenburg_am_Neckar	33	33	NA	F	0	Europe	Germany	Housewife	0	0
+T107	T107	Adult	ITM	"Rottenburg_am_Neckar, Germany"	Germany	Baden-Wuerttemberg	Rottenburg_am_Neckar	37	37	NA	F	0	Europe	Germany	Housewife	0	0
+T109	T109	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	28	28	NA	F	0	Europe	Germany	Student	0	0
+T110	T110	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	25	25	NA	F	0	Europe	Germany	Student	0	1
+T111	T111	Adult	ITM	"Stuttgart, Germany"	Germany	Baden-Wuerttemberg	Stuttgart	25	25	NA	F	0	Europe	Germany	Student	0	1
+T112	T112	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	28	28	NA	F	0	Europe	Poland	Unemployed	0	1
+T113	T113	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	27	27	NA	F	0	Europe	Poland	Officeworker	0	1
+T114	T114	Adult	ITM	"Rottenburg_am_Neckar, Germany"	Germany	Baden-Wuerttemberg	Rottenburg_am_Neckar	33	33	NA	F	0	Europe	Germany	Housewife	0	0
+T116	T116	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	38	38	NA	F	0	SouthAmerica	Brazil	Non_officeworker	0	1
+T117	T117	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	27	27	NA	F	0	CentralAsia	Iran	Student	0	0
+T118	T118	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	23	23	NA	F	0	CentralAsia	Iran	Student	0	0
+T119	T119	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	21	21	NA	F	0	Europe	Germany	Student	0	0
+T120	T120	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	29	29	NA	F	0	EastAsia	Japan	Officeworker	0	0
+T121	T121	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	25	25	NA	F	0	Europe	Germany	Student	0	1
+T122	T122	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	22	22	NA	F	0	Europe	Germany	Student	0	1
+T123	T123	Adult	ITM	"Stuttgart, Germany"	Germany	Baden-Wuerttemberg	Stuttgart	35	35	NA	F	0	Europe	Germany	Housewife	0	0
+T125	T125	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	23	23	NA	F	0	Europe	Germany	Student	0	0
+T126	T126	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	18	18	NA	F	0	Europe	Germany	Non_officeworker	1	0
+T127	T127	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	24	24	NA	F	0	Europe	Germany	Student	0	1
+T128	T128	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	26	26	NA	F	0	Europe	Germany	Student	0	1
+T129	T129	Adult	ITM	"Renningen, Germany"	Germany	Baden-Wuerttemberg	Renningen	36	36	NA	F	0	Europe	Germany	Housewife	0	1
+T130	T130	Adult	ITM	"Boeblingen, Germany"	Germany	Baden-Wuerttemberg	Boeblingen	36	36	NA	F	0	Europe	Germany	Housewife	0	0
+T132	T132	Adult	ITM	"Korntal-Munchingen, Germany"	Germany	Baden-Wuerttemberg	Korntal-Munchingen	31	31	NA	F	0	Europe	Germany	Housewife	0	0
+T134	T134	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	29	29	NA	F	0	CentralAsia	Iran	Non_officeworker	0	1
+T135	T135	Adult	ITM	"Reutlingen, Germany"	Germany	Baden-Wuerttemberg	Reutlingen	30	30	NA	F	0	Europe	Germany	Housewife	0	0
+T137	T137	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	24	24	NA	F	0	CentralAsia	Turkey	Student	0	1
+T138	T138	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	33	33	NA	F	0	Europe	Germany	Housewife	0	0
+T140	T140	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	30	30	NA	F	0	Europe	Germany	Student	0	0
+T142	T142	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	29	29	NA	F	0	Europe	Poland	Housewife	0	0
+T144	T144	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	28	28	NA	F	0	Europe	Austria	Student	0	0
+T145	T145	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	38	38	NA	F	0	Europe	Ethiopia	Other	0	0
+T146	T146	Adult	ITM	"Stuttgart, Germany"	Germany	Baden-Wuerttemberg	Stuttgart	26	26	NA	F	0	Europe	Germany	Student	0	1
+T147	T147	Adult	ITM	"Waldbronn, Germany"	Germany	Baden-Wuerttemberg	Waldbronn	26	26	NA	F	0	Europe	Germany	Student	0	1
+T148	T148	Adult	ITM	"Aichtal, Germany"	Germany	Baden-Wuerttemberg	Aichtal	24	24	NA	F	0	Europe	Germany	Student	0	1
+T149	T149	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	23	23	NA	F	0	CentralAsia	India	Student	0	1
+T150	T150	Adult	ITM	"Schonaich, Germany"	Germany	Rheinland-Pfalz	Schonaich	22	22	NA	F	0	Europe	Germany	Student	0	1
+T151	T151	Adult	ITM	"Reutlingen, Germany"	Germany	Baden-Wuerttemberg	Reutlingen	37	37	NA	F	0	Europe	Germany	Officeworker	1	1
+T153	T153	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	49	49	NA	F	0	Europe	England	Officeworker	0	1
+T154	T154	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	40	40	NA	F	0	Europe	Germany	Non_officeworker	0	0
+T156	T156	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	22	22	NA	F	0	Europe	Germany	Student	0	1
+T157	T157	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	25	25	NA	F	0	Europe	Germany	Student	0	1
+T158	T158	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	19	19	NA	F	0	Europe	Germany	Student	0	0
+T159	T159	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	40	40	NA	F	0	Europe	Germany	Non_officeworker	0	0
+T161	T161	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	34	34	NA	F	0	NorthAmerica	USA	Officeworker	0	0
+T163	T163	Adult	ITM	"Stuttgart, Germany"	Germany	Baden-Wuerttemberg	Stuttgart	26	26	NA	F	0	Europe	Germany	Student	0	1
+T164	T164	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	24	24	NA	F	0	Europe	Germany	Student	0	1
+T165	T165	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	34	34	NA	F	0	Europe	Wales	Housewife	0	0
+T167	T167	Adult	ITM	"Rottenburg_am_Neckar, Germany"	Germany	Baden-Wuerttemberg	Rottenburg_am_Neckar	32	32	NA	F	0	CentralAsia	Indonesia	Housewife	0	0
+T168	T168	Adult	ITM	"Ludwigsburg, Germany"	Germany	Baden-Wuerttemberg	Ludwigsburg	27	27	NA	F	0	Europe	Germany	Student	0	1
+T169	T169	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	30	30	NA	F	0	Europe	Germany	Housewife	0	0
+T171	T171	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	26	26	NA	F	0	Europe	Germany	Student	1	1
+T172	T172	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	25	25	NA	F	0	Europe	Germany	Student	0	1
+T173	T173	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	25	25	NA	F	0	Europe	Germany	Student	0	1
+T174	T174	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	23	23	NA	F	0	Europe	Germany	Student	1	1
+T175	T175	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	33	33	NA	F	0	CentralAsia	Iran	Student	0	0
+T176	T176	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	28	28	NA	F	0	Europe	Germany	Student	0	0
+T178	T178	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	40	40	NA	F	0	CentralAsia	Iran	Non_officeworker	0	1
+T179	T179	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	29	29	NA	F	0	Europe	Germany	Student	0	0
+T180	T180	Adult	ITM	"Boeblingen, Germany"	Germany	Baden-Wuerttemberg	Boeblingen	27	27	NA	F	0	Europe	Germany	Housewife	0	0
+T182	T182	Adult	ITM	"Stuttgart, Germany"	Germany	Baden-Wuerttemberg	Stuttgart	33	33	NA	F	0	Africa	Gabon	Housewife	0	0
+T184	T184	Adult	ITM	"Rottenburg_am_Neckar, Germany"	Germany	Baden-Wuerttemberg	Rottenburg_am_Neckar	32	32	NA	F	0	CentralAsia	Iran	Housewife	0	0
+T186	T186	Adult	ITM	"Waldenbuch, Germany"	Germany	Baden-Wuerttemberg	Waldenbuch	29	29	NA	F	0	Europe	Germany	Housewife	1	1
+T188	T188	Adult	ITM	"Waldenbuch, Germany"	Germany	Baden-Wuerttemberg	Waldenbuch	32	32	NA	F	0	Europe	Germany	Housewife	0	0
+T190	T190	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	33	33	NA	F	0	CentralAsia	Iran	Student	0	0
+T191	T191	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	28	28	NA	F	0	SouthAmerica	Chile	Officeworker	1	1
+T192	T192	Adult	ITM	"Rottenburg_am_Neckar, Germany"	Germany	Baden-Wuerttemberg	Rottenburg_am_Neckar	31	31	NA	F	0	Europe	Germany	Housewife	0	0
+T194	T194	Adult	ITM	"Herrenberg, Germany"	Germany	Baden-Wuerttemberg	Herrenberg	34	34	NA	F	0	Europe	Germany	Housewife	0	0
+T196	T196	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	33	33	NA	F	0	Europe	Germany	NA	0	0
+T198	T198	Adult	ITM	"Aidlingen, Germany"	Germany	Baden-Wuerttemberg	Aidlingen	23	23	NA	F	0	Europe	Germany	Non_officeworker	0	0
+T199	T199	Adult	ITM	"Pforzheim, Germany"	Germany	Baden-Wuerttemberg	Pforzheim	29	29	NA	F	0	CentralAsia	Kazakhstan	Non_officeworker	0	0
+T201	T201	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	21	21	NA	F	0	Europe	Germany	Student	0	1
+T202	T202	Adult	ITM	"Ammerbuch, Germany"	Germany	Baden-Wuerttemberg	Ammerbuch	27	27	NA	F	0	Europe	Germany	Student	0	1
+T203	T203	Adult	ITM	"Sindelfingen, Germany"	Germany	Baden-Wuerttemberg	Sindelfingen	35	35	NA	F	0	Europe	Germany	Housewife	0	0
+T205	T205	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	38	38	NA	F	0	Africa	Benin	Unemployed	0	0
+T206	T206	Adult	ITM	"Nurtingen, Germany"	Germany	Baden-Wuerttemberg	Nurtingen	31	31	NA	F	0	Africa	Gabon	Student	0	0
+T207	T207	Adult	ITM	"Albstadt, Germany"	Germany	Baden-Wuerttemberg	Albstadt	29	29	NA	F	0	Africa	Gabon	Student	0	0
+T208	T208	Adult	ITM	"Sigmaringen, Germany"	Germany	Baden-Wuerttemberg	Sigmaringen	30	30	NA	F	0	Africa	Gabon	Housewife	0	0
+T210	T210	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	28	28	NA	F	0	Europe	England	Student	0	0
+T211	T211	Adult	ITM	"Entringen, Germany"	Germany	Baden-Wuerttemberg	Entringen	25	25	NA	F	0	Europe	Germany	Student	0	0
+T212	T212	Adult	ITM	"Reutlingen, Germany"	Germany	Baden-Wuerttemberg	Reutlingen	31	31	NA	F	0	Europe	Germany	NA	0	0
+T214	T214	Adult	ITM	"Reutlingen, Germany"	Germany	Baden-Wuerttemberg	Reutlingen	32	32	NA	F	0	Europe	Germany	Housewife	0	0
+T215	T215	Adult	ITM	"Weil_der_Stadt, Germany"	Germany	Baden-Wuerttemberg	Weil_der_Stadt	34	34	NA	F	0	Europe	Germany	Officeworker	0	0
+T217	T217	Adult	ITM	"Grossbettlingen, Germany"	Germany	Baden-Wuerttemberg	Grossbettlingen	32	32	NA	F	0	Europe	Germany	Housewife	0	0
+T219	T219	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	28	28	NA	F	0	Europe	Germany	Officeworker	0	1
+T220	T220	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	29	29	NA	F	0	Europe	Germany	Officeworker	0	1
+T221	T221	Adult	ITM	"Sindelfingen, Germany"	Germany	Baden-Wuerttemberg	Sindelfingen	34	34	NA	F	0	Europe	Poland	Housewife	0	0
+T223	T223	Adult	ITM	"Sindelfingen, Germany"	Germany	Baden-Wuerttemberg	Sindelfingen	40	40	NA	F	0	Europe	Poland	Housewife	0	0
+T225	T225	Adult	ITM	"Gomaringen, Germany"	Germany	Baden-Wuerttemberg	Gomaringen	33	33	NA	F	0	Europe	Germany	Housewife	0	0
+T227	T227	Adult	ITM	"Walddorfhäslach, Germany"	Germany	Baden-Wuerttemberg	Walddorfhäslach	33	33	NA	F	0	Europe	Germany	Housewife	0	0
+T229	T229	Adult	ITM	"Gaertringen, Germany"	Germany	Baden-Wuerttemberg	Gaertringen	27	27	NA	F	0	Europe	Germany	Housewife	0	0
+T231	T231	Adult	ITM	"Dusslingen, Germany"	Germany	Baden-Wuerttemberg	Dusslingen	30	30	NA	F	0	Europe	Germany	Student	0	0
+T233	T233	Adult	ITM	"Schlaitdorf, Germany"	Germany	Baden-Wuerttemberg	Schlaitdorf	33	33	NA	F	0	Europe	Germany	Housewife	1	0
+T235	T235	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	37	37	NA	F	0	Europe	Germany	Housewife	0	0
+T237	T237	Adult	ITM	"Stuttgart, Germany"	Germany	Baden-Wuerttemberg	Stuttgart	23	23	NA	F	0	Europe	Germany	Student	0	0
+T239	T239	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	22	22	NA	F	0	Europe	Germany	Student	0	1
+T240	T240	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	37	37	NA	F	0	CentralAsia	Iran	Student	0	1
+T241	T241	Adult	ITM	"Neustetten, Germany"	Germany	Baden-Wuerttemberg	Neustetten	30	30	NA	F	0	Europe	Germany	Housewife	0	0
+T243	T243	Adult	ITM	"Reutlingen, Germany"	Germany	Baden-Wuerttemberg	Reutlingen	33	33	NA	F	0	Europe	Germany	Housewife	0	0
+T245	T245	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	26	26	NA	F	0	Europe	Germany	Student	0	1
+T246	T246	Adult	ITM	"Stuttgart, Germany"	Germany	Baden-Wuerttemberg	Stuttgart	25	25	NA	F	0	Europe	Germany	Student	0	1
+T247	T247	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	41	41	NA	F	0	Europe	Germany	Housewife	0	0
+T249	T249	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	26	26	NA	F	0	Europe	Germany	Student	0	0
+T251	T251	Adult	ITM	"Mossingen, Germany"	Germany	Baden-Wuerttemberg	Mossingen	35	35	NA	F	0	Europe	Germany	Housewife	0	0
+T253	T253	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	32	32	NA	F	0	Africa	Angola	Housewife	0	0
+T255	T255	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	33	33	NA	F	0	Europe	Germany	Housewife	0	0
+T257	T257	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	41	41	NA	F	0	Europe	Germany	Housewife	0	1
+T258	T258	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	32	32	NA	F	0	SouthAmerica	Mexico	Non_officeworker	0	1
+T259	T259	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	36	36	NA	F	0	SouthAmerica	Brazil	Student	0	1
+T260	T260	Adult	ITM	"Wendlingen, Germany"	Germany	Baden-Wuerttemberg	Wendlingen	23	23	NA	F	0	Europe	Germany	Non_officeworker	0	0
+T262	T262	Adult	ITM	"Boeblingen, Germany"	Germany	Baden-Wuerttemberg	Boeblingen	35	35	NA	F	0	Europe	Germany	Housewife	0	0
+T264	T264	Adult	ITM	"Reutlingen, Germany"	Germany	Baden-Wuerttemberg	Reutlingen	33	33	NA	F	0	Europe	Germany	Housewife	0	0
+T266	T266	Adult	ITM	"Ehningen, Germany"	Germany	Baden-Wuerttemberg	Ehningen	27	27	NA	F	0	Europe	Germany	Housewife	0	0
+T268	T268	Adult	ITM	"Ofterdingen, Germany"	Germany	Baden-Wuerttemberg	Ofterdingen	29	29	NA	F	0	Europe	Germany	Housewife	0	0
+T270	T270	Adult	ITM	"Boeblingen, Germany"	Germany	Baden-Wuerttemberg	Boeblingen	28	28	NA	F	0	Europe	Latvia	Student	0	1
+T271	T271	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	27	27	NA	F	0	Europe	Germany	Student	0	0
+T273	T273	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	24	24	NA	F	0	Europe	Italy	Student	0	0
+T274	T274	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	40	40	NA	F	0	Europe	Germany	Housewife	0	0
+T276	T276	Adult	ITM	"Mossingen, Germany"	Germany	Baden-Wuerttemberg	Mossingen	31	31	NA	F	0	Europe	Germany	Housewife	0	0
+T278	T278	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	33	33	NA	F	0	Europe	Germany	Housewife	0	0
+T280	T280	Adult	ITM	"Boeblingen, Germany"	Germany	Baden-Wuerttemberg	Boeblingen	29	29	NA	F	0	Europe	Germany	Housewife	0	0
+T282	T282	Adult	ITM	"Hechingen, Germany"	Germany	Baden-Wuerttemberg	Hechingen	32	32	NA	F	0	Europe	Germany	Housewife	0	0
+T284	T284	Adult	ITM	"Rottenburg_am_Neckar, Germany"	Germany	Baden-Wuerttemberg	Rottenburg_am_Neckar	27	27	NA	F	0	Europe	Germany	Non_officeworker	0	0
+T286	T286	Adult	ITM	"Reutlingen, Germany"	Germany	Baden-Wuerttemberg	Reutlingen	33	33	NA	F	0	Europe	Germany	Housewife	0	0
+T288	T288	Adult	ITM	"Reutlingen, Germany"	Germany	Baden-Wuerttemberg	Reutlingen	39	39	NA	F	0	Europe	Germany	Officeworker	0	0
+T290	T290	Adult	ITM	"Jettingen, Germany"	Germany	Baden-Wuerttemberg	Jettingen	29	29	NA	F	0	Europe	Germany	Non_officeworker	0	0
+T292	T292	Adult	ITM	"Jettingen, Germany"	Germany	Baden-Wuerttemberg	Jettingen	34	34	NA	F	0	Europe	Germany	Housewife	0	1
+T294	T294	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	28	28	NA	F	0	Europe	Poland	Student	0	1
+T295	T295	Adult	ITM	"Jettingen, Germany"	Germany	Baden-Wuerttemberg	Jettingen	30	30	NA	F	0	Europe	Germany	Housewife	0	1
+T297	T297	Adult	ITM	"Reutlingen, Germany"	Germany	Baden-Wuerttemberg	Reutlingen	35	35	NA	F	0	Europe	Germany	Housewife	0	0
+T300	T300	Adult	ITM	"Boeblingen, Germany"	Germany	Baden-Wuerttemberg	Boeblingen	46	46	NA	F	0	Europe	Denmark	Non_officeworker	0	1
+T301	T301	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	30	30	NA	F	0	Europe	Germany	Non_officeworker	0	0
+T302	T302	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	27	27	NA	F	0	Europe	Germany	Student	0	1
+T303	T303	Adult	ITM	"Betzingen, Germany"	Germany	Baden-Wuerttemberg	Betzingen	34	34	NA	F	0	Europe	Germany	Housewife	0	0
+T305	T305	Adult	ITM	"Gomaringen, Germany"	Germany	Baden-Wuerttemberg	Gomaringen	36	36	NA	F	0	Europe	Germany	Housewife	0	0
+T307	T307	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	40	40	NA	F	0	Europe	Germany	Student	0	0
+T309	T309	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	36	36	NA	F	0	Europe	Germany	Housewife	0	0
+T311	T311	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	30	30	NA	F	0	Europe	Germany	Housewife	0	0
+T313	T313	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	31	31	NA	F	0	Europe	Germany	Student	0	0
+T315	T315	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	36	36	NA	F	0	Europe	Germany	Housewife	0	0
+T317	T317	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	19	19	NA	F	0	CentralAsia	Turkey	Housewife	0	0
+T319	T319	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	28	28	NA	F	0	CentralAsia	Kazakhstan	Officeworker	0	0
+T321	T321	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	33	33	NA	F	0	Europe	Spain	Non_officeworker	0	0
+T323	T323	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	37	37	NA	F	0	Europe	Germany	Housewife	0	0
+T325	T325	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	29	29	NA	F	0	Europe	Germany	Student	0	0
+T327	T327	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	33	33	NA	F	0	Europe	Germany	Non_officeworker	0	0
+T329	T329	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	36	36	NA	F	0	Europe	Germany	Housewife	0	0
+T331	T331	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	29	29	NA	F	0	Europe	Germany	Housewife	0	0
+T333	T333	Adult	ITM	"Reutlingen, Germany"	Germany	Baden-Wuerttemberg	Reutlingen	39	39	NA	F	0	Europe	Germany	Housewife	0	0
+T335	T335	Adult	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	38	38	NA	F	0	Europe	Germany	Officeworker	0	0
+V001	V001	Adult	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	31	31	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V003	V003	Adult	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	23	23	NA	F	0	EastAsia	Vietnam	Student	NA	NA
+V005	V005	Adult	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	29	29	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V007	V007	Adult	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	23	23	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V009	V009	Adult	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	28	28	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V011	V011	Adult	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	21	21	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V013	V013	Adult	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	27	27	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V015	V015	Adult	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	33	33	NA	F	0	EastAsia	Vietnam	Student	NA	NA
+V017	V017	Adult	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	32	32	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V019	V019	Adult	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	19	19	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V021	V021	Adult	Sonla	"Huala, Vietnam"	Vietnam	Sonla	Huala	18	18	NA	F	0	EastAsia	Vietnam	Student	NA	NA
+V023	V023	Adult	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	28	28	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V025	V025	Adult	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	29	29	NA	F	0	EastAsia	Vietnam	Non_officeworker	NA	NA
+V027	V027	Adult	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	18	18	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V029	V029	Adult	Sonla	"Chiengsang, Vietnam"	Vietnam	Sonla	Chiengsang	33	33	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V031	V031	Adult	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	35	35	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V033	V033	Adult	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	25	25	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V035	V035	Adult	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	23	23	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V037	V037	Adult	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	28	28	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V039	V039	Adult	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	23	23	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V041	V041	Adult	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	33	33	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V043	V043	Adult	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	26	26	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V045	V045	Adult	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	31	31	NA	F	0	EastAsia	Vietnam	Officeworker	NA	NA
+V047	V047	Adult	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	18	18	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V049	V049	Adult	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	26	26	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V051	V051	Adult	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	30	30	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V053	V053	Adult	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	20	20	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V055	V055	Adult	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	18	18	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V057	V057	Adult	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	24	24	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V059	V059	Adult	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	26	26	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V061	V061	Adult	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	19	19	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V063	V063	Adult	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	27	27	NA	F	0	EastAsia	Vietnam	Non_officeworker	NA	NA
+V065	V065	Adult	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	30	30	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V067	V067	Adult	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	24	24	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V069	V069	Adult	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	27	27	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V071	V071	Adult	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	34	34	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V073	V073	Adult	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	24	24	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V075	V075	Adult	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	30	30	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V077	V077	Adult	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	33	33	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V079	V079	Adult	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	23	23	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V081	V081	Adult	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	38	38	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V083	V083	Adult	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	30	30	NA	F	0	EastAsia	Vietnam	Non_officeworker	NA	NA
+V085	V085	Adult	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	25	25	NA	F	0	EastAsia	Vietnam	Housewife	NA	NA
+V087	V087	Adult	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	25	25	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V089	V089	Adult	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	27	27	NA	F	0	EastAsia	Vietnam	Officeworker	NA	NA
+V091	V091	Adult	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	27	27	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V093	V093	Adult	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	20	20	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V095	V095	Adult	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	18	18	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V097	V097	Adult	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	19	19	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V099	V099	Adult	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	34	34	NA	F	0	EastAsia	Vietnam	Housewife	NA	NA
+V101	V101	Adult	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	31	31	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V103	V103	Adult	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	23	23	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V105	V105	Adult	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	36	36	NA	F	0	EastAsia	Vietnam	Non_officeworker	NA	NA
+V107	V107	Adult	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	23	23	NA	F	0	EastAsia	Vietnam	Officeworker	NA	NA
+V109	V109	Adult	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	30	30	NA	F	0	EastAsia	Vietnam	Non_officeworker	NA	NA
+V111	V111	Adult	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	29	29	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V113	V113	Adult	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	23	23	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V115	V115	Adult	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	32	32	NA	F	0	EastAsia	Vietnam	Non_officeworker	NA	NA
+V117	V117	Adult	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	42	42	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V120	V120	Adult	Sonla	"Chiengden, Vietnam"	Vietnam	Sonla	Chiengden	25	25	NA	F	0	EastAsia	Vietnam	Student	NA	NA
+V122	V122	Adult	Sonla	"Chiengden, Vietnam"	Vietnam	Sonla	Chiengden	20	20	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V124	V124	Adult	Sonla	"Chiengden, Vietnam"	Vietnam	Sonla	Chiengden	33	33	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V126	V126	Adult	Sonla	"Chiengden, Vietnam"	Vietnam	Sonla	Chiengden	35	35	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V128	V128	Adult	Sonla	"Chiengden, Vietnam"	Vietnam	Sonla	Chiengden	24	24	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V129	V129	Adult	Sonla	"Chiengden, Vietnam"	Vietnam	Sonla	Chiengden	31	31	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V131	V131	Adult	Sonla	"Chiengden, Vietnam"	Vietnam	Sonla	Chiengden	38	38	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V133	V133	Adult	Sonla	"Chiengden, Vietnam"	Vietnam	Sonla	Chiengden	32	32	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V135	V135	Adult	Sonla	"Chiengden, Vietnam"	Vietnam	Sonla	Chiengden	25	25	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V137	V137	Adult	Sonla	"Chiengden, Vietnam"	Vietnam	Sonla	Chiengden	40	40	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V139	V139	Adult	Sonla	"Chiengden, Vietnam"	Vietnam	Sonla	Chiengden	20	20	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V141	V141	Adult	Sonla	"Chiengden, Vietnam"	Vietnam	Sonla	Chiengden	27	27	NA	F	0	EastAsia	Vietnam	Officeworker	NA	NA
+V143	V143	Adult	Sonla	"Chiengden, Vietnam"	Vietnam	Sonla	Chiengden	24	24	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V145	V145	Adult	Sonla	"Chiengden, Vietnam"	Vietnam	Sonla	Chiengden	18	18	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V147	V147	Adult	Sonla	"Chiengden, Vietnam"	Vietnam	Sonla	Chiengden	20	20	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V149	V149	Adult	Sonla	"Chiengden, Vietnam"	Vietnam	Sonla	Chiengden	26	26	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V151	V151	Adult	Sonla	"Chiengden, Vietnam"	Vietnam	Sonla	Chiengden	22	22	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V153	V153	Adult	Sonla	"Chiengden, Vietnam"	Vietnam	Sonla	Chiengden	31	31	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V155	V155	Adult	Sonla	"Chiengden, Vietnam"	Vietnam	Sonla	Chiengden	30	30	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V157	V157	Adult	Sonla	"Chiengden, Vietnam"	Vietnam	Sonla	Chiengden	26	26	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V159	V159	Adult	Sonla	"Chiengden, Vietnam"	Vietnam	Sonla	Chiengden	24	24	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V161	V161	Adult	Sonla	"Chiengden, Vietnam"	Vietnam	Sonla	Chiengden	30	30	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V163	V163	Adult	Sonla	"Chiengden, Vietnam"	Vietnam	Sonla	Chiengden	27	27	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V165	V165	Adult	Sonla	"Chiengden, Vietnam"	Vietnam	Sonla	Chiengden	19	19	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V167	V167	Adult	Sonla	"Chiengcoi, Vietnam"	Vietnam	Sonla	Chiengcoi	31	31	NA	F	0	EastAsia	Vietnam	Officeworker	NA	NA
+V169	V169	Adult	Sonla	"Chiengden, Vietnam"	Vietnam	Sonla	Chiengden	34	34	NA	F	0	EastAsia	Vietnam	Officeworker	NA	NA
+V171	V171	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	29	29	NA	F	0	EastAsia	Vietnam	Non_officeworker	NA	NA
+V173	V173	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	24	24	NA	F	0	EastAsia	Vietnam	Housewife	NA	NA
+V175	V175	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	31	31	NA	F	0	EastAsia	Vietnam	Non_officeworker	NA	NA
+V177	V177	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	29	29	NA	F	0	EastAsia	Vietnam	Non_officeworker	NA	NA
+V179	V179	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	26	26	NA	F	0	EastAsia	Vietnam	Officeworker	NA	NA
+V181	V181	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	25	25	NA	F	0	EastAsia	Vietnam	Housewife	NA	NA
+V183	V183	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	26	26	NA	F	0	EastAsia	Vietnam	Housewife	NA	NA
+V185	V185	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	31	31	NA	F	0	EastAsia	Vietnam	Officeworker	NA	NA
+V187	V187	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	21	21	NA	F	0	EastAsia	Vietnam	Housewife	NA	NA
+V189	V189	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	25	25	NA	F	0	EastAsia	Vietnam	Housewife	NA	NA
+V191	V191	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	29	29	NA	F	0	EastAsia	Vietnam	Officeworker	NA	NA
+V193	V193	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	37	37	NA	F	0	EastAsia	Vietnam	Housewife	NA	NA
+V195	V195	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	29	29	NA	F	0	EastAsia	Vietnam	Non_officeworker	NA	NA
+V197	V197	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	26	26	NA	F	0	EastAsia	Vietnam	Officeworker	NA	NA
+V199	V199	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	23	23	NA	F	0	EastAsia	Vietnam	Non_officeworker	NA	NA
+V201	V201	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	28	28	NA	F	0	EastAsia	Vietnam	Officeworker	NA	NA
+V203	V203	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	25	25	NA	F	0	EastAsia	Vietnam	Non_officeworker	NA	NA
+V205	V205	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	28	28	NA	F	0	EastAsia	Vietnam	Non_officeworker	NA	NA
+V207	V207	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	29	29	NA	F	0	EastAsia	Vietnam	Housewife	NA	NA
+V209	V209	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	25	25	NA	F	0	EastAsia	Vietnam	Housewife	NA	NA
+V211	V211	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	26	26	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V213	V213	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	NA	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V215	V215	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	29	29	NA	F	0	EastAsia	Vietnam	Housewife	NA	NA
+V217	V217	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	27	27	NA	F	0	EastAsia	Vietnam	Non_officeworker	NA	NA
+V219	V219	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	29	29	NA	F	0	EastAsia	Vietnam	Housewife	NA	NA
+V221	V221	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	26	26	NA	F	0	EastAsia	Vietnam	Housewife	NA	NA
+V223	V223	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	29	29	NA	F	0	EastAsia	Vietnam	Officeworker	NA	NA
+V225	V225	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	25	25	NA	F	0	EastAsia	Vietnam	Housewife	NA	NA
+V227	V227	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	29	29	NA	F	0	EastAsia	Vietnam	Non_officeworker	NA	NA
+V229	V229	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	25	25	NA	F	0	EastAsia	Vietnam	Housewife	NA	NA
+V231	V231	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	37	37	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V233	V233	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	32	32	NA	F	0	EastAsia	Vietnam	Officeworker	NA	NA
+V235	V235	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	24	24	NA	F	0	EastAsia	Vietnam	Housewife	NA	NA
+V237	V237	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	28	28	NA	F	0	EastAsia	Vietnam	Housewife	NA	NA
+V239	V239	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	28	28	NA	F	0	EastAsia	Vietnam	Non_officeworker	NA	NA
+V241	V241	Adult	Hatinh	"NA, Vietnam"	Vietnam	NA	NA	NA	NA	NA	F	0	EastAsia	NA	NA	NA	NA
+V243	V243	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	42	42	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V245	V245	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	23	23	NA	F	0	EastAsia	Vietnam	Housewife	NA	NA
+V247	V247	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	31	31	NA	F	0	EastAsia	Vietnam	Housewife	NA	NA
+V249	V249	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	27	27	NA	F	0	EastAsia	Vietnam	Housewife	NA	NA
+V251	V251	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	27	27	NA	F	0	EastAsia	Vietnam	Housewife	NA	NA
+V253	V253	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	26	26	NA	F	0	EastAsia	Vietnam	Housewife	NA	NA
+V255	V255	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	27	27	NA	F	0	EastAsia	Vietnam	Housewife	NA	NA
+V257	V257	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	36	36	NA	F	0	EastAsia	Vietnam	Housewife	NA	NA
+V259	V259	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	33	33	NA	F	0	EastAsia	Vietnam	Student	NA	NA
+V261	V261	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	31	31	NA	F	0	EastAsia	Vietnam	Non_officeworker	NA	NA
+V263	V263	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	36	36	NA	F	0	EastAsia	Vietnam	Housewife	NA	NA
+V265	V265	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	37	37	NA	F	0	EastAsia	Vietnam	Farmer	NA	NA
+V267	V267	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	26	26	NA	F	0	EastAsia	Vietnam	Housewife	NA	NA
+V269	V269	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	34	34	NA	F	0	EastAsia	Vietnam	Non_officeworker	NA	NA
+V271	V271	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	24	24	NA	F	0	EastAsia	Vietnam	Non_officeworker	NA	NA
+V273	V273	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	23	23	NA	F	0	EastAsia	Vietnam	Housewife	NA	NA
+V275	V275	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	26	26	NA	F	0	EastAsia	Vietnam	Officeworker	NA	NA
+V277	V277	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	26	26	NA	F	0	EastAsia	Vietnam	Housewife	NA	NA
+V279	V279	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	25	25	NA	F	0	EastAsia	Vietnam	Non_officeworker	NA	NA
+V281	V281	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	28	28	NA	F	0	EastAsia	Vietnam	Non_officeworker	NA	NA
+V283	V283	Adult	NA	"NA, Vietnam"	Vietnam	NA	NA	NA	NA	NA	F	0	NA	NA	NA	NA	NA
+V285	V285	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	32	32	NA	F	0	EastAsia	Vietnam	Housewife	NA	NA
+V287	V287	Adult	Hatinh	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	35	35	NA	F	0	EastAsia	Vietnam	Officeworker	NA	NA
+V289	V289	Adult	Hatinh	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	23	23	NA	F	0	EastAsia	Vietnam	Non_officeworker	NA	NA
+V291	V291	Adult	Hatinh	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	30	30	NA	F	0	EastAsia	Vietnam	Housewife	NA	NA
+V293	V293	Adult	Hatinh	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	34	34	NA	F	0	EastAsia	Vietnam	Officeworker	NA	NA
+V295	V295	Adult	Hatinh	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	29	29	NA	F	0	EastAsia	Vietnam	Officeworker	NA	NA
+V297	V297	Adult	Hatinh	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	25	25	NA	F	0	EastAsia	Vietnam	Housewife	NA	NA
+V299	V299	Adult	Hatinh	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	33	33	NA	F	0	EastAsia	Vietnam	Housewife	NA	NA
+V301	V301	Adult	Hatinh	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	38	38	NA	F	0	EastAsia	Vietnam	Officeworker	NA	NA
+V303	V303	Adult	Hatinh	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	26	26	NA	F	0	EastAsia	Vietnam	Non_officeworker	NA	NA
+V305	V305	Adult	Hatinh	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	28	28	NA	F	0	EastAsia	Vietnam	Housewife	NA	NA
+V307	V307	Adult	Hatinh	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	23	23	NA	F	0	EastAsia	Vietnam	Housewife	NA	NA
+V309	V309	Adult	Hatinh	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	37	37	NA	F	0	EastAsia	Vietnam	Housewife	NA	NA
+V311	V311	Adult	Hatinh	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	29	29	NA	F	0	EastAsia	Vietnam	Officeworker	NA	NA
+V313	V313	Adult	Hatinh	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	28	28	NA	F	0	EastAsia	Vietnam	Officeworker	NA	NA
+V315	V315	Adult	Hatinh	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	33	33	NA	F	0	EastAsia	Vietnam	Housewife	NA	NA
+V317	V317	Adult	Hatinh	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	25	25	NA	F	0	EastAsia	Vietnam	Housewife	NA	NA
+V319	V319	Adult	Hatinh	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	38	38	NA	F	0	EastAsia	Vietnam	Housewife	NA	NA
+V321	V321	Adult	Hatinh	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	33	33	NA	F	0	EastAsia	Vietnam	Non_officeworker	NA	NA
+V323	V323	Adult	Hatinh	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	29	29	NA	F	0	EastAsia	Vietnam	Non_officeworker	NA	NA
+V325	V325	Adult	Hatinh	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	37	37	NA	F	0	EastAsia	Vietnam	Officeworker	NA	NA
+V327	V327	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	31	31	NA	F	0	EastAsia	Vietnam	Officeworker	NA	NA
+V329	V329	Adult	Hatinh	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	26	26	NA	F	0	EastAsia	Vietnam	NA	NA	NA
+V331	V331	Adult	Hatinh	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	34	34	NA	F	0	EastAsia	Vietnam	Non_officeworker	NA	NA
+V333	V333	Adult	Hatinh	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	35	35	NA	F	0	EastAsia	Vietnam	Non_officeworker	NA	NA
+V335	V335	Adult	Hatinh	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	28	28	NA	F	0	EastAsia	Vietnam	Non_officeworker	NA	NA
+V337	V337	Adult	Hatinh	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	24	24	NA	F	0	EastAsia	Vietnam	Housewife	NA	NA
+V339	V339	Adult	Hatinh	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	26	26	NA	F	0	EastAsia	Vietnam	Housewife	NA	NA
+V341	V341	Adult	Hatinh	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	33	33	NA	F	0	EastAsia	Vietnam	NA	NA	NA
+V343	V343	Adult	Hatinh	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	34	34	NA	F	0	EastAsia	Vietnam	Officeworker	NA	NA
+V345	V345	Adult	Hatinh	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	26	26	NA	F	0	EastAsia	Vietnam	Officeworker	NA	NA
+V347	V347	Adult	Hatinh	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	23	23	NA	F	0	EastAsia	Vietnam	Housewife	NA	NA
+V349	V349	Adult	Hatinh	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	20	20	NA	F	0	EastAsia	Vietnam	Housewife	NA	NA
+V351	V351	Adult	Hanoi	"Le thanh nghi, Vietnam"	Vietnam	Hanoi	Le thanh nghi	23	23	NA	F	0	EastAsia	Vietnam	Student	NA	NA
+V352	V352	Adult	Hanoi	"Ninh nhat, Vietnam"	Vietnam	Ninh binh	Ninh nhat	22	22	NA	F	0	EastAsia	Vietnam	Student	NA	NA
+V353	V353	Adult	Hanoi	"Tanhung, Vietnam"	Vietnam	Bac Giang	Tanhung	23	23	NA	F	0	EastAsia	Vietnam	Student	NA	NA
+V354	V354	Adult	Hanoi	"Thanh xuan, Vietnam"	Vietnam	Hanoi	Thanh xuan	22	22	NA	F	0	EastAsia	Vietnam	Student	NA	NA
+V355	V355	Adult	Hanoi	"Ta thanh oai, Vietnam"	Vietnam	Hanoi	Ta thanh oai	22	22	NA	F	0	EastAsia	Vietnam	Student	NA	NA
+V356	V356	Adult	Hanoi	"Dong da, Vietnam"	Vietnam	Hanoi	Dong da	22	22	NA	F	0	EastAsia	Vietnam	Student	NA	NA
+V357	V357	Adult	Hanoi	"Haian, Vietnam"	Vietnam	Haiphong	Haian	22	22	NA	F	0	EastAsia	Vietnam	Student	NA	NA
+V358	V358	Adult	Hanoi	"Hoang cau, Vietnam"	Vietnam	Hanoi	Hoang cau	22	22	NA	F	0	EastAsia	Vietnam	Student	NA	NA
+V359	V359	Adult	Hanoi	"Dong da, Vietnam"	Vietnam	Hanoi	Dong da	22	22	NA	F	0	EastAsia	Vietnam	Student	NA	NA
+V360	V360	Adult	Hanoi	"Mai lam, Vietnam"	Vietnam	Hanoi	Mai lam	22	22	NA	F	0	EastAsia	Vietnam	Student	NA	NA
+V361	V361	Adult	Hanoi	"Tonthattung, Vietnam"	Vietnam	Hanoi	Tonthattung	22	22	NA	F	0	EastAsia	Vietnam	Student	NA	NA
+V362	V362	Adult	Hanoi	"Yen so, Vietnam"	Vietnam	Hanoi	Yen so	22	22	NA	F	0	EastAsia	Vietnam	Student	NA	NA
+V363	V363	Adult	Hanoi	"Vu tong phan, Vietnam"	Vietnam	Hanoi	Vu tong phan	27	27	NA	F	0	EastAsia	Vietnam	Officeworker	NA	NA
+V364	V364	Adult	Hanoi	"Thanh xuan, Vietnam"	Vietnam	Hanoi	Thanh xuan	22	22	NA	F	0	EastAsia	Vietnam	Student	NA	NA
+V365	V365	Adult	Hanoi	"Dong da, Vietnam"	Vietnam	Hanoi	Dong da	22	22	NA	F	0	EastAsia	Vietnam	Student	NA	NA
+V366	V366	Adult	Hanoi	"Dong da, Vietnam"	Vietnam	Hanoi	Dong da	22	22	NA	F	0	EastAsia	Vietnam	Student	NA	NA
+V367	V367	Adult	Hanoi	"Chua boc, Vietnam"	Vietnam	Hanoi	Chua boc	22	22	NA	F	0	EastAsia	Vietnam	Student	NA	NA
+V368	V368	Adult	Hanoi	"Vu tong phan, Vietnam"	Vietnam	Hanoi	Vu tong phan	25	25	NA	F	0	EastAsia	Vietnam	Officeworker	NA	NA
+V369	V369	Adult	Hanoi	"Xadan2, Vietnam"	Vietnam	Hanoi	Xadan2	22	22	NA	F	0	EastAsia	Vietnam	Student	NA	NA
+V371	V371	Adult	Hanoi	"Bac tu liem, Vietnam"	Vietnam	Hanoi	Bac tu liem	22	22	NA	F	0	EastAsia	Vietnam	Student	NA	NA
+V372	V372	Adult	Hanoi	"Trung liet, Vietnam"	Vietnam	Hanoi	Trung liet	34	34	NA	F	0	EastAsia	Vietnam	Officeworker	NA	NA
+V373	V373	Adult	Hanoi	"Hadong, Vietnam"	Vietnam	Hanoi	Hadong	23	23	NA	F	0	EastAsia	Vietnam	Student	NA	NA
+V374	V374	Adult	Hanoi	"Lo duc, Vietnam"	Vietnam	Hanoi	Lo duc	23	23	NA	F	0	EastAsia	Vietnam	Student	NA	NA
+V375	V375	Adult	Hanoi	"Truong dinh, Vietnam"	Vietnam	Hanoi	Truong dinh	22	22	NA	F	0	EastAsia	Vietnam	Student	NA	NA
+V376	V376	Adult	Hanoi	"Vu tong phan, Vietnam"	Vietnam	Hanoi	Vu tong phan	32	32	NA	F	0	EastAsia	Vietnam	Non_officeworker	NA	NA
+V377	V377	Adult	Hanoi	"Hadong, Vietnam"	Vietnam	Hanoi	Hadong	33	33	NA	F	0	EastAsia	Vietnam	Officeworker	NA	NA
+V379	V379	Adult	Hanoi	"Hai ba trung, Vietnam"	Vietnam	Hanoi	Hai ba trung	29	29	NA	F	0	EastAsia	Vietnam	Housewife	NA	NA
+V380	V380	Adult	Hanoi	"Thanh tri, Vietnam"	Vietnam	Hanoi	Thanh tri	32	32	NA	F	0	EastAsia	Vietnam	Officeworker	NA	NA
+V381	V381	Adult	Hanoi	"Yennguu, Vietnam"	Vietnam	Hanoi	Yennguu	29	29	NA	F	0	EastAsia	Vietnam	Officeworker	NA	NA
+V383	V383	Adult	Hanoi	"NA, Vietnam"	Vietnam	Hanoi	NA	31	31	NA	F	1	NorthAmerica	USA	Officeworker	NA	NA
+V384	V384	Adult	Hanoi	"NA, Vietnam"	Vietnam	Hanoi	NA	26	26	NA	F	1	Europe	England	Officeworker	NA	NA
+V385	V385	Adult	Hanoi	"NA, Vietnam"	Vietnam	Hanoi	NA	28	28	NA	F	1	Africa	SouthAfrica	Officeworker	NA	NA
+V386	V386	Adult	Hanoi	"NA, Vietnam"	Vietnam	Hanoi	NA	37	37	NA	F	1	Africa	SouthAfrica	Officeworker	NA	NA
+V387	V387	Adult	Hanoi	"NA, Vietnam"	Vietnam	Hanoi	NA	25	25	NA	F	1	Europe	England	Officeworker	NA	NA
+V388	V388	Adult	Hanoi	"NA, Vietnam"	Vietnam	Hanoi	NA	28	28	NA	F	1	Europe	Wales	Officeworker	NA	NA
+V389	V389	Adult	Hanoi	"NA, Vietnam"	Vietnam	Hanoi	NA	22	22	NA	F	1	CentralAsia	Mauritius	Student	NA	NA
+V390	V390	Adult	Hanoi	"NA, Vietnam"	Vietnam	Hanoi	NA	24	24	NA	F	1	NorthAmerica	USA	Officeworker	NA	NA
+V391	V391	Adult	Hanoi	"NA, Vietnam"	Vietnam	Hanoi	NA	24	24	NA	F	1	Africa	SouthAfrica	Officeworker	NA	NA
+V392	V392	Adult	Hanoi	"NA, Vietnam"	Vietnam	Hanoi	NA	24	24	NA	F	1	Europe	Poland	Officeworker	NA	NA
+V393	V393	Adult	Hanoi	"NA, Vietnam"	Vietnam	Hanoi	NA	30	30	NA	F	1	Europe	Hungary	Officeworker	NA	NA
+V394	V394	Adult	Hanoi	"NA, Vietnam"	Vietnam	Hanoi	NA	29	29	NA	F	1	Europe	England	Officeworker	NA	NA
+V396	V396	Adult	Hanoi	"Tayho, Vietnam"	Vietnam	Hanoi	Tayho	26	26	NA	F	1	Europe	Wales	Unemployed	NA	NA
+V397	V397	Adult	Hanoi	"NA, Vietnam"	Vietnam	Hanoi	NA	32	32	NA	F	1	Europe	England	Officeworker	NA	NA
+V398	V398	Adult	Hanoi	"NA, Vietnam"	Vietnam	Hanoi	NA	24	24	NA	F	1	Europe	France	Officeworker	NA	NA
+V399	V399	Adult	Hanoi	"NA, Vietnam"	Vietnam	Hanoi	NA	25	25	NA	F	1	Europe	Latvia	Officeworker	NA	NA
+V400	V400	Adult	Hanoi	"Tayho, Vietnam"	Vietnam	Hanoi	Tayho	25	25	NA	F	1	Europe	England	Officeworker	NA	NA
+V401	V401	Adult	Hanoi	"NA, Vietnam"	Vietnam	Hanoi	NA	34	34	NA	F	1	Europe	France	Officeworker	NA	NA
+V402	V402	Adult	Hanoi	"Cau giay, Vietnam"	Vietnam	Hanoi	Cau giay	21	21	NA	F	1	Europe	England	Officeworker	NA	NA
+V403	V403	Adult	Hanoi	"Tayho, Vietnam"	Vietnam	Hanoi	Tayho	23	23	NA	F	1	Africa	SouthAfrica	Officeworker	NA	NA
+V404	V404	Adult	Hanoi	"NA, Vietnam"	Vietnam	Hanoi	NA	22	22	NA	F	1	Europe	Netherlands	Officeworker	NA	NA
+V405	V405	Adult	Hanoi	"Tayho, Vietnam"	Vietnam	Hanoi	Tayho	23	23	NA	F	1	Africa	SouthAfrica	Officeworker	NA	NA
+V406	V406	Adult	Hanoi	"Tayho, Vietnam"	Vietnam	Hanoi	Tayho	23	23	NA	F	1	Africa	SouthAfrica	Officeworker	NA	NA
+V407	V407	Adult	Hanoi	"Tayho, Vietnam"	Vietnam	Hanoi	Tayho	24	24	NA	F	1	Africa	SouthAfrica	Officeworker	NA	NA
+V408	V408	Adult	Hanoi	"NA, Vietnam"	Vietnam	Hanoi	NA	25	25	NA	F	1	NorthAmerica	USA	Officeworker	NA	NA
+V409	V409	Adult	Hanoi	"NA, Vietnam"	Vietnam	Hanoi	NA	45	45	NA	F	1	Europe	England	Officeworker	NA	NA
+V410	V410	Adult	Hanoi	"NA, Vietnam"	Vietnam	Hanoi	NA	23	23	NA	F	1	Europe	Poland	Officeworker	NA	NA
+V411	V411	Adult	Hanoi	"NA, Vietnam"	Vietnam	Hanoi	NA	47	47	NA	F	1	Europe	England	Officeworker	NA	NA
+V413	V413	Adult	Hanoi	"Halong, Vietnam"	Vietnam	Quang ninh	Halong	29	29	NA	F	0	EastAsia	Vietnam	Officeworker	NA	NA
+V414	V414	Adult	Hanoi	"Nam tu liem, Vietnam"	Vietnam	Hanoi	Nam tu liem	27	27	NA	F	0	EastAsia	Vietnam	Officeworker	NA	NA
+V416	V416	Adult	Hanoi	"Kien hung, Vietnam"	Vietnam	Hanoi	Kien hung	28	28	NA	F	0	EastAsia	Vietnam	Officeworker	NA	NA
+V418	V418	Adult	Hanoi	"Cau giay, Vietnam"	Vietnam	Hanoi	Cau giay	39	39	NA	F	0	EastAsia	Vietnam	Officeworker	NA	NA
+V420	V420	Adult	Hanoi	"Hoang liet, Vietnam"	Vietnam	Hanoi	Hoang liet	35	35	NA	F	0	EastAsia	Vietnam	Officeworker	NA	NA
+V422	V422	Adult	Hanoi	"Hai ba trung, Vietnam"	Vietnam	Hanoi	Hai ba trung	29	29	NA	F	0	EastAsia	Vietnam	Officeworker	NA	NA
+V424	V424	Adult	Hanoi	"Linnhdam, Vietnam"	Vietnam	Hanoi	Linnhdam	30	30	NA	F	0	EastAsia	Vietnam	Officeworker	NA	NA
+V426	V426	Adult	Hanoi	"Tayho, Vietnam"	Vietnam	Hanoi	Tayho	38	38	NA	F	0	EastAsia	Vietnam	Officeworker	NA	NA
+V428	V428	Adult	Hanoi	"Kim ma, Vietnam"	Vietnam	Hanoi	Kim ma	28	28	NA	F	0	EastAsia	Vietnam	Officeworker	NA	NA
+V430	V430	Adult	Hanoi	"Hoang mai, Vietnam"	Vietnam	Hanoi	Hoang mai	38	38	NA	F	0	EastAsia	Vietnam	Officeworker	NA	NA
+V432	V432	Adult	Hanoi	"Hai ba trung, Vietnam"	Vietnam	Hanoi	Hai ba trung	27	27	NA	F	0	EastAsia	Vietnam	Officeworker	NA	NA
+V434	V434	Adult	Hanoi	"Hai ba trung, Vietnam"	Vietnam	Hanoi	Hai ba trung	38	38	NA	F	0	EastAsia	Vietnam	Officeworker	NA	NA
+V436	V436	Adult	Hanoi	"Hai ba trung, Vietnam"	Vietnam	Hanoi	Hai ba trung	36	36	NA	F	0	EastAsia	Vietnam	Officeworker	NA	NA
+V438	V438	Adult	Hanoi	"Longbien, Vietnam"	Vietnam	Hanoi	Longbien	34	34	NA	F	0	EastAsia	Vietnam	Officeworker	NA	NA
+VS001	VS001	Adult	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	35	35	NA	F	0	EastAsia	Vietnam	Student	NA	NA
+VS003	VS003	Adult	Hanoi	"NA, Vietnam"	Vietnam	NA	NA	NA	NA	NA	F	0	NA	NA	NA	NA	NA
+VS005	VS005	Adult	Hanoi	"NA, Vietnam"	Vietnam	NA	NA	NA	NA	NA	F	0	NA	NA	NA	NA	NA
+VS013	VS013	Adult	Hanoi	"Da ton, Vietnam"	Vietnam	Hanoi	Da ton	31	31	NA	F	0	EastAsia	Vietnam	Officeworker	NA	NA
+VS015	VS015	Adult	Hanoi	"NA, Vietnam"	Vietnam	NA	NA	NA	NA	NA	F	0	NA	NA	NA	NA	NA
+VS017	VS017	Adult	Hanoi	"Longbien, Vietnam"	Vietnam	Hanoi	Longbien	28	28	NA	F	0	EastAsia	Vietnam	NA	NA	NA
+VS019	VS019	Adult	Hanoi	"NA, Vietnam"	Vietnam	NA	NA	NA	NA	NA	F	0	NA	NA	NA	NA	NA
+VS028	VS028	Adult	Hanoi	"NA, Vietnam"	Vietnam	NA	NA	NA	NA	NA	F	0	NA	NA	NA	NA	NA
+G0007	G0006	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.06	0.75	M	NA	Africa	Gabon	NA	NA	NA
+G0009	G0008	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.04	0.5	F	NA	Africa	Gabon	NA	NA	NA
+G0011	G0010	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.08	1	F	NA	Africa	Gabon	NA	NA	NA
+G0013	G0012	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.50	6	M	NA	Africa	Gabon	NA	NA	NA
+G0015	G0014	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.25	3	M	NA	Africa	Gabon	NA	NA	NA
+G0017	G0016	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	1.00	12	M	NA	Africa	NA	NA	NA	NA
+G0019	G0018	Infant	CERMEL	"NA, Gabon"	Gabon	NA	NA	NA	0.17	2	F	NA	Africa	NA	NA	NA	NA
+G0021	G0020	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.25	3	F	NA	Africa	Gabon	NA	NA	NA
+G0022	G0016	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	NA	NA	NA	NA	Africa	NA	NA	NA	NA
+G0025	G0024	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.29	3.5	M	NA	Africa	Gabon	NA	NA	NA
+G0026	G0027	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	1.08	13	F	NA	Africa	Gabon	NA	NA	NA
+G0029	G0028	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.92	11	M	NA	Africa	Gabon	NA	NA	NA
+G0031	G0030	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.17	2	M	NA	Africa	NA	NA	NA	NA
+G0033	G0032	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.42	5	F	NA	Africa	Gabon	NA	NA	NA
+G0036	G0035	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.08	1	M	NA	Africa	Gabon	NA	NA	NA
+G0037	G0034	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.75	9	F	NA	Africa	Gabon	NA	NA	NA
+G0039	G0038	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.08	1	F	NA	Africa	Gabon	NA	NA	NA
+G0041	G0040	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.25	3	F	NA	Africa	Gabon	NA	NA	NA
+G0043	G0042	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.42	5	F	NA	Africa	Gabon	NA	NA	NA
+G0045	G0044	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.42	5	F	NA	Africa	Gabon	NA	NA	NA
+G0047	G0046	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.58	7	M	NA	Africa	Gabon	NA	NA	NA
+G0049	G0048	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.75	9	F	NA	Africa	Gabon	NA	NA	NA
+G0050	G0023	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.17	2	M	NA	Africa	Gabon	NA	NA	NA
+G0052	G0051	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.42	5	F	NA	Africa	Gabon	NA	NA	NA
+G0054	G0053	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.75	9	M	NA	Africa	Gabon	NA	NA	NA
+G0056	G0055	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.50	6	M	NA	Africa	Gabon	NA	NA	NA
+G0058	G0057	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.50	6	M	NA	Africa	Gabon	NA	NA	NA
+G0060	G0059	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.67	8	F	NA	Africa	Gabon	NA	NA	NA
+G0062	G0061	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.67	8	F	NA	Africa	Gabon	NA	NA	NA
+G0064	G0063	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.17	2	M	NA	Africa	Gabon	NA	NA	NA
+G0066	G0065	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.33	4	F	NA	Africa	Gabon	NA	NA	NA
+G0068	G0067	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.92	11	F	NA	Africa	Gabon	NA	NA	NA
+G0070	G0069	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.17	2	F	NA	Africa	Gabon	NA	NA	NA
+G0072	G0071	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.58	7	M	NA	Africa	Gabon	NA	NA	NA
+G0074	G0073	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.67	8	F	NA	Africa	Gabon	NA	NA	NA
+G0076	G0075	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.25	3	F	NA	Africa	Gabon	NA	NA	NA
+G0077	G0075	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.25	3	F	NA	Africa	Gabon	NA	NA	NA
+G0079	G0078	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.42	5	F	NA	Africa	Gabon	NA	NA	NA
+G0081	G0080	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.33	4	M	NA	Africa	Gabon	NA	NA	NA
+G0083	G0082	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.42	5	M	NA	Africa	Gabon	NA	NA	NA
+G0084	G0082	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.42	5	M	NA	Africa	Gabon	NA	NA	NA
+G0086	G0085	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.08	1	F	NA	Africa	Gabon	NA	NA	NA
+G0088	G0087	Infant	CERMEL	"Paga, Gabon"	Gabon	Moyen-Ogooue	Paga	NA	1.00	12	M	NA	Africa	Gabon	NA	NA	NA
+G0090	G0089	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.67	8	M	NA	Africa	Gabon	NA	NA	NA
+G0092	G0091	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.25	3	M	NA	Africa	Gabon	NA	NA	NA
+G0094	G0093	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.08	1	M	NA	Africa	Gabon	NA	NA	NA
+G0096	G0095	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	1.00	12	M	NA	Africa	Gabon	NA	NA	NA
+G0098	G0097	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	1.00	12	F	NA	Africa	Gabon	NA	NA	NA
+G0100	G0099	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.17	2	M	NA	Africa	Gabon	NA	NA	NA
+G0102	G0101	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.17	2	M	NA	Africa	Gabon	NA	NA	NA
+G0104	G0103	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.75	9	F	NA	Africa	Gabon	NA	NA	NA
+G0106	G0105	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.33	4	F	NA	Africa	Gabon	NA	NA	NA
+G0108	G0107	Infant	CERMEL	"Makouke, Gabon"	Gabon	Moyen-Ogooue	Makouke	NA	0.50	6	F	NA	Africa	Gabon	NA	NA	NA
+G0110	G0109	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	1.08	13	M	NA	Africa	Gabon	NA	NA	NA
+G0112	G0111	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.08	1	M	NA	Africa	Gabon	NA	NA	NA
+G0114	G0113	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.50	6	F	NA	Africa	Gabon	NA	NA	NA
+G0116	G0115	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.92	11	M	NA	Africa	Gabon	NA	NA	NA
+G0118	G0117	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.25	3	F	NA	Africa	Gabon	NA	NA	NA
+G0121	G0120	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.75	9	F	NA	Africa	Gabon	NA	NA	NA
+G0125	G0124	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.25	3	F	NA	Africa	Gabon	NA	NA	NA
+G0127	G0126	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.25	3	F	NA	Africa	Gabon	NA	NA	NA
+G0129	G0128	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.75	9	M	NA	Africa	Gabon	NA	NA	NA
+G0131	G0130	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.02	0.25	M	NA	Africa	Gabon	NA	NA	NA
+G0133	G0132	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.58	7	F	NA	Africa	Gabon	NA	NA	NA
+G0135	G0134	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.75	9	M	NA	Africa	Gabon	NA	NA	NA
+G0137	G0136	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.25	3	M	NA	Africa	Gabon	NA	NA	NA
+G0139	G0138	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.17	2	M	NA	Africa	Gabon	NA	NA	NA
+G0141	G0140	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.67	8	F	NA	Africa	Gabon	NA	NA	NA
+G0143	G0142	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	1.17	14	M	NA	Africa	Gabon	NA	NA	NA
+G0145	G0144	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	1.00	12	M	NA	Africa	Gabon	NA	NA	NA
+G0147	G0146	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	1.08	13	F	NA	Africa	Gabon	NA	NA	NA
+G0149	G0148	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	1.00	12	F	NA	Africa	Gabon	NA	NA	NA
+G0151	G0150	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.33	4	M	NA	Africa	Gabon	NA	NA	NA
+G0153	G0152	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.04	0.5	F	NA	Africa	Gabon	NA	NA	NA
+G0155	G0154	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.04	0.5	M	NA	Africa	Gabon	NA	NA	NA
+G0157	G0156	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.75	9	M	NA	Africa	Gabon	NA	NA	NA
+G0159	G0158	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.67	8	M	NA	Africa	Gabon	NA	NA	NA
+G0161	G0160	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.83	10	M	NA	Africa	Gabon	NA	NA	NA
+G0163	G0162	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.33	4	F	NA	Africa	Gabon	NA	NA	NA
+G0165	G0164	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.75	9	M	NA	Africa	Gabon	NA	NA	NA
+G0167	G0166	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	1.08	13	M	NA	Africa	Gabon	NA	NA	NA
+G0169	G0168	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.67	8	M	NA	Africa	Gabon	NA	NA	NA
+G0171	G0170	Infant	CERMEL	"Paga, Gabon"	Gabon	Moyen-Ogooue	Paga	NA	0.67	8	F	NA	Africa	Gabon	NA	NA	NA
+G0173	G0172	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.75	9	F	NA	Africa	Gabon	NA	NA	NA
+G0175	G0174	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.42	5	F	NA	Africa	Gabon	NA	NA	NA
+G0177	G0176	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.83	10	M	NA	Africa	Gabon	NA	NA	NA
+G0179	G0178	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.06	0.75	M	NA	Africa	Gabon	NA	NA	NA
+G0181	G0180	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.25	3	M	NA	Africa	Gabon	NA	NA	NA
+G0183	G0182	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.75	9	F	NA	Africa	Gabon	NA	NA	NA
+G0185	G0184	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.58	7	M	NA	Africa	Gabon	NA	NA	NA
+G0187	G0186	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	1.17	14	M	NA	Africa	Gabon	NA	NA	NA
+G0189	G0188	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.50	6	F	NA	Africa	Gabon	NA	NA	NA
+G0191	G0190	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.58	7	M	NA	Africa	Gabon	NA	NA	NA
+G0193	G0192	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.50	6	F	NA	Africa	Gabon	NA	NA	NA
+G0195	G0194	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	1.67	20	M	NA	Africa	Gabon	NA	NA	NA
+G0197	G0196	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.08	1	M	NA	Africa	Gabon	NA	NA	NA
+G0199	G0198	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.17	2	M	NA	Africa	Gabon	NA	NA	NA
+G0201	G0200	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.33	4	F	NA	Africa	Gabon	NA	NA	NA
+G0203	G0202	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	1.00	12	M	NA	Africa	Gabon	NA	NA	NA
+G0205	G0204	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.67	8	F	NA	Africa	Gabon	NA	NA	NA
+G0207	G0206	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.83	10	F	NA	Africa	Gabon	NA	NA	NA
+G0209	G0208	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	1.33	16	F	NA	Africa	Gabon	NA	NA	NA
+G0211	G0210	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.50	6	F	NA	Africa	Gabon	NA	NA	NA
+G0213	G0212	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	1.17	14	M	NA	Africa	Gabon	NA	NA	NA
+G0215	G0214	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.08	1	F	NA	Africa	Gabon	NA	NA	NA
+G0217	G0216	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.08	1	M	NA	Africa	Gabon	NA	NA	NA
+G0219	G0218	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.33	4	M	NA	Africa	Gabon	NA	NA	NA
+G0221	G0220	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.92	11	M	NA	Africa	Gabon	NA	NA	NA
+G0223	G0222	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.92	11	F	NA	Africa	Gabon	NA	NA	NA
+G0225	G0224	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.02	0.25	F	NA	Africa	Gabon	NA	NA	NA
+G0227	G0226	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.83	10	M	NA	Africa	Gabon	NA	NA	NA
+G0229	G0228	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.17	2	F	NA	Africa	Gabon	NA	NA	NA
+G0231	G0230	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.92	11	M	NA	Africa	Gabon	NA	NA	NA
+G0233	G0232	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.67	8	M	NA	Africa	NA	NA	NA	NA
+G0235	G0234	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.83	10	F	NA	Africa	NA	NA	NA	NA
+G0237	G0236	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.58	7	F	NA	Africa	Gabon	NA	NA	NA
+G0239	G0238	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.83	10	M	NA	Africa	Gabon	NA	NA	NA
+G0241	G0240	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	1.08	13	F	NA	Africa	Gabon	NA	NA	NA
+G0243	G0242	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.83	10	F	NA	Africa	Gabon	NA	NA	NA
+G0246	G0245	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.58	7	M	NA	Africa	Gabon	NA	NA	NA
+G0248	G0247	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.58	7	M	NA	Africa	NA	NA	NA	NA
+G0250	G0249	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.83	10	F	NA	Africa	Gabon	NA	NA	NA
+G0252	G0251	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.58	7	M	NA	Africa	Gabon	NA	NA	NA
+G0254	G0253	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.33	4	M	NA	Africa	Gabon	NA	NA	NA
+G0256	G0255	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.50	6	M	NA	Africa	Gabon	NA	NA	NA
+G0259	G0258	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.67	8	F	NA	Africa	Gabon	NA	NA	NA
+G0261	G0260	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.75	9	F	NA	Africa	Gabon	NA	NA	NA
+G0263	G0262	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.08	1	F	NA	Africa	Gabon	NA	NA	NA
+G0267	G0266	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.67	8	F	NA	Africa	Gabon	NA	NA	NA
+G0269	G0268	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	1.00	12	F	NA	Africa	Gabon	NA	NA	NA
+G0271	G0270	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.67	8	F	NA	Africa	Gabon	NA	NA	NA
+G0273	G0272	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.04	0.5	M	NA	Africa	Gabon	NA	NA	NA
+G0275	G0274	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.04	0.5	F	NA	Africa	Gabon	NA	NA	NA
+G0277	G0276	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.58	7	F	NA	Africa	Gabon	NA	NA	NA
+G0279	G0278	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.75	9	M	NA	Africa	Gabon	NA	NA	NA
+G0287	G0286	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.33	4	F	NA	Africa	Gabon	NA	NA	NA
+G0294	G0293	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.67	8	M	NA	Africa	Gabon	NA	NA	NA
+G0296	G0295	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.50	6	F	NA	Africa	Gabon	NA	NA	NA
+G0298	G0297	Infant	CERMEL	"Lambarene, Gabon"	Gabon	Moyen-Ogooue	Lambarene	NA	0.33	4	F	NA	Africa	Gabon	NA	NA	NA
+G0312	G0311	Infant	Field	"Tchibanga, Gabon"	Gabon	Nyanga	Tchibanga	NA	0.25	3	M	NA	Africa	Gabon	NA	NA	NA
+G0314	G0313	Infant	Field	"Tchibanga, Gabon"	Gabon	Nyanga	Tchibanga	NA	0.75	9	NA	NA	Africa	Gabon	NA	NA	NA
+G0316	G0315	Infant	Field	"Tchibanga, Gabon"	Gabon	Nyanga	Tchibanga	NA	0.02	0.25	M	NA	Africa	Gabon	NA	NA	NA
+G0318	G0317	Infant	Field	"Tchibanga, Gabon"	Gabon	Nyanga	Tchibanga	NA	0.08	1	F	NA	Africa	Gabon	NA	NA	NA
+G0320	G0319	Infant	Field	"Tranquille, Gabon"	Gabon	Ngounie	Tranquille	NA	1.00	12	M	NA	Africa	Gabon	NA	NA	NA
+G0322	G0321	Infant	Field	"Tranquille, Gabon"	Gabon	Ngounie	Tranquille	NA	0.58	7	M	NA	Africa	Gabon	NA	NA	NA
+G0324	G0323	Infant	Field	"Tranquille, Gabon"	Gabon	Ngounie	Tranquille	NA	1.00	12	M	NA	Africa	Gabon	NA	NA	NA
+G0326	G0325	Infant	Field	"Tranquille, Gabon"	Gabon	Ngounie	Tranquille	NA	0.06	0.75	F	NA	Africa	Gabon	NA	NA	NA
+G0328	G0327	Infant	Field	"Tranquille, Gabon"	Gabon	Ngounie	Tranquille	NA	1.00	12	F	NA	Africa	Gabon	NA	NA	NA
+G0330	G0329	Infant	Field	"Tranquille, Gabon"	Gabon	Ngounie	Tranquille	NA	0.08	1	M	NA	Africa	Gabon	NA	NA	NA
+G0332	G0331	Infant	Field	"Tranquille, Gabon"	Gabon	Ngounie	Tranquille	NA	0.08	1	M	NA	Africa	Gabon	NA	NA	NA
+G0334	G0333	Infant	Field	"Tranquille, Gabon"	Gabon	Ngounie	Tranquille	NA	2.00	24	M	NA	Africa	Gabon	NA	NA	NA
+G0336	G0335	Infant	Field	"Ikobe, Gabon"	Gabon	Ngounie	Ikobe	NA	0.75	9	F	NA	Africa	NA	NA	NA	NA
+G0338	G0337	Infant	Field	"Ikobe, Gabon"	Gabon	Ngounie	Ikobe	NA	1.00	12	F	NA	Africa	NA	NA	NA	NA
+G0339	G0337	Infant	Field	"Ikobe, Gabon"	Gabon	Ngounie	Ikobe	NA	3.00	36	M	NA	Africa	NA	NA	NA	NA
+G0346	G0345	Infant	Field	"Soga, Gabon"	Gabon	Ngounie	Soga	NA	NA	NA		NA	Africa	NA	NA	NA	NA
+G0347	G0345	Infant	Field	"Soga, Gabon"	Gabon	Ngounie	Soga	NA	1.00	12	F	NA	Africa	Gabon	NA	NA	NA
+G0349	G0348	Infant	Field	"Soga, Gabon"	Gabon	Ngounie	Soga	NA	NA	NA		NA	Africa	NA	NA	NA	NA
+G0350	G0348	Infant	Field	"Soga, Gabon"	Gabon	Ngounie	Soga	NA	1.00	12	M	NA	Africa	NA	NA	NA	NA
+G0352	G0351	Infant	Field	"Soga, Gabon"	Gabon	Ngounie	Soga	NA	NA	NA		NA	Africa	NA	NA	NA	NA
+G0353	G0351	Infant	Field	"Soga, Gabon"	Gabon	Ngounie	Soga	NA	NA	NA		NA	Africa	NA	NA	NA	NA
+G0355	G0354	Infant	Field	"Soga, Gabon"	Gabon	Ngounie	Soga	NA	NA	NA		NA	Africa	NA	NA	NA	NA
+G0356	G0354	Infant	Field	"Soga, Gabon"	Gabon	Ngounie	Soga	NA	1.00	12	F	NA	Africa	NA	NA	NA	NA
+G0358	G0357	Infant	Field	"Soga, Gabon"	Gabon	Ngounie	Soga	NA	3.00	36	M	NA	Africa	Gabon	NA	NA	NA
+G0359	G0357	Infant	Field	"Soga, Gabon"	Gabon	Ngounie	Soga	NA	2.00	24	F	NA	Africa	Gabon	NA	NA	NA
+G0360	G0357	Infant	Field	"Soga, Gabon"	Gabon	Ngounie	Soga	NA	1.00	12	M	NA	Africa	Gabon	NA	NA	NA
+G0362	G0361	Infant	Field	"Soga, Gabon"	Gabon	Ngounie	Soga	NA	2.00	24	M	NA	Africa	Gabon	NA	NA	NA
+G0364	G0363	Infant	Field	"Soga, Gabon"	Gabon	Ngounie	Soga	NA	5.00	60	F	NA	Africa	Gabon	NA	NA	NA
+G0365	G0363	Infant	Field	"Soga, Gabon"	Gabon	Ngounie	Soga	NA	3.00	36	F	NA	Africa	Gabon	NA	NA	NA
+G0366	G0363	Infant	Field	"Soga, Gabon"	Gabon	Ngounie	Soga	NA	0.08	1	F	NA	Africa	Gabon	NA	NA	NA
+G0368	G0367	Infant	Field	"Makabana, Gabon"	Gabon	Nyanga	Makabana	NA	0.67	8	F	NA	Africa	Gabon	NA	NA	NA
+G0369	G0367	Infant	Field	"Makabana, Gabon"	Gabon	Nyanga	Makabana	NA	3.00	36	M	NA	Africa	Gabon	NA	NA	NA
+G0371	G0370	Infant	Field	"Iboundji, Gabon"	Gabon	Ngounie	Iboundji	NA	0.08	1	M	NA	Africa	NA	NA	NA	NA
+G0373	G0372	Infant	Field	"Makabana, Gabon"	Gabon	Nyanga	Makabana	NA	0.25	3	M	NA	Africa	NA	NA	NA	NA
+G0375	G0374	Infant	Field	"Iboundji, Gabon"	Gabon	Ngounie	Iboundji	NA	0.33	4	F	NA	Africa	Gabon	NA	NA	NA
+G0377	G0376	Infant	Field	"Makabana, Gabon"	Gabon	Nyanga	Makabana	NA	0.17	2	M	NA	Africa	Gabon	NA	NA	NA
+G0379	G0378	Infant	Field	"Omboue, Gabon"	Gabon	Ogooue-Maritime	Omboue	NA	0.42	5	M	NA	Africa	Gabon	NA	NA	NA
+G0381	G0380	Infant	Field	"Omboue, Gabon"	Gabon	Ogooue-Maritime	Omboue	NA	0.58	7	F	NA	Africa	Gabon	NA	NA	NA
+G0383	G0382	Infant	Field	"Nyoe2, Gabon"	Gabon	Ngounie	Nyoe2	NA	0.75	9	M	NA	Africa	Gabon	NA	NA	NA
+G0385	G0384	Infant	Field	"Nyoe2, Gabon"	Gabon	Ngounie	Nyoe2	NA	0.83	10	M	NA	Africa	Gabon	NA	NA	NA
+G0387	G0386	Infant	Field	"Nyoe2, Gabon"	Gabon	Ngounie	Nyoe2	NA	0.08	1	M	NA	Africa	Gabon	NA	NA	NA
+G0388	G0382	Infant	Field	"Nioye, Gabon"	Gabon	Ngounie	Nioye	NA	3.00	36	M	NA	Africa	NA	NA	NA	NA
+G0390	G0389	Infant	Field	"Nyoe2, Gabon"	Gabon	Ngounie	Nyoe2	NA	5.00	60	F	NA	Africa	Gabon	NA	NA	NA
+G0392	G0391	Infant	Field	"Nyoe2, Gabon"	Gabon	Ngounie	Nyoe2	NA	4.00	48	F	NA	Africa	Gabon	NA	NA	NA
+G0394	G0393	Infant	Field	"Divinde, Gabon"	Gabon	Ngounie	Divinde	NA	0.42	5	M	NA	Africa	Gabon	NA	NA	NA
+G0395	G0393	Infant	Field	"Divinde, Gabon"	Gabon	Ngounie	Divinde	NA	5.00	60	F	NA	Africa	Gabon	NA	NA	NA
+G0397	G0396	Infant	Field	"Divinde, Gabon"	Gabon	Ngounie	Divinde	NA	2.00	24	M	NA	Africa	Gabon	NA	NA	NA
+G0399	G0398	Infant	Field	"Divinde, Gabon"	Gabon	Ngounie	Divinde	NA	1.00	12	M	NA	Africa	Gabon	NA	NA	NA
+G0401	G0400	Infant	Field	"Divinde, Gabon"	Gabon	Ngounie	Divinde	NA	5.00	60	M	NA	Africa	Gabon	NA	NA	NA
+G0402	G0400	Infant	Field	"Divinde, Gabon"	Gabon	Ngounie	Divinde	NA	2.00	24	F	NA	Africa	Gabon	NA	NA	NA
+G0404	G0403	Infant	Field	"Divinde, Gabon"	Gabon	Ngounie	Divinde	NA	2.00	24	F	NA	Africa	Gabon	NA	NA	NA
+G0406	G0405	Infant	Field	"Divinde, Gabon"	Gabon	Ngounie	Divinde	NA	2.00	24	M	NA	Africa	Gabon	NA	NA	NA
+G0408	G0407	Infant	Field	"Divinde, Gabon"	Gabon	Ngounie	Divinde	NA	2.00	24	F	NA	Africa	Gabon	NA	NA	NA
+G0409	G0407	Infant	Field	"Divinde, Gabon"	Gabon	Ngounie	Divinde	NA	0.92	11	F	NA	Africa	Gabon	NA	NA	NA
+G0410	G0407	Infant	Field	"Divinde, Gabon"	Gabon	Ngounie	Divinde	NA	5.00	60	M	NA	Africa	Gabon	NA	NA	NA
+G0412	G0411	Infant	Field	"Erouba, Gabon"	Gabon	NA	Erouba	NA	4.00	48	F	NA	NA	NA	NA	NA	NA
+G0414	G0413	Infant	Field	"Erouba, Gabon"	Gabon	NA	Erouba	NA	3.00	36	F	NA	NA	NA	NA	NA	NA
+G0415	G0413	Infant	Field	"Erouba, Gabon"	Gabon	NA	Erouba	NA	5.00	60	F	NA	NA	NA	NA	NA	NA
+G0417	G0416	Infant	Field	"Erouba, Gabon"	Gabon	NA	Erouba	NA	1.00	12	F	NA	NA	NA	NA	NA	NA
+G0419	G0418	Infant	Field	"Erouba, Gabon"	Gabon	NA	Erouba	NA	2.00	24	F	NA	NA	NA	NA	NA	NA
+G0421	G0420	Infant	Field	"Erouba, Gabon"	Gabon	NA	Erouba	NA	3.00	36	M	NA	NA	NA	NA	NA	NA
+G0423	G0422	Infant	Field	"Erouba, Gabon"	Gabon	NA	Erouba	NA	3.00	36	F	NA	NA	NA	NA	NA	NA
+G0425	G0424	Infant	Field	"Erouba, Gabon"	Gabon	NA	Erouba	NA	3.50	42	NA	NA	NA	NA	NA	NA	NA
+V002	V001	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	0.58	7	F	NA	Asia	Vietnam	NA	NA	NA
+V004	V003	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	0.50	6	M	NA	Asia	Vietnam	NA	NA	NA
+V006	V005	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	0.58	7	M	NA	Asia	Vietnam	NA	NA	NA
+V008	V007	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	0.50	6	F	NA	Asia	Vietnam	NA	NA	NA
+V010	V009	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	0.42	5	F	NA	Asia	Vietnam	NA	NA	NA
+V012	V011	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	0.50	6	F	NA	Asia	Vietnam	NA	NA	NA
+V014	V013	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	0.58	7	M	NA	Asia	Vietnam	NA	NA	NA
+V016	V015	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	0.67	8	F	NA	Asia	Vietnam	NA	NA	NA
+V018	V017	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	0.83	10	M	NA	Asia	Vietnam	NA	NA	NA
+V020	V019	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	0.83	10	F	NA	Asia	Vietnam	NA	NA	NA
+V022	V021	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	0.83	10	M	NA	Asia	Vietnam	NA	NA	NA
+V024	V023	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	0.42	5	M	NA	Asia	Vietnam	NA	NA	NA
+V026	V025	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	0.58	7	M	NA	Asia	Vietnam	NA	NA	NA
+V028	V027	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	0.50	6	M	NA	Asia	Vietnam	NA	NA	NA
+V030	V029	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	0.58	7	M	NA	Asia	Vietnam	NA	NA	NA
+V032	V031	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	0.75	9	M	NA	Asia	Vietnam	NA	NA	NA
+V034	V033	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	0.92	11	F	NA	Asia	Vietnam	NA	NA	NA
+V036	V035	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	0.50	6	M	NA	Asia	Vietnam	NA	NA	NA
+V038	V037	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	0.50	6	M	NA	Asia	Vietnam	NA	NA	NA
+V040	V039	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	1.33	16	M	NA	Asia	Vietnam	NA	NA	NA
+V042	V041	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	0.58	7	M	NA	Asia	Vietnam	NA	NA	NA
+V044	V043	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	0.58	7	F	NA	Asia	Vietnam	NA	NA	NA
+V046	V045	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	0.42	5	F	NA	Asia	Vietnam	NA	NA	NA
+V048	V047	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	0.25	3	M	NA	Asia	Vietnam	NA	NA	NA
+V050	V049	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	0.58	7	M	NA	Asia	Vietnam	NA	NA	NA
+V052	V051	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	0.75	9	M	NA	Asia	Vietnam	NA	NA	NA
+V054	V053	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	0.50	6	F	NA	Asia	Vietnam	NA	NA	NA
+V056	V055	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	0.50	6	F	NA	Asia	Vietnam	NA	NA	NA
+V058	V057	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	0.83	10	F	NA	Asia	Vietnam	NA	NA	NA
+V060	V059	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	0.67	8	M	NA	Asia	Vietnam	NA	NA	NA
+V062	V061	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	0.42	5	F	NA	Asia	Vietnam	NA	NA	NA
+V064	V063	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	0.92	11	F	NA	Asia	Vietnam	NA	NA	NA
+V066	V065	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	0.58	7	F	NA	Asia	Vietnam	NA	NA	NA
+V068	V067	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	0.92	11	F	NA	Asia	Vietnam	NA	NA	NA
+V070	V069	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	0.42	5	F	NA	Asia	Vietnam	NA	NA	NA
+V072	V071	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	0.17	2	F	NA	Asia	Vietnam	NA	NA	NA
+V074	V073	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	0.50	6	F	NA	Asia	Vietnam	NA	NA	NA
+V076	V075	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	0.33	4	F	NA	Asia	Vietnam	NA	NA	NA
+V078	V077	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	0.08	1	M	NA	Asia	Vietnam	NA	NA	NA
+V080	V079	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	0.17	2	M	NA	Asia	Vietnam	NA	NA	NA
+V082	V081	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	0.75	9	F	NA	Asia	Vietnam	NA	NA	NA
+V084	V083	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	0.67	8	M	NA	Asia	Vietnam	NA	NA	NA
+V086	V085	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	0.25	3	F	NA	Asia	Vietnam	NA	NA	NA
+V088	V087	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	0.58	7	M	NA	Asia	Vietnam	NA	NA	NA
+V090	V080	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	0.50	6	F	NA	Asia	Vietnam	NA	NA	NA
+V092	V091	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	0.58	7	F	NA	Asia	Vietnam	NA	NA	NA
+V094	V093	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	0.83	10	F	NA	Asia	Vietnam	NA	NA	NA
+V096	V095	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	0.67	8	F	NA	Asia	Vietnam	NA	NA	NA
+V098	V097	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	0.92	11	F	NA	Asia	Vietnam	NA	NA	NA
+V100	V099	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	0.33	4	M	NA	Asia	Vietnam	NA	NA	NA
+V102	V101	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	0.25	3	F	NA	Asia	Vietnam	NA	NA	NA
+V104	V103	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	0.25	3	F	NA	Asia	Vietnam	NA	NA	NA
+V106	V105	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	0.75	9	F	NA	Asia	Vietnam	NA	NA	NA
+V108	V107	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	1.00	12	M	NA	Asia	Vietnam	NA	NA	NA
+V110	V109	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	1.00	12	F	NA	Asia	Vietnam	NA	NA	NA
+V112	V111	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	0.92	11	F	NA	Asia	Vietnam	NA	NA	NA
+V114	V113	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	0.75	9	F	NA	Asia	Vietnam	NA	NA	NA
+V116	V115	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	0.42	5	M	NA	Asia	Vietnam	NA	NA	NA
+V118	V117	Infant	Sonla	"Chiengxom, Vietnam"	Vietnam	Sonla	Chiengxom	NA	1.08	13	F	NA	Asia	Vietnam	NA	NA	NA
+V119	V128	Infant	Sonla	"Chiengden, Vietnam"	Vietnam	Sonla	Chiengden	NA	0.92	11	M	NA	Asia	Vietnam	NA	NA	NA
+V121	V120	Infant	Sonla	"Chiengden, Vietnam"	Vietnam	Sonla	Chiengden	NA	0.75	9	F	NA	Asia	Vietnam	NA	NA	NA
+V123	V122	Infant	Sonla	"Chiengden, Vietnam"	Vietnam	Sonla	Chiengden	NA	0.50	6	F	NA	Asia	Vietnam	NA	NA	NA
+V125	V124	Infant	Sonla	"Chiengden, Vietnam"	Vietnam	Sonla	Chiengden	NA	0.83	10	M	NA	Asia	Vietnam	NA	NA	NA
+V127	V126	Infant	Sonla	"Chiengden, Vietnam"	Vietnam	Sonla	Chiengden	NA	0.75	9	F	NA	Asia	Vietnam	NA	NA	NA
+V130	V129	Infant	Sonla	"Chiengden, Vietnam"	Vietnam	Sonla	Chiengden	NA	0.58	7	M	NA	Asia	Vietnam	NA	NA	NA
+V132	V131	Infant	Sonla	"Chiengden, Vietnam"	Vietnam	Sonla	Chiengden	NA	0.75	9	M	NA	Asia	Vietnam	NA	NA	NA
+V134	V133	Infant	Sonla	"Chiengden, Vietnam"	Vietnam	Sonla	Chiengden	NA	0.33	4	M	NA	Asia	Vietnam	NA	NA	NA
+V136	V135	Infant	Sonla	"Chiengden, Vietnam"	Vietnam	Sonla	Chiengden	NA	0.67	8	M	NA	Asia	Vietnam	NA	NA	NA
+V138	V137	Infant	Sonla	"Chiengden, Vietnam"	Vietnam	Sonla	Chiengden	NA	0.42	5	M	NA	Asia	Vietnam	NA	NA	NA
+V140	V139	Infant	Sonla	"Chiengden, Vietnam"	Vietnam	Sonla	Chiengden	NA	0.75	9	M	NA	Asia	Vietnam	NA	NA	NA
+V142	V141	Infant	Sonla	"Chiengden, Vietnam"	Vietnam	Sonla	Chiengden	NA	0.92	11	F	NA	Asia	Vietnam	NA	NA	NA
+V144	V143	Infant	Sonla	"Chiengden, Vietnam"	Vietnam	Sonla	Chiengden	NA	0.75	9	M	NA	Asia	Vietnam	NA	NA	NA
+V146	V145	Infant	Sonla	"Chiengden, Vietnam"	Vietnam	Sonla	Chiengden	NA	0.58	7	F	NA	Asia	Vietnam	NA	NA	NA
+V148	V147	Infant	Sonla	"Chiengden, Vietnam"	Vietnam	Sonla	Chiengden	NA	0.42	5	M	NA	Asia	Vietnam	NA	NA	NA
+V150	V149	Infant	Sonla	"Chiengden, Vietnam"	Vietnam	Sonla	Chiengden	NA	0.83	10	F	NA	Asia	Vietnam	NA	NA	NA
+V152	V151	Infant	Sonla	"Chiengden, Vietnam"	Vietnam	Sonla	Chiengden	NA	0.75	9	M	NA	Asia	Vietnam	NA	NA	NA
+V154	V153	Infant	Sonla	"Chiengden, Vietnam"	Vietnam	Sonla	Chiengden	NA	0.83	10	M	NA	Asia	Vietnam	NA	NA	NA
+V156	V155	Infant	Sonla	"Chiengden, Vietnam"	Vietnam	Sonla	Chiengden	NA	0.83	10	F	NA	Asia	Vietnam	NA	NA	NA
+V158	V157	Infant	Sonla	"Chiengden, Vietnam"	Vietnam	Sonla	Chiengden	NA	0.92	11	M	NA	Asia	Vietnam	NA	NA	NA
+V160	V159	Infant	Sonla	"Chiengden, Vietnam"	Vietnam	Sonla	Chiengden	NA	0.50	6	F	NA	Asia	Vietnam	NA	NA	NA
+V162	V161	Infant	Sonla	"Chiengden, Vietnam"	Vietnam	Sonla	Chiengden	NA	0.50	6	M	NA	Asia	Vietnam	NA	NA	NA
+V164	V163	Infant	Sonla	"Chiengden, Vietnam"	Vietnam	Sonla	Chiengden	NA	0.75	9	M	NA	Asia	Vietnam	NA	NA	NA
+V166	V165	Infant	Sonla	"Chiengden, Vietnam"	Vietnam	Sonla	Chiengden	NA	0.58	7	M	NA	Asia	Vietnam	NA	NA	NA
+V168	V167	Infant	Sonla	"Chiengden, Vietnam"	Vietnam	Sonla	Chiengden	NA	0.67	8	M	NA	Asia	Vietnam	NA	NA	NA
+V170	V169	Infant	Sonla	"Chiengden, Vietnam"	Vietnam	Sonla	Chiengden	NA	0.92	11	M	NA	Asia	Vietnam	NA	NA	NA
+V172	V171	Infant	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	0.29	3.5	M	NA	Asia	Vietnam	NA	NA	NA
+V174	V173	Infant	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	0.50	6	M	NA	Asia	Vietnam	NA	NA	NA
+V176	V175	Infant	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	0.42	5	M	NA	Asia	Vietnam	NA	NA	NA
+V178	V177	Infant	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	0.25	3	M	NA	Asia	Vietnam	NA	NA	NA
+V180	V179	Infant	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	0.33	4	M	NA	Asia	Vietnam	NA	NA	NA
+V182	V181	Infant	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	0.13	1.5	F	NA	Asia	Vietnam	NA	NA	NA
+V184	V183	Infant	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	0.42	5	F	NA	Asia	Vietnam	NA	NA	NA
+V186	V185	Infant	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	0.25	3	F	NA	Asia	Vietnam	NA	NA	NA
+V188	V187	Infant	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	0.25	3	M	NA	Asia	Vietnam	NA	NA	NA
+V190	V189	Infant	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	0.25	3	M	NA	Asia	Vietnam	NA	NA	NA
+V192	V191	Infant	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	0.42	5	M	NA	Asia	Vietnam	NA	NA	NA
+V194	V193	Infant	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	0.25	3	F	NA	Asia	Vietnam	NA	NA	NA
+V196	V195	Infant	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	0.42	5	M	NA	Asia	Vietnam	NA	NA	NA
+V198	V197	Infant	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	0.83	10	M	NA	Asia	Vietnam	NA	NA	NA
+V200	V199	Infant	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	0.25	3	F	NA	Asia	Vietnam	NA	NA	NA
+V202	V201	Infant	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	0.25	3	M	NA	Asia	Vietnam	NA	NA	NA
+V204	V203	Infant	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	0.25	3	F	NA	Asia	Vietnam	NA	NA	NA
+V206	V205	Infant	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	0.13	1.5	F	NA	Asia	Vietnam	NA	NA	NA
+V208	V207	Infant	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	0.25	3	F	NA	Asia	Vietnam	NA	NA	NA
+V210	V209	Infant	Hanoi	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	0.46	5.5	M	NA	Asia	Vietnam	NA	NA	NA
+V212	V211	Infant	Hanoi	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	0.50	6	F	NA	Asia	Vietnam	NA	NA	NA
+V214	V213	Infant	Hanoi	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	0.67	8	M	NA	Asia	Vietnam	NA	NA	NA
+V216	V215	Infant	Hanoi	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	1.00	12	F	NA	Asia	Vietnam	NA	NA	NA
+V218	V217	Infant	Hanoi	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	0.46	5.5	F	NA	Asia	Vietnam	NA	NA	NA
+V220	V219	Infant	Hanoi	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	0.58	7	F	NA	Asia	Vietnam	NA	NA	NA
+V222	V221	Infant	Hanoi	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	0.58	7	F	NA	Asia	Vietnam	NA	NA	NA
+V224	V223	Infant	Hanoi	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	0.46	5.5	F	NA	Asia	Vietnam	NA	NA	NA
+V226	V225	Infant	Hanoi	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	0.54	6.5	M	NA	Asia	Vietnam	NA	NA	NA
+V228	V227	Infant	Hanoi	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	1.00	12	M	NA	Asia	Vietnam	NA	NA	NA
+V230	V229	Infant	Hanoi	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	0.63	7.5	F	NA	Asia	Vietnam	NA	NA	NA
+V232	V231	Infant	Hanoi	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	0.50	6	M	NA	Asia	Vietnam	NA	NA	NA
+V234	V233	Infant	Hanoi	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	0.63	7.5	F	NA	Asia	Vietnam	NA	NA	NA
+V236	V235	Infant	Hanoi	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	0.92	11	M	NA	Asia	Vietnam	NA	NA	NA
+V238	V237	Infant	Hanoi	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	1.00	12	F	NA	Asia	Vietnam	NA	NA	NA
+V240	V239	Infant	Hanoi	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	0.58	7	M	NA	Asia	Vietnam	NA	NA	NA
+V242	V241	Infant	Hanoi	"NA, Vietnam"	Vietnam	NA	NA	NA	NA	NA	NA	NA	Asia	NA	NA	NA	NA
+V244	V243	Infant	Hanoi	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	0.79	9.5	M	NA	Asia	Vietnam	NA	NA	NA
+V246	V245	Infant	Hanoi	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	0.50	6	M	NA	Asia	Vietnam	NA	NA	NA
+V248	V247	Infant	Hanoi	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	0.71	8.5	F	NA	Asia	Vietnam	NA	NA	NA
+V250	V249	Infant	Hanoi	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	0.92	11	F	NA	Asia	Vietnam	NA	NA	NA
+V252	V251	Infant	Hanoi	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	0.50	6	F	NA	Asia	Vietnam	NA	NA	NA
+V254	V253	Infant	Hanoi	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	0.50	6	F	NA	Asia	Vietnam	NA	NA	NA
+V256	V255	Infant	Hanoi	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	0.33	4	M	NA	Asia	Vietnam	NA	NA	NA
+V258	V257	Infant	Hanoi	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	0.63	7.5	F	NA	Asia	Vietnam	NA	NA	NA
+V260	V259	Infant	Hanoi	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	0.83	10	M	NA	Asia	Vietnam	NA	NA	NA
+V262	V261	Infant	Hanoi	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	0.75	9	F	NA	Asia	Vietnam	NA	NA	NA
+V264	V263	Infant	Hanoi	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	0.63	7.5	M	NA	Asia	Vietnam	NA	NA	NA
+V266	V265	Infant	Hanoi	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	0.83	10	M	NA	Asia	Vietnam	NA	NA	NA
+V268	V267	Infant	Hanoi	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	0.58	7	M	NA	Asia	Vietnam	NA	NA	NA
+V270	V269	Infant	Hanoi	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	0.75	9	M	NA	Asia	Vietnam	NA	NA	NA
+V272	V271	Infant	Hanoi	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	0.75	9	F	NA	Asia	Vietnam	NA	NA	NA
+V274	V273	Infant	Hanoi	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	0.79	9.5	M	NA	Asia	Vietnam	NA	NA	NA
+V276	V275	Infant	Hanoi	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	0.06	0.75	M	NA	Asia	Vietnam	NA	NA	NA
+V278	V277	Infant	Hanoi	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	0.83	10	M	NA	Asia	Vietnam	NA	NA	NA
+V280	V279	Infant	Hanoi	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	0.13	1.5	M	NA	Asia	Vietnam	NA	NA	NA
+V282	V281	Infant	Hanoi	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	0.92	11	M	NA	Asia	Vietnam	NA	NA	NA
+V284	V283	Infant	Hanoi	"NA, Vietnam"	Vietnam	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA
+V286	V285	Infant	Hanoi	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	0.54	6.5	M	NA	Asia	Vietnam	NA	NA	NA
+V288	V287	Infant	Hanoi	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	NA	0.25	3	F	NA	Asia	Vietnam	NA	NA	NA
+V290	V289	Infant	Hanoi	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	NA	0.25	3	F	NA	Asia	Vietnam	NA	NA	NA
+V292	V291	Infant	Hanoi	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	NA	0.13	1.5	F	NA	Asia	Vietnam	NA	NA	NA
+V294	V293	Infant	Hanoi	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	NA	0.33	4	M	NA	Asia	Vietnam	NA	NA	NA
+V296	V295	Infant	Hanoi	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	NA	0.08	1	M	NA	Asia	Vietnam	NA	NA	NA
+V298	V297	Infant	Hanoi	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	NA	0.25	3	M	NA	Asia	Vietnam	NA	NA	NA
+V300	V299	Infant	Hanoi	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	NA	0.10	1.25	F	NA	Asia	Vietnam	NA	NA	NA
+V302	V301	Infant	Hanoi	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	NA	0.33	4	F	NA	Asia	Vietnam	NA	NA	NA
+V304	V303	Infant	Hanoi	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	NA	0.13	1.5	M	NA	Asia	Vietnam	NA	NA	NA
+V306	V305	Infant	Hanoi	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	NA	0.33	4	M	NA	Asia	Vietnam	NA	NA	NA
+V308	V307	Infant	Hanoi	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	NA	0.17	2	M	NA	Asia	Vietnam	NA	NA	NA
+V310	V309	Infant	Hanoi	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	NA	0.13	1.5	M	NA	Asia	Vietnam	NA	NA	NA
+V312	V311	Infant	Hanoi	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	NA	0.13	1.5	F	NA	Asia	Vietnam	NA	NA	NA
+V314	V313	Infant	Hanoi	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	NA	0.21	2.5	F	NA	Asia	Vietnam	NA	NA	NA
+V316	V315	Infant	Hanoi	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	NA	0.21	2.5	F	NA	Asia	Vietnam	NA	NA	NA
+V318	V317	Infant	Hanoi	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	NA	0.29	3.5	M	NA	Asia	Vietnam	NA	NA	NA
+V320	V319	Infant	Hanoi	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	NA	0.13	1.5	F	NA	Asia	Vietnam	NA	NA	NA
+V322	V321	Infant	Hanoi	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	NA	0.17	2	F	NA	Asia	Vietnam	NA	NA	NA
+V324	V323	Infant	Hanoi	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	NA	0.13	1.5	F	NA	Asia	Vietnam	NA	NA	NA
+V326	V325	Infant	Hanoi	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	NA	0.06	0.75	F	NA	Asia	Vietnam	NA	NA	NA
+V328	V327	Infant	Hanoi	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	0.75	9	M	NA	Asia	Vietnam	NA	NA	NA
+V330	V329	Infant	Hanoi	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	NA	0.63	7.5	F	NA	Asia	Vietnam	NA	NA	NA
+V332	V331	Infant	Hanoi	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	NA	0.58	7	F	NA	Asia	Vietnam	NA	NA	NA
+V334	V333	Infant	Hanoi	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	NA	0.58	7	F	NA	Asia	Vietnam	NA	NA	NA
+V336	V335	Infant	Hanoi	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	NA	0.67	8	M	NA	Asia	Vietnam	NA	NA	NA
+V338	V337	Infant	Hanoi	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	NA	0.75	9	M	NA	Asia	Vietnam	NA	NA	NA
+V340	V339	Infant	Hanoi	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	NA	0.54	6.5	F	NA	Asia	Vietnam	NA	NA	NA
+V342	V341	Infant	Hanoi	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	NA	0.92	11	F	NA	Asia	Vietnam	NA	NA	NA
+V344	V343	Infant	Hanoi	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	NA	0.92	11	M	NA	Asia	Vietnam	NA	NA	NA
+V346	V345	Infant	Hanoi	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	NA	0.58	7	M	NA	Asia	Vietnam	NA	NA	NA
+V348	V347	Infant	Hanoi	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	NA	0.71	8.5	F	NA	Asia	Vietnam	NA	NA	NA
+V350	V349	Infant	Hanoi	"Bachong, Vietnam"	Vietnam	Hatinh	Bachong	NA	1.00	12	F	NA	Asia	Vietnam	NA	NA	NA
+V370	V379	Infant	Hanoi	"Hai ba trung, Vietnam"	Vietnam	Hanoi	Hai ba trung	NA	0.17	2	M	NA	Asia	Vietnam	NA	NA	NA
+V378	V377	Infant	Hanoi	"Hadong, Vietnam"	Vietnam	Hanoi	Hadong	NA	0.42	5	F	NA	Asia	Vietnam	NA	NA	NA
+V382	V381	Infant	Hanoi	"Thanh tri, Vietnam"	Vietnam	Hanoi	Thanh tri	NA	0.50	6	F	NA	Asia	Vietnam	NA	NA	NA
+V412	V413	Infant	Hanoi	"Halong, Vietnam"	Vietnam	Quang ninh	Halong	NA	1.50	18	F	NA	Asia	Vietnam	NA	NA	NA
+V415	V414	Infant	Hanoi	"Nam tu liem, Vietnam"	Vietnam	Hanoi	Nam tu liem	NA	0.58	7	F	NA	Asia	Vietnam	NA	NA	NA
+V417	V416	Infant	Hanoi	"Hadong, Vietnam"	Vietnam	Hanoi	Hadong	NA	0.67	8	M	NA	Asia	Vietnam	NA	NA	NA
+V419	V418	Infant	Hanoi	"Cau giay, Vietnam"	Vietnam	Hanoi	Cau giay	NA	0.83	10	F	NA	Asia	Vietnam	NA	NA	NA
+V421	V420	Infant	Hanoi	"Hoang mai, Vietnam"	Vietnam	Hanoi	Hoang mai	NA	0.75	9	M	NA	Asia	Vietnam	NA	NA	NA
+V423	V422	Infant	Hanoi	"Hai ba trung, Vietnam"	Vietnam	Hanoi	Hai ba trung	NA	0.92	11	F	NA	Asia	Vietnam	NA	NA	NA
+V425	V424	Infant	Hanoi	"Hoang mai, Vietnam"	Vietnam	Hanoi	Hoang mai	NA	0.58	7	F	NA	Asia	Vietnam	NA	NA	NA
+V427	V426	Infant	Hanoi	"Tayho, Vietnam"	Vietnam	Hanoi	Tayho	NA	0.75	9	M	NA	Asia	Vietnam	NA	NA	NA
+V429	V428	Infant	Hanoi	"Dong anh, Vietnam"	Vietnam	Hanoi	Dong anh	NA	0.75	9	F	NA	Asia	Vietnam	NA	NA	NA
+V431	V430	Infant	Hanoi	"Hoang mai, Vietnam"	Vietnam	Hanoi	Hoang mai	NA	0.83	10	M	NA	Asia	Vietnam	NA	NA	NA
+V433	V432	Infant	Hanoi	"Hai ba trung, Vietnam"	Vietnam	Hanoi	Hai ba trung	NA	0.50	6	M	NA	Asia	Vietnam	NA	NA	NA
+V435	V434	Infant	Hanoi	"Hai ba trung, Vietnam"	Vietnam	Hanoi	Hai ba trung	NA	0.58	7	M	NA	Asia	Vietnam	NA	NA	NA
+V437	V436	Infant	Hanoi	"Hai ba trung, Vietnam"	Vietnam	Hanoi	Hai ba trung	NA	0.83	10	F	NA	Asia	Vietnam	NA	NA	NA
+V439	V438	Infant	Hanoi	"Longbien, Vietnam"	Vietnam	Hanoi	Longbien	NA	0.67	8	M	NA	Asia	Vietnam	NA	NA	NA
+VS002	VS001	Infant	Hatinh	"Duc thuan, Vietnam"	Vietnam	Hatinh	Duc thuan	NA	0.08	1	M	NA	Asia	Vietnam	NA	NA	NA
+VS004	VS003	Infant	Hanoi	"NA, Vietnam"	Vietnam	Hanoi	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA
+VS006	VS005	Infant	Hanoi	"NA, Vietnam"	Vietnam	Hanoi	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA
+VS007	VS005	Infant	Hanoi	"NA, Vietnam"	Vietnam	Hanoi	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA
+VS008	None	Infant	Hanoi	"Tayho, Vietnam"	Vietnam	Hanoi	Tayho	NA	0.00	0.033	M	NA	Asia	Vietnam	NA	NA	NA
+VS009	None	Infant	Hanoi	"Thanh xuan, Vietnam"	Vietnam	Hanoi	Thanh xuan	NA	0.01	0.066	M	NA	Asia	Vietnam	NA	NA	NA
+VS010	None	Infant	Hanoi	"Thanh tri, Vietnam"	Vietnam	Hanoi	Thanh tri	NA	0.01	0.066	F	NA	Asia	Vietnam	NA	NA	NA
+VS011	None	Infant	Hanoi	"Thanh tri, Vietnam"	Vietnam	Hanoi	Thanh tri	NA	0.00	0.033	F	NA	Asia	Vietnam	NA	NA	NA
+VS012	None	Infant	Hanoi	"Hai ba trung, Vietnam"	Vietnam	Hanoi	Hai ba trung	NA	0.01	0.066	M	NA	Asia	Vietnam	NA	NA	NA
+VS014	VS013	Infant	Hanoi	"Gia lam, Vietnam"	Vietnam	Hanoi	Gia lam	NA	0.42	5	F	NA	Asia	Vietnam	NA	NA	NA
+VS016	VS015	Infant	Hanoi	"NA, Vietnam"	Vietnam	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA
+VS018	VS017	Infant	Hanoi	"Longbien, Vietnam"	Vietnam	Hanoi	Longbien	NA	0.75	9	F	NA	Asia	Vietnam	NA	NA	NA
+VS020	VS019	Infant	Hanoi	"NA, Vietnam"	Vietnam	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA
+VS023	VS028	Infant	Hanoi	"NA, Vietnam"	Vietnam	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA
+VS026		Infant	Hanoi	"NA, Vietnam"	Vietnam	NA	NA	NA	NA	NA		NA	NA	NA	NA	NA	NA
+T004	T003	Infant	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	NA	0.38	4.5	M	NA	Europe	Germany	NA	NA	NA
+T009	T008	Infant	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	NA	0.17	2	F	NA	Europe	Germany	NA	NA	NA
+T023	T022	Infant	ITM	"Boeblingen, Germany"	Germany	Baden-Wuerttemberg	Boeblingen	NA	NA	NA	M	NA	Europe	Germany	NA	NA	NA
+T025	T024	Infant	ITM	"Pfullingen, Germany"	Germany	Baden-Wuerttemberg	Pfullingen	NA	0.25	3	M	NA	Europe	Germany	NA	NA	NA
+T028	T026	Infant	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	NA	NA	NA	F	NA	Europe	Germany	NA	NA	NA
+T031	T030	Infant	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	NA	0.17	2	M	NA	Europe	Germany	NA	NA	NA
+T035	T034	Infant	ITM	"Gomaringen, Germany"	Germany	Baden-Wuerttemberg	Gomaringen	NA	NA	NA	M	NA	Europe	Germany	NA	NA	NA
+T037	T036	Infant	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	NA	0.33	4	M	NA	Europe	Germany	NA	NA	NA
+T039	T038	Infant	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	NA	0.52	6.25	M	NA	Europe	Germany	NA	NA	NA
+T041	T040	Infant	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	NA	0.56	6.75	M	NA	Europe	Germany	NA	NA	NA
+T043	T042	Infant	ITM	"Donaueschingen, Germany"	Germany	Baden-Wuerttemberg	Donaueschingen	NA	0.52	6.25	M	NA	Europe	Germany	NA	NA	NA
+T045	T044	Infant	ITM	"Bad_Boll, Germany"	Germany	Baden-Wuerttemberg	Bad_Boll	NA	0.44	5.25	F	NA	Europe	Germany	NA	NA	NA
+T047	T046	Infant	ITM	"Stuttgart, Germany"	Germany	Baden-Wuerttemberg	Stuttgart	NA	0.17	2	F	NA	Europe	Germany	NA	NA	NA
+T051	T050	Infant	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	NA	0.42	5	F	NA	Europe	Germany	NA	NA	NA
+T053	T052	Infant	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	NA	0.38	4.5	M	NA	Europe	Germany	NA	NA	NA
+T059	T058	Infant	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	NA	0.23	2.75	M	NA	Europe	Germany	NA	NA	NA
+T062	T061	Infant	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	NA	0.69	8.25	M	NA	Europe	Germany	NA	NA	NA
+T065	T064	Infant	ITM	"Nurtingen, Germany"	Germany	Baden-Wuerttemberg	Nurtingen	NA	0.96	11.5	M	NA	Europe	Germany	NA	NA	NA
+T067	T066	Infant	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	NA	1.50	18	M	NA	Europe	Germany	NA	NA	NA
+T077	T076	Infant	ITM	"Neuhausen, Germany"	Germany	Baden-Wuerttemberg	Neuhausen	NA	0.54	6.5	F	NA	Europe	Germany	NA	NA	NA
+T080	T079	Infant	ITM	"Leinfelden-Echterdingen, Germany"	Germany	Baden-Wuerttemberg	Leinfelden-Echterdingen	NA	0.42	5	F	NA	Europe	Germany	NA	NA	NA
+T082	T081	Infant	ITM	"Waldenbuch, Germany"	Germany	Baden-Wuerttemberg	Waldenbuch	NA	0.35	4.25	M	NA	Europe	Germany	NA	NA	NA
+T084	T083	Infant	ITM	"Weil_im_Schonbuch, Germany"	Germany	Baden-Wuerttemberg	Weil_im_Schonbuch	NA	0.67	8	M	NA	Europe	Germany	NA	NA	NA
+T086	T085	Infant	ITM	"Reutlingen, Germany"	Germany	Baden-Wuerttemberg	Reutlingen	NA	0.69	8.25	F	NA	Europe	Germany	NA	NA	NA
+T088	T087	Infant	ITM	"Reutlingen, Germany"	Germany	Baden-Wuerttemberg	Reutlingen	NA	0.73	8.75	F	NA	Europe	Germany	NA	NA	NA
+T096	T095	Infant	ITM	"Mossingen, Germany"	Germany	Baden-Wuerttemberg	Mossingen	NA	0.19	2.25	F	NA	Europe	Germany	NA	NA	NA
+T098	T097	Infant	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	NA	0.54	6.5	M	NA	Europe	Germany	NA	NA	NA
+T100	T099	Infant	ITM	"Metzingen, Germany"	Germany	Baden-Wuerttemberg	Metzingen	NA	0.77	9.25	M	NA	Europe	Germany	NA	NA	NA
+T106	T105	Infant	ITM	"Rottenburg_am_Neckar, Germany"	Germany	Baden-Wuerttemberg	Rottenburg_am_Neckar	NA	0.65	7.75	M	NA	Europe	Germany	NA	NA	NA
+T108	T107	Infant	ITM	"Rottenburg_am_Neckar, Germany"	Germany	Baden-Wuerttemberg	Rottenburg_am_Neckar	NA	0.67	8	M	NA	Europe	Germany	NA	NA	NA
+T115	T114	Infant	ITM	"Rottenburg_am_Neckar, Germany"	Germany	Baden-Wuerttemberg	Rottenburg_am_Neckar	NA	0.75	9	F	NA	Europe	Germany	NA	NA	NA
+T124	T123	Infant	ITM	"Stuttgart, Germany"	Germany	Baden-Wuerttemberg	Stuttgart	NA	0.54	6.5	M	NA	Europe	Germany	NA	NA	NA
+T131	T130	Infant	ITM	"Boeblingen, Germany"	Germany	Baden-Wuerttemberg	Boeblingen	NA	1.21	14.5	M	NA	Europe	Germany	NA	NA	NA
+T133	T132	Infant	ITM	"Korntal-Munchingen, Germany"	Germany	Baden-Wuerttemberg	Korntal-Munchingen	NA	1.25	15	M	NA	Europe	Germany	NA	NA	NA
+T136	T135	Infant	ITM	"Reutlingen, Germany"	Germany	Baden-Wuerttemberg	Reutlingen	NA	0.46	5.5	M	NA	Europe	Germany	NA	NA	NA
+T139	T138	Infant	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	NA	0.15	1.75	F	NA	Europe	Germany	NA	NA	NA
+T141	T140	Infant	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	NA	1.27	15.25	M	NA	Europe	Germany	NA	NA	NA
+T143	T142	Infant	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	NA	0.79	9.5	F	NA	Europe	Germany	NA	NA	NA
+T152	T151	Infant	ITM	"Pliezhausen, Germany"	Germany	Baden-Wuerttemberg	Pliezhausen	NA	0.38	4.5	F	NA	Europe	Germany	NA	NA	NA
+T155	T154	Infant	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	NA	1.85	22.25	F	NA	Europe	Sweden	NA	NA	NA
+T160	T159	Infant	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	NA	0.25	3	F	NA	Europe	Germany	NA	NA	NA
+T162	T161	Infant	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	NA	0.50	6	F	NA	Europe	Germany	NA	NA	NA
+T166	T165	Infant	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	NA	0.08	1	M	NA	Europe	Germany	NA	NA	NA
+T170	T169	Infant	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	NA	0.63	7.5	M	NA	Europe	Germany	NA	NA	NA
+T177	T176	Infant	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	NA	0.75	9	M	NA	Europe	Germany	NA	NA	NA
+T181	T180	Infant	ITM	"Boeblingen, Germany"	Germany	Baden-Wuerttemberg	Boeblingen	NA	0.83	10	F	NA	Europe	Germany	NA	NA	NA
+T183	T182	Infant	ITM	"Stuttgart, Germany"	Germany	Baden-Wuerttemberg	Stuttgart	NA	0.33	4	F	NA	Europe	Germany	NA	NA	NA
+T185	T184	Infant	ITM	"Rottenburg_am_Neckar, Germany"	Germany	Baden-Wuerttemberg	Rottenburg_am_Neckar	NA	0.73	8.75	M	NA	Europe	Germany	NA	NA	NA
+T187	T186	Infant	ITM	"Waldenbuch, Germany"	Germany	Baden-Wuerttemberg	Waldenbuch	NA	0.79	9.5	M	NA	Europe	Germany	NA	NA	NA
+T189	T188	Infant	ITM	"Waldenbuch, Germany"	Germany	Baden-Wuerttemberg	Waldenbuch	NA	NA	NA	F	NA	Europe	Germany	NA	NA	NA
+T193	T192	Infant	ITM	"Rottenburg_am_Neckar, Germany"	Germany	Baden-Wuerttemberg	Rottenburg_am_Neckar	NA	0.81	9.75	M	NA	Europe	Germany	NA	NA	NA
+T195	T194	Infant	ITM	"Herrenberg, Germany"	Germany	Baden-Wuerttemberg	Herrenberg	NA	0.25	3	M	NA	Europe	Germany	NA	NA	NA
+T197	T196	Infant	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	NA	0.63	7.5	F	NA	Europe	Germany	NA	NA	NA
+T200	T199	Infant	ITM	"Pforzheim, Germany"	Germany	Baden-Wuerttemberg	Pforzheim	NA	0.58	7	F	NA	Europe	Germany	NA	NA	NA
+T204	T203	Infant	ITM	"Sindelfingen, Germany"	Germany	Baden-Wuerttemberg	Sindelfingen	NA	0.27	3.25	M	NA	Europe	Germany	NA	NA	NA
+T209	T208	Infant	ITM	"Sigmaringen, Germany"	Germany	Baden-Wuerttemberg	Sigmaringen	NA	0.50	6	F	NA	Europe	Germany	NA	NA	NA
+T213	T212	Infant	ITM	"Reutlingen, Germany"	Germany	Baden-Wuerttemberg	Reutlingen	NA	0.83	10	F	NA	Europe	Germany	NA	NA	NA
+T216	T215	Infant	ITM	"Weil_der_Stadt, Germany"	Germany	Baden-Wuerttemberg	Weil_der_Stadt	NA	0.73	8.75	F	NA	Europe	Germany	NA	NA	NA
+T218	T217	Infant	ITM	"Grossbettlingen, Germany"	Germany	Baden-Wuerttemberg	Grossbettlingen	NA	0.77	9.25	M	NA	Europe	Germany	NA	NA	NA
+T222	T221	Infant	ITM	"Sindelfingen, Germany"	Germany	Baden-Wuerttemberg	Sindelfingen	NA	1.75	21	M	NA	Europe	Germany	NA	NA	NA
+T224	T223	Infant	ITM	"Sindelfingen, Germany"	Germany	Baden-Wuerttemberg	Sindelfingen	NA	0.38	4.5	M	NA	Europe	Germany	NA	NA	NA
+T226	T225	Infant	ITM	"Gomaringen, Germany"	Germany	Baden-Wuerttemberg	Gomaringen	NA	0.98	11.75	F	NA	Europe	Germany	NA	NA	NA
+T228	T227	Infant	ITM	"Walddorfhäslach, Germany"	Germany	Baden-Wuerttemberg	Walddorfhäslach	NA	0.58	7	F	NA	Europe	Germany	NA	NA	NA
+T230	T229	Infant	ITM	"Gaertringen, Germany"	Germany	Baden-Wuerttemberg	Gaertringen	NA	0.23	2.75	F	NA	Europe	Germany	NA	NA	NA
+T232	T231	Infant	ITM	"Dusslingen, Germany"	Germany	Baden-Wuerttemberg	Dusslingen	NA	0.15	1.75	F	NA	Europe	Germany	NA	NA	NA
+T234	T233	Infant	ITM	"Schlaitdorf, Germany"	Germany	Baden-Wuerttemberg	Schlaitdorf	NA	0.69	8.25	F	NA	Europe	Germany	NA	NA	NA
+T236	T235	Infant	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	NA	0.54	6.5	F	NA	Europe	Germany	NA	NA	NA
+T238	T214	Infant	ITM	"Reutlingen, Germany"	Germany	Baden-Wuerttemberg	Reutlingen	NA	0.58	7	F	NA	Europe	Germany	NA	NA	NA
+T242	T241	Infant	ITM	"Neustetten, Germany"	Germany	Baden-Wuerttemberg	Neustetten	NA	0.50	6	M	NA	Europe	Germany	NA	NA	NA
+T244	T243	Infant	ITM	"Reutlingen, Germany"	Germany	Baden-Wuerttemberg	Reutlingen	NA	0.67	8	F	NA	Europe	Germany	NA	NA	NA
+T248	T247	Infant	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	NA	0.29	3.5	M	NA	Europe	Germany	NA	NA	NA
+T250	T249	Infant	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	NA	0.17	2	F	NA	Europe	Germany	NA	NA	NA
+T252	T251	Infant	ITM	"Mossingen, Germany"	Germany	Baden-Wuerttemberg	Mossingen	NA	0.40	4.75	F	NA	Europe	Germany	NA	NA	NA
+T254	T253	Infant	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	NA	0.92	11	M	NA	Europe	Germany	NA	NA	NA
+T256	T255	Infant	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	NA	0.81	9.75	F	NA	Europe	Germany	NA	NA	NA
+T261	T260	Infant	ITM	"Wendlingen, Germany"	Germany	Baden-Wuerttemberg	Wendlingen	NA	0.33	4	M	NA	Europe	Germany	NA	NA	NA
+T263	T262	Infant	ITM	"Boeblingen, Germany"	Germany	Baden-Wuerttemberg	Boeblingen	NA	0.83	10	F	NA	Europe	Germany	NA	NA	NA
+T265	T264	Infant	ITM	"Reutlingen, Germany"	Germany	Baden-Wuerttemberg	Reutlingen	NA	0.44	5.25	F	NA	Europe	Germany	NA	NA	NA
+T267	T266	Infant	ITM	"Ehningen, Germany"	Germany	Baden-Wuerttemberg	Ehningen	NA	0.92	11	M	NA	Europe	Germany	NA	NA	NA
+T269	T268	Infant	ITM	"Ofterdingen, Germany"	Germany	Baden-Wuerttemberg	Ofterdingen	NA	0.40	4.75	F	NA	Europe	Germany	NA	NA	NA
+T272	T271	Infant	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	NA	0.27	3.25	M	NA	Europe	Germany	NA	NA	NA
+T275	T274	Infant	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	NA	0.63	7.5	M	NA	Europe	Germany	NA	NA	NA
+T277	T276	Infant	ITM	"Herrenberg, Germany"	Germany	Baden-Wuerttemberg	Herrenberg	NA	0.40	4.75	M	NA	Europe	Germany	NA	NA	NA
+T279	T278	Infant	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	NA	0.13	1.5	M	NA	Europe	Germany	NA	NA	NA
+T281	T280	Infant	ITM	"Boeblingen, Germany"	Germany	Baden-Wuerttemberg	Boeblingen	NA	0.75	9	F	NA	Europe	Germany	NA	NA	NA
+T283	T282	Infant	ITM	"Hechingen, Germany"	Germany	Baden-Wuerttemberg	Hechingen	NA	0.83	10	M	NA	Europe	Germany	NA	NA	NA
+T285	T284	Infant	ITM	"Rottenburg_am_Neckar, Germany"	Germany	Baden-Wuerttemberg	Rottenburg_am_Neckar	NA	1.33	16	F	NA	Europe	Germany	NA	NA	NA
+T287	T286	Infant	ITM	"Reutlingen, Germany"	Germany	Baden-Wuerttemberg	Reutlingen	NA	0.48	5.75	F	NA	Europe	Germany	NA	NA	NA
+T289	T288	Infant	ITM	"Reutlingen, Germany"	Germany	Baden-Wuerttemberg	Reutlingen	NA	1.50	18	F	NA	Europe	Germany	NA	NA	NA
+T291	T290	Infant	ITM	"Jettingen, Germany"	Germany	Baden-Wuerttemberg	Jettingen	NA	0.27	3.25	M	NA	Europe	Germany	NA	NA	NA
+T293	T292	Infant	ITM	"Jettingen, Germany"	Germany	Baden-Wuerttemberg	Jettingen	NA	0.98	11.75	M	NA	Europe	Germany	NA	NA	NA
+T296	T295	Infant	ITM	"Jettingen, Germany"	Germany	Baden-Wuerttemberg	Jettingen	NA	1.21	14.5	F	NA	Europe	Germany	NA	NA	NA
+T298	T297	Infant	ITM	"Reutlingen, Germany"	Germany	Baden-Wuerttemberg	Reutlingen	NA	0.35	4.25	M	NA	Europe	Germany	NA	NA	NA
+T299	T270	Infant	ITM	"Boeblingen, Germany"	Germany	Baden-Wuerttemberg	Boeblingen	NA	1.58	19	M	NA	Europe	Germany	NA	NA	NA
+T304	T303	Infant	ITM	"Betzingen, Germany"	Germany	Baden-Wuerttemberg	Betzingen	NA	0.71	8.5	M	NA	Europe	Germany	NA	NA	NA
+T306	T305	Infant	ITM	"Gomaringen, Germany"	Germany	Baden-Wuerttemberg	Gomaringen	NA	0.63	7.5	M	NA	Europe	Germany	NA	NA	NA
+T308	T307	Infant	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	NA	1.06	12.75	F	NA	Europe	Germany	NA	NA	NA
+T310	T309	Infant	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	NA	0.75	9	F	NA	Europe	Germany	NA	NA	NA
+T312	T311	Infant	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	NA	1.02	12.25	F	NA	Europe	Germany	NA	NA	NA
+T314	T313	Infant	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	NA	0.85	10.25	M	NA	Europe	Germany	NA	NA	NA
+T316	T315	Infant	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	NA	1.00	12	M	NA	Europe	Germany	NA	NA	NA
+T318	T317	Infant	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	NA	0.21	2.5	F	NA	Europe	Germany	NA	NA	NA
+T320	T319	Infant	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	NA	0.58	7	M	NA	Europe	Germany	NA	NA	NA
+T322	T321	Infant	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	NA	0.06	0.75	M	NA	Europe	Germany	NA	NA	NA
+T324	T323	Infant	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	NA	0.38	4.5	NA	NA	Europe	Germany	NA	NA	NA
+T326	T325	Infant	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	NA	0.29	3.5	F	NA	Europe	Germany	NA	NA	NA
+T328	T327	Infant	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	NA	1.29	15.5	F	NA	Europe	Germany	NA	NA	NA
+T330	T329	Infant	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	NA	0.17	2	M	NA	Europe	Germany	NA	NA	NA
+T332	T331	Infant	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	NA	0.54	6.5	M	NA	Europe	Germany	NA	NA	NA
+T334	T333	Infant	ITM	"Reutlingen, Germany"	Germany	Baden-Wuerttemberg	Reutlingen	NA	0.75	9	F	NA	Europe	Germany	NA	NA	NA
+T336	T335	Infant	ITM	"Tuebingen, Germany"	Germany	Baden-Wuerttemberg	Tuebingen	NA	0.35	4.25	M	NA	Europe	Germany	NA	NA	NA
