@@ -1,7 +1,8 @@
-name: StrainVis
+name: StrainVis_1_1
 
 channels:
   - conda-forge
+  - bioconda
 
 dependencies:
   - python
@@ -11,4 +12,5 @@ dependencies:
   - scipy
   - networkx
   - fastcluster
+  - dna_features_viewer
 

@@ -1,6 +1,6 @@
 # StrainVis: a Python-based web application for interactive visual analysis of strain-tracking methods
 
-### Version 1.0.9
+### Version 1.1.0
 
 - [Overview](#overview)
 - [Installation](#installation)
@@ -327,6 +327,19 @@ They appear in at least 50% of the compared sample-pairs.
 - **Include the following groups in the plot:** It is possible to select one or more groups to be included in the plot.
 - **Filter plot button:** Clicking this button updates the plot, so that only pairwise comparisons, originating from the selected groups of the selected feature, will be included in the plot.
 - **Reset filteration button:** Clicking this button resets the filtering and updates the plot so that all data is shown.
+
+#### Add annotation data:
+- **Upload annotation file:** 
+It is possible to upload an annotation file for the current analysed species in [gff format](https://www.ncbi.nlm.nih.gov/datasets/docs/v2/reference-docs/file-formats/annotation-files/about-ncbi-gff3/).  
+The annotation file must match the reference genome assembly that was used to create the SynTracker/ANI scores, provided as input to StrainVis.
+(The 'seqid' in the first column of the annotation file should match the reference genome's name).  
+Once an annotation file for the current species has been uploaded, it can be used to display the annotated genes for all the contigs that compose the reference genome.
+
+- **Show annotated genes for current contig:** 
+When this option is checked, the annotated genes, found within the displayed contig range, are plotted at the bottom of the main plot. 
+Please note that the annotated genes plot can only be displayed if the contig's length does not exceed 100,000 bp. 
+In such cases, the contig's length range can be set to fit these requirements.  
+If saving an image of the synteny per position plot while displaying the annotated genes, a combined plot will be saved. 
 
 ## Single-species analysis of ANI results
 

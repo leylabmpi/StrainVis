@@ -33,7 +33,7 @@
 <body>
   <main>
   <h1 id="strainvis-a-python-based-web-application-for-interactive-visual-analysis-of-strain-tracking-methods">StrainVis: a Python-based web application for interactive visual analysis of strain-tracking methods</h1>
-<h4 id="version-1.0.9">Version 1.0.9</h4>
+<h4 id="version-1.1.0">Version 1.1.0</h4>
 <ul>
 <li><a href="#overview">Overview</a></li>
 <li><a href="#installation">Installation</a></li>
@@ -274,6 +274,19 @@ They appear in at least 50% of the compared sample-pairs.</p></li>
 <li><strong>Include the following groups in the plot:</strong> It is possible to select one or more groups to be included in the plot.</li>
 <li><strong>Filter plot button:</strong> Clicking this button updates the plot, so that only pairwise comparisons, originating from the selected groups of the selected feature, will be included in the plot.</li>
 <li><strong>Reset filteration button:</strong> Clicking this button resets the filtering and updates the plot so that all data is shown.</li>
+</ul>
+<p><strong>Add annotation data:</strong></p>
+<ul>
+<li><strong>Upload annotation file:</strong> It is possible to upload an annotation file for the current analysed species in <a href="https://www.ncbi.nlm.nih.gov/datasets/docs/v2/reference-docs/file-formats/annotation-files/about-ncbi-gff3/" target="_blank">gff format</a>.<br>
+The annotation file must match the reference genome assembly that was used to create the SynTracker/ANI scores, provided as input to StrainVis.
+(The 'seqid' in the first column of the annotation file should match the reference genome's name).<br />
+Once an annotation file for the current species has been uploaded, it can be used to display the annotated genes for all the contigs that compose the reference genome.
+</li>
+<li><strong>Show annotated genes for current contig:</strong> When this option is checked, the annotated genes, found within the displayed contig range, are plotted at the bottom of the main plot.<br />
+Please note that the annotated genes plot can only be displayed if the contig's length does not exceed 100,000 bp.
+In such cases, the contig's length range can be set to fit these requirements.<br />
+If saving an image of the synteny per position plot while displaying the annotated genes, a combined plot will be saved.
+</li>
 </ul>
 <h3 id="ani-results-analyses">Single-species analyses of ANI results</h3>
 <p>The following analyses are provided for the ANI results:</p>

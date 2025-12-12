@@ -2,6 +2,7 @@ import gc
 
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
+from dna_features_viewer import GraphicFeature, GraphicRecord
 import panel as pn
 import pandas as pd
 import numpy as np
@@ -23,6 +24,7 @@ import StrainVis_app.plots_single_genome as ps
 import StrainVis_app.plots_multi_genomes as pm
 import StrainVis_app.widgets as widgets
 import matplotlib
+import textwrap
 matplotlib.use('agg')
 pn.extension(disconnect_notification='Connection lost, try reloading the page!')
 pn.extension('floatpanel')
@@ -117,6 +119,140 @@ def category_by_feature(row, feature, metadata_dict):
             return 'Different ' + feature
 
 
+def wrap_label(s, width=12):
+    if not s:
+        return ""
+    return "\n".join(textwrap.wrap(s, width=width, break_long_words=True))
+
+
+def set_features_in_range(features, x_min, x_max):
+    filtered_features = []
+
+    for feature in features:
+        # Append only features within the selected sequence range
+        if feature.end >= x_min and feature.start <= x_max:
+            filtered_features.append(feature)
+
+    return filtered_features
+
+
+def load_genes_from_gff(gff_text):
+    print("\nload_genes_from_gff:")
+    contigs_dict = dict()
+    for line in gff_text.splitlines():
+        if line.startswith("#"):
+            # Found new contig
+            if re.search("^##sequence-region", line):
+                m = re.search(r'^##sequence-region\s+(\S+)\s+\d+\s+\d+', line)
+                if m:
+                    contig = m.group(1)
+                    contigs_dict[contig] = []  # Initialize the new contig's features array
+                    #print("Found new contig: " + contig)
+
+            else:
+                continue
+
+        # Real informative line
+        else:
+            seqid, source, feature_type, start, end, score, strand, phase, attrs = line.strip().split("\t")
+
+            if feature_type != "gene":
+                continue
+
+            strand = 1 if strand == "+" else -1
+            label = ""
+            for item in attrs.split(";"):
+                if item.startswith("Name="):
+                    label = item.replace("Name=", "")
+                    wrapped_label = wrap_label(label, width=12)  # Wrap labels to make them narrow and stacked
+
+            contigs_dict[contig].append(
+                GraphicFeature(
+                    start=int(start),
+                    end=int(end),
+                    strand=strand,
+                    color="#66c2a5",
+                    label=wrapped_label,
+                    fontdict={'fontsize': 7}
+                )
+            )
+
+    return contigs_dict
+
+
+def ensure_bottom_margin_for_texts(fig, ax_list, pad_pixels=6, min_bottom=0.05, max_bottom=0.30):
+    """
+    Increase figure bottom margin so that texts living below the lowest axis in ax_list
+    are not clipped.
+
+    Parameters
+    ----------
+    fig : matplotlib.figure.Figure
+    ax_list : sequence of matplotlib.axes.Axes
+        Axes to inspect for text artists (we check .texts, xticklabels, xlabel)
+    pad_pixels : int
+        Extra padding in pixels between lowest text bbox and the axes area.
+    min_bottom : float
+        Minimum fraction of figure height to use as bottom margin (safety).
+    max_bottom : float
+        Maximum allowed bottom fraction.
+    """
+    # Force a draw so text positions are updated
+    fig.canvas.draw()
+    renderer = fig.canvas.get_renderer()
+    fig_h = fig.bbox.height  # pixels
+
+    # Collect bottom-most pixel coordinate among relevant texts
+    y_bottoms = []
+
+    for ax in ax_list:
+        # axis texts (DFV labels)
+        for txt in ax.texts:
+            if not txt.get_visible():
+                continue
+            try:
+                bbox = txt.get_window_extent(renderer)
+            except Exception:
+                continue
+            # bbox.y0 is the lower pixel coordinate of the text (origin at bottom-left)
+            y_bottoms.append(bbox.y0)
+
+        # xtick labels on this axis
+        for lbl in ax.get_xticklabels():
+            if not lbl.get_visible():
+                continue
+            bbox = lbl.get_window_extent(renderer)
+            y_bottoms.append(bbox.y0)
+
+        # x-axis label (xlabel)
+        lbl = ax.xaxis.get_label()
+        if lbl.get_visible():
+            bbox = lbl.get_window_extent(renderer)
+            y_bottoms.append(bbox.y0)
+
+    if not y_bottoms:
+        return  # nothing to do
+
+    lowest_px = min(y_bottoms)  # smallest y (closest to bottom)
+    # convert to fraction of figure height
+    lowest_frac = lowest_px / fig_h
+
+    # We need the subplot bottom to be *above* the lowest_frac by pad_pixels
+    pad_frac = pad_pixels / fig_h
+    required_bottom = lowest_frac + pad_frac
+
+    # clamp to reasonable range
+    required_bottom = max(required_bottom, min_bottom)
+    required_bottom = min(required_bottom, max_bottom)
+
+    # current bottom
+    left, bottom, right, top = fig.subplotpars.left, fig.subplotpars.bottom, fig.subplotpars.right, fig.subplotpars.top
+
+    # If required_bottom is larger than current bottom, increase it
+    if required_bottom > bottom:
+        plt.subplots_adjust(bottom=required_bottom)
+
+
 class StrainVisApp:
 
     def __init__(self):
@@ -143,6 +279,7 @@ class StrainVisApp:
         self.ref_genomes_list_by_pairs_num = []
         self.ref_genomes_list_ani = []
         self.ref_genomes_list_by_pairs_num_ani = []
+        self.annotation_per_ref_genome_dict = dict()
         self.selected_genomes_subset = []
         self.sorted_selected_genomes_subset = []
         self.sorted_selected_genomes_subset_ani = []
@@ -268,7 +405,11 @@ class StrainVisApp:
         self.template.main.append(self.main_container)
 
         # Homepage layouts
-        self.input_card = pn.Card(hide_header=True, styles={'margin': "10px", 'padding': "10px"})
+        self.mandatory_input_card = pn.Card(hide_header=True, styles={'margin': "10px", 'padding': "10px",
+                                                                      'width': "1000px"})
+        self.optional_input_card = pn.Card(hide_header=True, styles={'margin': "10px", 'padding': "10px",
+                                                                     'width': "1000px"})
+        self.ani_upload_row = pn.Row(styles={'font-size': "16px", 'margin-bottom': "0", 'margin-top': "0"})
 
         # Widgets
         radio_group_css = '''
@@ -289,7 +430,6 @@ class StrainVisApp:
         self.ANI_text_input = pn.widgets.TextInput(name='', placeholder='Enter ANI file path here...')
         self.ANI_input_file = pn.widgets.FileInput(accept='.tsv, .tab, .txt')
         self.metadata_file = pn.widgets.FileInput(accept='.csv, .tsv, .tab, .txt')
-        self.gene_annotation_file = pn.widgets.FileInput()
 
         self.submit_button = pn.widgets.Button(name='Submit', button_type='primary',
                                                disabled=pn.bind(enable_submit,
@@ -903,6 +1043,7 @@ class StrainVisApp:
         self.visited_synteny_per_pos_tab = 0
         self.finished_initial_synteny_per_pos_plot = 0
         self.ax_for_synteny_per_pos_plot = ""
+        self.ax_annotations = ""
         self.synteny_per_pos_plot = ""
         self.coverage_plot = ""
         self.line_avg_plot = ""
@@ -917,37 +1058,42 @@ class StrainVisApp:
         self.sorting_select = pn.widgets.Select(name='Sort by:', options=config.contig_sorting_options,
                                                 styles={'margin': "0"})
         self.sorting_select_watcher = ""
-        self.start_pos_input = pn.widgets.TextInput(name='Start position')
-        self.end_pos_input = pn.widgets.TextInput(name='End position')
-        self.avg_plot_chkbox = pn.widgets.Checkbox(name='Show average synteny scores', value=True)
+        self.start_pos_input = pn.widgets.TextInput(name='Start position', styles={'font-size': "14px"})
+        self.end_pos_input = pn.widgets.TextInput(name='End position', styles={'font-size': "14px"})
+        self.avg_plot_chkbox = pn.widgets.Checkbox(name='Show average synteny scores', value=True,
+                                                   styles={'font-size': "14px"})
         self.avg_plot_chkbox_watcher = ""
         self.avg_plot_color = pn.widgets.ColorPicker(name='Color:', value='#000080',
                                                      disabled=pn.bind(change_disabled_state_inverse,
                                                                       chkbox_state=self.avg_plot_chkbox,
                                                                       watch=True))
         self.avg_plot_color_watcher = ""
-        self.coverage_plot_chkbox = pn.widgets.Checkbox(name='Show all synteny scores', value=True)
+        self.coverage_plot_chkbox = pn.widgets.Checkbox(name='Show all synteny scores', value=True,
+                                                        styles={'font-size': "14px"})
         self.coverage_plot_chkbox_watcher = ""
         self.coverage_plot_color = pn.widgets.ColorPicker(name='Color:', value='#ba55d3',
                                                           disabled=pn.bind(change_disabled_state_inverse,
                                                                            chkbox_state=self.coverage_plot_chkbox,
                                                                            watch=True))
         self.coverage_plot_color_watcher = ""
-        self.hypervar_chkbox = pn.widgets.Checkbox(name='Highlight hypervariable regions', value=True)
+        self.hypervar_chkbox = pn.widgets.Checkbox(name='Highlight hypervariable regions', value=True,
+                                                   styles={'font-size': "14px"})
         self.hypervar_chkbox_watcher = ""
         self.hypervar_color = pn.widgets.ColorPicker(name='Color:', value=config.variable_color,
                                                      disabled=pn.bind(change_disabled_state_inverse,
                                                                       chkbox_state=self.hypervar_chkbox,
                                                                       watch=True))
         self.hypervar_color_watcher = ""
-        self.hypercons_chkbox = pn.widgets.Checkbox(name='Highlight hyperconserved regions', value=True)
+        self.hypercons_chkbox = pn.widgets.Checkbox(name='Highlight hyperconserved regions', value=True,
+                                                    styles={'font-size': "14px"})
         self.hypercons_chkbox_watcher = ""
         self.hypercons_color = pn.widgets.ColorPicker(name='Color:', value=config.conserved_color,
                                                       disabled=pn.bind(change_disabled_state_inverse,
                                                                        chkbox_state=self.hypercons_chkbox,
                                                                        watch=True))
         self.hypercons_color_watcher = ""
-        self.alpha_slider = pn.widgets.FloatSlider(name='Alpha transparency', start=0, end=1, step=0.1, value=0.3)
+        self.alpha_slider = pn.widgets.FloatSlider(name='Alpha transparency', start=0, end=1, step=0.1, value=0.3,
+                                                   styles={'font-size': "14px"})
         self.alpha_slider_watcher = ""
         self.synteny_per_pos_image_format = pn.widgets.Select(value=config.matplotlib_file_formats[0],
                                                        options=config.matplotlib_file_formats,
@@ -958,7 +1104,7 @@ class StrainVisApp:
         self.download_synteny_per_pos_table_column = pn.Column()
 
         self.filter_by_metadata_card = pn.Card(title='Filter plot by metadata', collapsed=True,
-                                               styles={'margin': "5px 0 5px 10px", 'width': "1000px"})
+                                               styles={'margin': "5px 0 5px 10px", 'width': "1050px"})
         self.synteny_per_pos_feature_select = pn.widgets.Select(options=['Select feature'], width=200,
                                                                 name="Filter plot by the following feature:")
         self.synteny_per_pos_groups_select = pn.widgets.MultiSelect(options=[], width=350, height=200, size=5,
@@ -967,6 +1113,23 @@ class StrainVisApp:
         self.filter_synteny_per_pos_button.on_click(self.filter_synteny_per_pos_plot)
         self.reset_filter_synteny_per_pos_button = pn.widgets.Button(name='Reset filteration', button_type='primary')
         self.reset_filter_synteny_per_pos_button.on_click(self.reset_filter_synteny_per_pos_plot)
+
+        self.add_annotation_card = pn.Card(title='Add annotation data', collapsed=True,
+                                           styles={'margin': "5px 0 5px 10px", 'width': "1050px"})
+        self.upload_annotation_file = pn.widgets.FileInput(accept='.gff')
+        self.gff_filename = ""
+        self.annotation_upload_col = pn.Column()
+        self.show_annotations_col = pn.Column()
+        self.show_annotations_row = pn.Row()
+        self.submit_annotation_file_button = pn.widgets.Button(name='Upload file', button_type='primary')
+        self.submit_annotation_file_button.on_click(self.read_annotation_file)
+        self.show_annotations_chkbox = pn.widgets.Checkbox(name='Show annotated genes for current contig', value=False,
+                                                           styles={'font-size': "14px"})
+        self.annotation_help_button = pn.widgets.ButtonIcon(icon="help", size="1.5em",
+                                                            description="Genes plot help", margin=(3, 0, 0, 0))
+        self.annotation_help_button.on_click(self.show_annotations_help_float_panel)
+        self.show_annotations_watcher = ""
+        self.show_annotations = False
 
         # Build the initial layout
         mandatory_input_title = "Mandatory input"
@@ -982,13 +1145,15 @@ class StrainVisApp:
         file_input_title = "Upload SynTracker's output table 'synteny_scores_per_region.csv' for one or multiple " \
                            "species:"
         text_input_title = "Or, if the file size is bigger than 300 Mb, enter it's full path here:"
-        self.input_card.append(pn.pane.Markdown(file_input_title, styles={'font-size': "16px", 'margin-bottom': "0",
-                                                                          'margin-top': "0"}))
-        self.input_card.append(self.SynTracker_input_file)
-        self.input_card.append(pn.pane.Markdown(text_input_title, styles={'font-size': "16px", 'margin-bottom': "0",
-                                                                          'margin-top': "0"}))
-        self.input_card.append(self.SynTracker_text_input)
-        self.main_area.append(self.input_card)
+        self.mandatory_input_card.append(pn.pane.Markdown(file_input_title, styles={'font-size': "16px",
+                                                                                    'margin-bottom': "0",
+                                                                                    'margin-top': "0"}))
+        self.mandatory_input_card.append(self.SynTracker_input_file)
+        self.mandatory_input_card.append(pn.pane.Markdown(text_input_title, styles={'font-size': "16px",
+                                                                                    'margin-bottom': "0",
+                                                                                    'margin-top': "0"}))
+        self.mandatory_input_card.append(self.SynTracker_text_input)
+        self.main_area.append(self.mandatory_input_card)
 
         self.main_area.append(pn.Spacer(height=20))
 
@@ -997,16 +1162,18 @@ class StrainVisApp:
                                                styles={'font-size': "24px", 'color': config.title_purple_color,
                                                        'margin-bottom': "0"}))
 
+        # Metadata input
         metadata_upload_title = "Upload a metadata file for the compared samples (in tab delimited format):"
-        self.main_area.append(pn.pane.Markdown(metadata_upload_title, styles={'font-size': "17px", 'margin-bottom': "0",
-                                                                              'margin-top': "0"}))
-        self.main_area.append(self.metadata_file)
-        metadata_note = "Please note: the metadata file may contain an unlimited number of columns (features).  " \
-                        "\nThe first column must contain the sample IDs (identical to the sample IDs that appear in " \
-                        "the input file(s))."
-        self.main_area.append(pn.pane.Markdown(metadata_note, styles={'font-size': "15px", 'margin-bottom': "0",
-                                                                      'margin-top': "0",
-                                                                      'color': config.title_red_color}))
+        metadata_help_button = pn.widgets.ButtonIcon(icon="help", size="1.5em", description="Metadata help",
+                                                     margin=(17, 5, 0, 0))
+        metadata_help_button.on_click(self.show_metadata_help_float_panel)
+        self.metadata_upload_row = pn.Row(pn.pane.Markdown(metadata_upload_title, styles={'font-size': "16px",
+                                                                                          'margin-bottom': "0",
+                                                                                          'margin-top': "0"}),
+                                          metadata_help_button, pn.Spacer(width=1))
+        self.optional_input_card.append(self.metadata_upload_row)
+        self.optional_input_card.append(self.metadata_file)
+        self.main_area.append(self.optional_input_card)
 
         self.main_area.append(pn.Spacer(height=30))
 
@@ -1015,6 +1182,14 @@ class StrainVisApp:
         pn.state.on_session_destroyed(destroyed)
 
         self.template.servable()
+
+    def show_metadata_help_float_panel(self, event):
+        metadata_note = "The metadata file may contain an unlimited number of columns (features).  " \
+                        "\nThe first column must contain the sample IDs (identical to the sample IDs that appear in " \
+                        "the input file(s))."
+        markdown = pn.pane.Markdown(metadata_note, styles={'font-size': "14px", 'color': config.title_red_color})
+        floatpanel = pn.layout.FloatPanel(markdown, name='metadata file help', margin=10, width=400)
+        self.metadata_upload_row[2] = floatpanel
 
     def load_correct_page(self, event):
         if self.header_buttons.value == 'Home':
@@ -1042,12 +1217,14 @@ class StrainVisApp:
     def update_input_card(self, event):
         syn_file_input_title = "Upload SynTracker's output table 'synteny_scores_per_region.csv' for one or multiple " \
                                "species:"
-        ani_file_input_title = "Upload tab-delimited ANI file for one or multiple species.  " \
-                               "The file should contain the following columns: 'Ref_genome', 'Sample1', 'Sample2', " \
-                               "'ANI'."
+        ani_file_input_title = "Upload tab-delimited ANI file for one or multiple species:"
+        ani_help_button = pn.widgets.ButtonIcon(icon="help", size="1.5em", description="ANI help",
+                                                margin=(17, 5, 0, 0))
+        ani_help_button.on_click(self.show_ani_help_float_panel)
         text_input_title = "Or, if the file size is bigger than 300 Mb, enter it's full path here:"
 
-        self.input_card.clear()
+        self.mandatory_input_card.clear()
+        self.ani_upload_row.clear()
         self.SynTracker_input_file.value = None
         self.SynTracker_text_input.value = ""
         self.ANI_input_file.value = None
@@ -1055,13 +1232,14 @@ class StrainVisApp:
 
         # Only SynTracker input
         if self.input_type_radio_group.value == 'SynTracker output file':
-            self.input_card.append(pn.pane.Markdown(syn_file_input_title, styles={'font-size': "16px",
-                                                                                  'margin-bottom': "0",
-                                                                                  'margin-top': "0"}))
-            self.input_card.append(self.SynTracker_input_file)
-            self.input_card.append(pn.pane.Markdown(text_input_title, styles={'font-size': "16px", 'margin-bottom': "0",
-                                                                              'margin-top': "0"}))
-            self.input_card.append(self.SynTracker_text_input)
+            self.mandatory_input_card.append(pn.pane.Markdown(syn_file_input_title, styles={'font-size': "16px",
+                                                                                            'margin-bottom': "0",
+                                                                                            'margin-top': "0"}))
+            self.mandatory_input_card.append(self.SynTracker_input_file)
+            self.mandatory_input_card.append(pn.pane.Markdown(text_input_title, styles={'font-size': "16px",
+                                                                                        'margin-bottom': "0",
+                                                                                        'margin-top': "0"}))
+            self.mandatory_input_card.append(self.SynTracker_text_input)
 
             self.input_mode = "SynTracker"
             self.active_input_mode = "SynTracker"
@@ -1069,13 +1247,16 @@ class StrainVisApp:
 
         # Only ANI input
         elif self.input_type_radio_group.value == 'ANI file':
-            self.input_card.append(pn.pane.Markdown(ani_file_input_title, styles={'font-size': "16px",
-                                                                                  'margin-bottom': "0",
-                                                                                  'margin-top': "0"}))
-            self.input_card.append(self.ANI_input_file)
-            self.input_card.append(pn.pane.Markdown(text_input_title, styles={'font-size': "16px", 'margin-bottom': "0",
-                                                                              'margin-top': "0"}))
-            self.input_card.append(self.ANI_text_input)
+            self.ani_upload_row.append(pn.pane.Markdown(ani_file_input_title, styles={'font-size': "16px",
+                                                                                      'margin-bottom': "0",
+                                                                                      'margin-top': "0"}))
+            self.ani_upload_row.append(ani_help_button)
+            self.mandatory_input_card.append(self.ani_upload_row)
+            self.mandatory_input_card.append(self.ANI_input_file)
+            self.mandatory_input_card.append(pn.pane.Markdown(text_input_title, styles={'font-size': "16px",
+                                                                                        'margin-bottom': "0",
+                                                                                        'margin-top': "0"}))
+            self.mandatory_input_card.append(self.ANI_text_input)
 
             self.input_mode = "ANI"
             self.active_input_mode = "ANI"
@@ -1083,34 +1264,46 @@ class StrainVisApp:
 
         # Combined input
         else:
-            self.input_card.append(pn.pane.Markdown(syn_file_input_title, styles={'font-size': "16px",
-                                                                                  'margin-bottom': "0",
-                                                                                  'margin-top': "0"}))
-            self.input_card.append(self.SynTracker_input_file)
-            self.input_card.append(pn.pane.Markdown(text_input_title, styles={'font-size': "16px", 'margin-bottom': "0",
-                                                                              'margin-top': "0"}))
-            self.input_card.append(self.SynTracker_text_input)
+            self.mandatory_input_card.append(pn.pane.Markdown(syn_file_input_title, styles={'font-size': "16px",
+                                                                                            'margin-bottom': "0",
+                                                                                            'margin-top': "0"}))
+            self.mandatory_input_card.append(self.SynTracker_input_file)
+            self.mandatory_input_card.append(pn.pane.Markdown(text_input_title, styles={'font-size': "16px",
+                                                                                        'margin-bottom': "0",
+                                                                                        'margin-top': "0"}))
+            self.mandatory_input_card.append(self.SynTracker_text_input)
 
-            self.input_card.append(pn.Spacer(height=10))
-            self.input_card.append(pn.layout.Divider())
+            self.mandatory_input_card.append(pn.Spacer(height=10))
+            self.mandatory_input_card.append(pn.layout.Divider())
 
-            self.input_card.append(pn.pane.Markdown(ani_file_input_title, styles={'font-size': "16px",
-                                                                                  'margin-bottom': "0",
-                                                                                  'margin-top': "0"}))
-            self.input_card.append(self.ANI_input_file)
-            self.input_card.append(pn.pane.Markdown(text_input_title, styles={'font-size': "16px", 'margin-bottom': "0",
-                                                                              'margin-top': "0"}))
-            self.input_card.append(self.ANI_text_input)
+            self.ani_upload_row.append(pn.pane.Markdown(ani_file_input_title, styles={'font-size': "16px",
+                                                                                        'margin-bottom': "0",
+                                                                                        'margin-top': "0"}))
+            self.ani_upload_row.append(ani_help_button)
+            self.mandatory_input_card.append(self.ani_upload_row)
+            self.mandatory_input_card.append(self.ANI_input_file)
+            self.mandatory_input_card.append(pn.pane.Markdown(text_input_title, styles={'font-size': "16px",
+                                                                                        'margin-bottom': "0",
+                                                                                        'margin-top': "0"}))
+            self.mandatory_input_card.append(self.ANI_text_input)
 
             matching_note = "Please note: the names of species and the sample IDs must be identical between both " \
                             "input files."
-            self.input_card.append(pn.pane.Markdown(matching_note, styles={'font-size': "16px", 'margin-bottom': "0",
-                                                                           'margin-top': "0",
-                                                                           'color': config.title_red_color}))
+            self.mandatory_input_card.append(pn.pane.Markdown(matching_note, styles={'font-size': "16px",
+                                                                                     'margin-bottom': "0",
+                                                                                     'margin-top': "0",
+                                                                                     'color': config.title_red_color}))
 
             self.input_mode = "both"
             self.active_input_mode = "SynTracker"
             self.score_type = "APSS"
+
+    def show_ani_help_float_panel(self, event):
+        ani_text = "The tab-delimited ANI file should contain the following columns: " \
+                   "'Ref_genome', 'Sample1', 'Sample2', 'ANI'."
+        markdown = pn.pane.Markdown(ani_text, styles={'font-size': "14px", 'color': config.title_red_color})
+        floatpanel = pn.layout.FloatPanel(markdown, name='ANI file help', margin=10, width=450)
+        self.ani_upload_row.append(floatpanel)
 
     def init_parameters(self):
         del self.score_per_region_all_genomes_df
@@ -1191,7 +1384,6 @@ class StrainVisApp:
 
                     # File has content
                     else:
-                        #self.display_results_page()
                         self.syntracker_loaded = 1
 
         # Verify that an ANI file was loaded
@@ -1299,6 +1491,7 @@ class StrainVisApp:
         self.ref_genomes_list_by_pairs_num = []
         self.ref_genomes_list_ani = []
         self.ref_genomes_list_by_pairs_num_ani = []
+        self.annotation_per_ref_genome_dict = {}
         self.selected_genomes_subset = []
         self.sorted_selected_genomes_subset = []
         self.sorted_selected_genomes_subset_ani = []
@@ -1404,6 +1597,10 @@ class StrainVisApp:
                 self.ref_genomes_list_ani = list(self.ani_scores_all_genomes_df.groupby(['Ref_genome']).groups)
                 print("\nNumber of species in ANI file: " + str(self.number_of_genomes_ani))
                 #print("Species list from ANI file: " + str(self.ref_genomes_list_ani))
+
+        # Initialize the annotation dict
+        for ref in self.ref_genomes_list:
+            self.annotation_per_ref_genome_dict[ref] = None
 
         # If a metadata file was uploaded - read the file into a DF
         if self.is_metadata:
@@ -1585,6 +1782,7 @@ class StrainVisApp:
         self.APSS_analyses_single_column.clear()
         self.synteny_per_pos_plot_column.clear()
         self.sampling_size = ""
+        self.gff_filename = ""
 
         if self.input_mode == "SynTracker" or self.input_mode == "both":
             # Stop watching the contig-related widgets
@@ -1603,6 +1801,7 @@ class StrainVisApp:
                 self.hypercons_color.param.unwatch(self.hypercons_color_watcher)
                 self.alpha_slider.param.unwatch(self.alpha_slider_watcher)
                 self.synteny_per_pos_feature_select.param.unwatch(self.synteny_per_pos_feature_select_watcher)
+                self.show_annotations_chkbox.param.unwatch(self.show_annotations_watcher)
 
             # Initialize variables
             self.contigs_list_by_length = []
@@ -1802,8 +2001,6 @@ class StrainVisApp:
                 self.nodes_color_by_ani.param.unwatch(self.nodes_colorby_ani_watcher)
                 self.nodes_highlight_by_ani.param.unwatch(self.nodes_highlight_by_ani_watcher)
 
-        self.visited_ANI_tab = 1
-
         self.is_continuous_clustermap_ani.value = False
         self.feature_colormap_ani.options = config.categorical_colormap_dict
         self.feature_colormap_ani.value = config.categorical_colormap_dict['cet_glasbey']
@@ -1832,6 +2029,7 @@ class StrainVisApp:
             self.create_jitter_pane_ani(self.ani_scores_selected_genome_df)
             self.create_clustermap_pane_ani(self.ani_scores_selected_genome_df)
             self.create_network_pane_ani(self.ani_scores_selected_genome_df)
+            self.visited_ANI_tab = 1
 
             plots_column = pn.Column(
                 self.jitter_card_ani,
@@ -4337,33 +4535,28 @@ class StrainVisApp:
         self.contig_name = contig.value
         print("\nChanged_contig, contig name: " + self.contig_name)
 
-        # Unwatch all contig-specific widgets
-        if self.avg_plot_chkbox_watcher in self.avg_plot_chkbox.param.watchers:
+        # Unwatch all contig-specific widgets (if it's not the first time that the contig has changed)
+        if self.visited_synteny_per_pos_tab:
+            print("changed_contig: remove contig-related watchers")
             self.avg_plot_chkbox.param.unwatch(self.avg_plot_chkbox_watcher)
-        if self.avg_plot_color_watcher in self.avg_plot_color.param.watchers:
             self.avg_plot_color.param.unwatch(self.avg_plot_color_watcher)
-        if self.coverage_plot_chkbox_watcher in self.coverage_plot_chkbox.param.watchers:
             self.coverage_plot_chkbox.param.unwatch(self.coverage_plot_chkbox_watcher)
-        if self.coverage_plot_color_watcher in self.coverage_plot_color.param.watchers:
             self.coverage_plot_color.param.unwatch(self.coverage_plot_color_watcher)
-        if self.hypervar_chkbox_watcher in self.hypervar_chkbox.param.watchers:
             self.hypervar_chkbox.param.unwatch(self.hypervar_chkbox_watcher)
-        if self.hypervar_color_watcher in self.hypervar_color.param.watchers:
             self.hypervar_color.param.unwatch(self.hypervar_color_watcher)
-        if self.hypercons_chkbox_watcher in self.hypercons_chkbox.param.watchers:
             self.hypercons_chkbox.param.unwatch(self.hypercons_chkbox_watcher)
-        if self.hypercons_color_watcher in self.hypercons_color.param.watchers:
             self.hypercons_color.param.unwatch(self.hypercons_color_watcher)
-        if self.alpha_slider_watcher in self.alpha_slider.param.watchers:
             self.alpha_slider.param.unwatch(self.alpha_slider_watcher)
-        if self.synteny_per_pos_feature_select_watcher in self.synteny_per_pos_feature_select.param.watchers:
-            self.synteny_per_pos_feature_select.param.unwatch(self.synteny_per_pos_feature_select_watcher)
+            self.show_annotations_chkbox.param.unwatch(self.show_annotations_watcher)
+            if self.is_metadata:
+                self.synteny_per_pos_feature_select.param.unwatch(self.synteny_per_pos_feature_select_watcher)
 
         self.coverage_plot = ""
         self.line_avg_plot = ""
         self.hypervar_bars = ""
         self.hypercons_bars = ""
         self.filter_plot_by_metadata = 0
+        self.show_annotations = False
 
         self.create_selected_contig_column()
 
@@ -4373,6 +4566,9 @@ class StrainVisApp:
             self.score_per_region_selected_genome_df['Contig_name'] == self.contig_name].copy()
 
         self.selected_contig_column.clear()
+        self.annotation_upload_col.clear()
+        self.show_annotations_col.clear()
+        self.show_annotations_row.clear()
 
         contig_name_title = "Contig name: " + self.contig_name
         self.selected_contig_column.append(pn.pane.Markdown(contig_name_title,
@@ -4470,6 +4666,48 @@ class StrainVisApp:
             self.filter_by_metadata_card.collapsible = False
             self.filter_by_metadata_card.hide_header = True
 
+        self.add_annotation_card.clear()
+
+        # No annotation file for the current genome has already been uploaded - add the FileInput widget
+        if self.annotation_per_ref_genome_dict[self.ref_genome] is None:
+            annotation_upload_title = "Upload an annotation file for the reference genome (in gff format):"
+            self.upload_annotation_file.disabled = False
+            self.submit_annotation_file_button.disabled = False
+            self.show_annotations_chkbox.disabled = True
+
+            self.annotation_upload_col.append(pn.pane.Markdown(annotation_upload_title,
+                                                               styles={'font-size': "14px",
+                                                                       'margin-bottom': "0",
+                                                                       'margin-top': "0",
+                                                                       'padding-bottom': "0"}))
+
+        # An annotation file for the current genome has already been uploaded - write a message
+        else:
+            annotation_upload_title = "Found annotation file for the current reference genome: " + self.gff_filename
+            self.upload_annotation_file.disabled = True
+            self.submit_annotation_file_button.disabled = True
+            self.show_annotations_chkbox.value = False
+            self.show_annotations_chkbox.disabled = False
+
+            self.annotation_upload_col.append(pn.pane.Markdown(annotation_upload_title,
+                                                               styles={'font-size': "14px",
+                                                                       'color': config.title_red_color,
+                                                                       'margin-bottom': "0",
+                                                                       'margin-top': "0",
+                                                                       'padding-bottom': "0"}))
+
+        annotation_upload_row = pn.Row(self.upload_annotation_file, self.submit_annotation_file_button)
+        self.annotation_upload_col.append(annotation_upload_row)
+
+        self.show_annotations_col.append(pn.Spacer(height=50))
+        self.show_annotations_row = pn.Row(self.show_annotations_chkbox, self.annotation_help_button,
+                                           pn.Spacer(width=1))
+        self.show_annotations_col.append(self.show_annotations_row)
+        add_annotation_row = pn.Row(self.annotation_upload_col, pn.Spacer(width=45), self.show_annotations_col,
+                                    styles={'padding': "10px"})
+
+        self.add_annotation_card.append(add_annotation_row)
+
         styling_title = "Customization options:"
         styling_col = pn.Column(pn.pane.Markdown(styling_title, styles={'font-size': "15px", 'font-weight': "bold",
                                                                         'color': config.title_blue_color,
@@ -4477,7 +4715,8 @@ class StrainVisApp:
                                 pos_range_cust_row,
                                 coverage_plot_cust_row,
                                 hypercons_cust_row,
-                                self.filter_by_metadata_card)
+                                self.filter_by_metadata_card,
+                                self.add_annotation_card)
 
         # Define watchers for visual widgets
         self.avg_plot_chkbox_watcher = self.avg_plot_chkbox.param.watch(self.show_hide_avg_plot, 'value',
@@ -4497,6 +4736,8 @@ class StrainVisApp:
         self.hypercons_color_watcher = self.hypercons_color.param.watch(self.change_hypercons_color,
                                                                         'value', onlychanged=True)
         self.alpha_slider_watcher = self.alpha_slider.param.watch(self.change_alpha, 'value', onlychanged=True)
+        self.show_annotations_watcher = self.show_annotations_chkbox.param.watch(self.show_hide_annotations_plot,
+                                                                                 'value', onlychanged=True)
 
         save_file_title = "Plot download options:"
         download_button = pn.widgets.Button(name='Download high-resolution image', button_type='primary')
@@ -4561,16 +4802,47 @@ class StrainVisApp:
         # Create the synteny_per_pos plot for the selected contig of the Ref-genome with the customized parameters
         self.synteny_per_pos_plot = self.create_synteny_per_pos_plot()
 
-        self.synteny_per_pos_pane = pn.pane.Matplotlib(self.synteny_per_pos_plot, height=600, dpi=300, tight=True,
-                                                       format='png')
+        self.synteny_per_pos_pane = pn.pane.Matplotlib(self.synteny_per_pos_plot, dpi=300, tight=True, format='png',
+                                                       width=1105)
 
-        synteny_per_pos_plot_row = pn.Row(styles={'padding': "5px 0 0 0"})
+        synteny_per_pos_plot_row = pn.Row(styles={'padding': "0", 'margin': "0"})
         synteny_per_pos_plot_row.append(self.synteny_per_pos_pane)
 
         self.selected_contig_column.append(synteny_per_pos_plot_row)
         self.selected_contig_column.append(pn.Spacer(width=20))
         self.selected_contig_column.append(styling_col)
         self.selected_contig_column.append(download_synteny_per_pos_column)
+
+    def read_annotation_file(self, event):
+        gff_file = io.BytesIO(self.upload_annotation_file.value)
+        gff_text = gff_file.read().decode("utf-8")
+        self.gff_filename = self.upload_annotation_file.filename
+        print("\nUploaded annotation file: " + self.gff_filename)
+
+        # Read the gff file and get a dict of features-per-contig for the current ref-genome
+        self.annotation_per_ref_genome_dict[self.ref_genome] = load_genes_from_gff(gff_text)
+
+        annotation_upload_title = "Uploaded annotation file: " + self.gff_filename
+        self.upload_annotation_file.disabled = True
+        self.submit_annotation_file_button.disabled = True
+        self.show_annotations_chkbox.disabled = False
+
+        self.annotation_upload_col.clear()
+        self.annotation_upload_col.append(pn.pane.Markdown(annotation_upload_title,
+                                                           styles={'font-size': "14px",
+                                                                   'color': config.title_red_color,
+                                                                   'margin-bottom': "0",
+                                                                   'margin-top': "0",
+                                                                   'padding-bottom': "0"}))
+        annotation_upload_row = pn.Row(self.upload_annotation_file, self.submit_annotation_file_button)
+        self.annotation_upload_col.append(annotation_upload_row)
+
+    def show_annotations_help_float_panel(self, event):
+        message = "Plot annotated genes at the bottom of the main plot.\n" \
+                  "The genes plot can only be displayed if the contig's length does not exceed 100,000 bp."
+        markdown = pn.pane.Markdown(message, styles={'font-size': "14px", 'color': config.title_red_color})
+        floatpanel = pn.layout.FloatPanel(markdown, name='genes plot help', margin=10, width=400)
+        self.show_annotations_row[2] = floatpanel
 
     def fill_groups_for_multiselect(self, event):
         feature = self.synteny_per_pos_feature_select.value
@@ -4640,7 +4912,14 @@ class StrainVisApp:
         avg_pos_array = np.full((2, len(avg_score_per_pos_contig.index)), 0)
         avg_pos_array[1, :] = config.region_length
 
-        fig, self.ax_for_synteny_per_pos_plot = plt.subplots(figsize=(11, 5))
+        # Create a figure with two subplots, one for the synteny information and one for the annotations
+        if self.show_annotations:
+            fig, (self.ax_for_synteny_per_pos_plot, self.ax_annotations) = plt.subplots(2, 1, figsize=(12, 8),
+                                                                                        sharex=True,
+                                                                                        gridspec_kw={'height_ratios': [3, 2]})
+        # Create a figure with one subplot for the synteny only
+        else:
+            fig, self.ax_for_synteny_per_pos_plot = plt.subplots(figsize=(12, 5))
 
         self.coverage_plot = self.ax_for_synteny_per_pos_plot.errorbar(score_per_pos_contig['Position'],
                                                                        score_per_pos_contig['Synteny_score'],
@@ -4703,15 +4982,57 @@ class StrainVisApp:
         #print("\nFinal AVG score per position table:")
         #print(avg_score_per_pos_contig)
 
-        # Set the X-ticks and labels of the axes
-        plt.xticks(avg_score_per_pos_contig['Position'], fontsize=6, rotation=90)
-        self.ax_for_synteny_per_pos_plot.locator_params(axis='x', tight=True, nbins=40)
-        plt.xlabel("Position in reference genome/contig", labelpad=8)
-        plt.ylabel("Synteny Score")
+        # Set the X-ticks and labels of the main plot
+        positions = avg_score_per_pos_contig['Position']
+        self.ax_for_synteny_per_pos_plot.set_xlim(int(start_pos), int(end_pos))
+        self.ax_for_synteny_per_pos_plot.set_xticks(positions)
+        self.ax_for_synteny_per_pos_plot.tick_params(axis='x', labelsize=6, rotation=90)
+        self.ax_for_synteny_per_pos_plot.set_xlabel("Position in reference genome/contig", labelpad=8, fontsize=10)
 
+        # Set the Y-label of the synteny plot
+        self.ax_for_synteny_per_pos_plot.set_ylabel("Synteny score", labelpad=8, fontsize=10)
+
+        # Set the legend
         self.ax_for_synteny_per_pos_plot.legend(fontsize='small', loc=(0, 1.02))
 
-        plt.close(fig)
+        # Customize the axes in order to display the synteny + annotations plot
+        if self.show_annotations:
+
+            # Filter to features that overlap the visible x-range (in absolute coordinates)
+            features_in_range = set_features_in_range(
+                self.annotation_per_ref_genome_dict[self.ref_genome][self.contig_name], int(start_pos), int(end_pos))
+
+            # Draw the annotations plot
+            seq_length = int(end_pos) - int(start_pos)
+            record = GraphicRecord(
+                sequence_length=seq_length,
+                features=features_in_range,
+                first_index=int(start_pos)
+            )
+            record.plot(ax=self.ax_annotations, with_ruler=True)
+
+            # Set the X-ticks of both plots according to the positions
+            self.ax_annotations.set_xticks(positions)
+            self.ax_annotations.tick_params(axis='x', labelsize=7, labelcolor='black')
+
+            self.ax_for_synteny_per_pos_plot.tick_params(axis='x', labelsize=7, reset=True, top=False)
+            self.ax_for_synteny_per_pos_plot.set_xlabel("")
+
+            # ---- FIX Y-AXIS VISIBILITY ----
+            # Re-enable the left spine (DFV turns it off)
+            self.ax_annotations.spines['left'].set_visible(True)
+
+            # Make sure Matplotlib knows it should show the y-axis
+            self.ax_annotations.yaxis.set_visible(True)
+
+            # Enable invisible ticks (even invisible ticks help trigger label placement)
+            self.ax_annotations.tick_params(axis='y', left=False, labelleft=False)
+
+            # Set the Y-label
+            self.ax_annotations.set_ylabel("Annotated genes", labelpad=30, fontsize=10)
+
+            # Add global X-label for the entire figure
+            fig.supxlabel("Position in reference genome/contig", y=0.04, fontsize=10)
 
         after = time.time()
         duration = after - before
@@ -4724,6 +5045,33 @@ class StrainVisApp:
         self.synteny_per_pos_pane.object = self.synteny_per_pos_plot
 
     def change_range(self, event):
+
+        # Check if show_annotations is checked
+        if self.show_annotations_chkbox.value:
+            length_range = int(self.end_pos_input.value) - int(self.start_pos_input.value)
+
+            # The requested length range is too big - Print a message that the length exceeds the allowed maximum
+            if length_range > config.max_range_for_annotation:
+                # Print a message that the length exceeds the allowed maximum
+                print("\nchange_range: length range is too big")
+                message = "Cannot plot annotated genes - set contig length to max. 100,000 bp"
+                self.show_annotations_col[0] = pn.pane.Markdown(message,
+                                                                styles={'font-size': "14px",
+                                                                        'color': config.title_red_color,
+                                                                        'margin-bottom': "0",
+                                                                        'margin-top': "0",
+                                                                        'padding-bottom': "0"})
+                self.show_annotations = False
+
+            # The requested length range is suitable for showing the annotation plot
+            else:
+                self.show_annotations_col[0] = pn.Spacer(height=50)
+                self.show_annotations = True
+
+        # show_annotations is not checked
+        else:
+            self.show_annotations = False
+
         self.update_synteny_per_pos_plot()
 
     def reset_range(self, event):
@@ -4736,6 +5084,31 @@ class StrainVisApp:
         self.end_pos_input.value = end_pos
         print("\nIn reset_range")
         print("Start=" + start_pos + ", end=" + end_pos)
+
+        # Check if show_annotations is checked
+        if self.show_annotations_chkbox.value:
+            length_range = int(self.end_pos_input.value) - int(self.start_pos_input.value)
+
+            # The requested length range is too big - Print a message that the length exceeds the allowed maximum
+            if length_range > config.max_range_for_annotation:
+                print("\nreset_range: length range is too big")
+                message = "Cannot plot annotated genes - set contig length to max. 100,000 bp"
+                self.show_annotations_col[0] = pn.pane.Markdown(message,
+                                                                styles={'font-size': "14px",
+                                                                        'color': config.title_red_color,
+                                                                        'margin-bottom': "0",
+                                                                        'margin-top': "0",
+                                                                        'padding-bottom': "0"})
+                self.show_annotations = False
+
+            # The requested length range is suitable for showing the annotation plot
+            else:
+                self.show_annotations_col[0] = pn.Spacer(height=50)
+                self.show_annotations = True
+
+        # show_annotations is not checked
+        else:
+            self.show_annotations = False
 
         self.update_synteny_per_pos_plot()
 
@@ -4848,9 +5221,30 @@ class StrainVisApp:
 
         self.synteny_per_pos_pane.object = self.synteny_per_pos_plot
 
-    def return_row_in_selected_groups(self, row, feature, groups):
-        condition = self.metadata_dict[feature][row['Sample1']] in groups and self.metadata_dict[feature][
-            row['Sample2']] in groups
+    def show_hide_annotations_plot(self, event):
+        # Show annotations is checked
+        if self.show_annotations_chkbox.value:
+            # Check the current contig length range. I f it's longer than 50000, uncheck the box and print a message
+            length_range = int(self.end_pos_input.value) - int(self.start_pos_input.value)
+            if length_range > config.max_range_for_annotation:
+                print("\nshow_hide_annotations_plot: length range is too big")
+                message = "Cannot plot annotated genes - set contig length to max. 100,000 bp"
+                self.show_annotations_col[0] = pn.pane.Markdown(message,
+                                                                styles={'font-size': "14px",
+                                                                        'color': config.title_red_color,
+                                                                        'margin-bottom': "0",
+                                                                        'margin-top': "0",
+                                                                        'padding-bottom': "0"})
+                #self.show_annotations_chkbox.value = False
+                self.show_annotations = False
+            else:
+                self.show_annotations_col[0] = pn.Spacer(height=50)
+                self.show_annotations = True
+                self.update_synteny_per_pos_plot()
+        else:
+            self.show_annotations_col[0] = pn.Spacer(height=50)
+            self.show_annotations = False
+            self.update_synteny_per_pos_plot()
 
     def filter_synteny_per_pos_plot(self, event):
         #print("\nIn filter_synteny_per_pos_plot")

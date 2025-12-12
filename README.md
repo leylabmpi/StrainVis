@@ -1,6 +1,6 @@
 # StrainVis: a Python-based web application for interactive visual analysis of strain-tracking methods
 
-### Version 1.0.9
+### Version 1.1.0
 
 ## Overview
 
@@ -24,12 +24,12 @@ Download the latest release of StrainVis from: https://github.com/leylabmpi/Stra
 
 Extract the tar.gz file into the desired working-directory.
 
-Create a new conda environment using the ‘StrainVis.yml’ file (located in the root directory of SynTrakcerVis) 
+Create a new conda environment using the ‘strainvis.yml’ file (located in the root directory of StrainVis) 
 using the following command:
-      `conda env create -f StrainVis.yml`
+      `conda env create -f strainvis.yml`
 
 Activate the newly created environment: 
-      `conda activate StrainVis`
+      `conda activate StrainVis_1_1`
 
 ## Open StrainVis web-application
 

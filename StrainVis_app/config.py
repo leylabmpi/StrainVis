@@ -14,6 +14,7 @@ max_clustermap_cols = 200
 region_length = 5000
 top_percentile = 0.9
 bottom_percentile = 0.1
+max_range_for_annotation = 100000
 
 ## Network-related parameters
 network_iterations_options = ['50', '100', '150', '200', '250', '300', '350', '400', '450', '500']
