@@ -1,6 +1,6 @@
 # StrainVis: a Python-based web application for interactive visual analysis of strain-tracking methods
 
-### Version 1.1.0
+### Version 1.1.1
 
 - [Overview](#overview)
 - [Installation](#installation)
@@ -67,7 +67,7 @@ To launch the server from the command-line and open the application in the brows
 The application should be opened in the browser under the URL: http://localhost:5005/strain_vis.  
 As long as the Bokeh server is running, StrainVis application can be accessed using the above URL.  
 Please note that several instances of StrainVis can be opened simultaneously in different browser windows/tabs.  
-It is also possible to launch more than several server processes simultaneously using different ports. 
+It is also possible to launch several server processes simultaneously using different ports. 
 
 **Stop the server**: In order to stop the Bokeh server, its running process should be killed.
 
