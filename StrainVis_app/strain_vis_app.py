@@ -1982,24 +1982,38 @@ class StrainVisApp:
         self.highlight_nodes_by_feature_ani.value = False
         self.color_edges_by_feature_ani.value = False
 
-        # Unwatch ANI plots related watchers (if it's not the first time that this function is called)
+        # Unwatch ANI plots related watchers (if it's not the first time that this function is called
+        # and only for watchers that have been defined before)
         if self.visited_ANI_tab:
-            self.network_threshold_select_ani.param.unwatch(self.threshold_select_ani_watcher)
-            self.network_threshold_input_ani.param.unwatch(self.threshold_input_ani_watcher)
-            self.highlight_sample_input_ani.param.unwatch(self.highlight_sample_ani_watcher)
+            if not isinstance(self.threshold_select_ani_watcher, str):
+                self.network_threshold_select_ani.param.unwatch(self.threshold_select_ani_watcher)
+            if not isinstance(self.threshold_input_ani_watcher, str):
+                self.network_threshold_input_ani.param.unwatch(self.threshold_input_ani_watcher)
+            if not isinstance(self.highlight_sample_ani_watcher, str):
+                self.highlight_sample_input_ani.param.unwatch(self.highlight_sample_ani_watcher)
             self.network_threshold_input_ani.value = config.ANI_connections_threshold_default
             
             if self.is_metadata:
-                self.feature_colormap_ani.param.unwatch(self.feature_colormap_ani_watcher)
-                self.custom_colormap_input_clustermap_ani.param.unwatch(self.custom_colormap_clustermap_ani_watcher)
-                self.color_by_feature_ani.param.unwatch(self.color_by_feature_clustermap_ani_watcher)
-                self.is_continuous_clustermap_ani.param.unwatch(self.continuous_clustermap_ani_watcher)
-                self.jitter_feature_select_ani.param.unwatch(self.jitter_feature_ani_watcher)
-                self.is_continuous_network_ani.param.unwatch(self.continuous_network_ani_watcher)
-                self.nodes_colormap_ani.param.unwatch(self.colormap_ani_watcher)
-                self.custom_colormap_input_ani.param.unwatch(self.custom_colormap_ani_watcher)
-                self.nodes_color_by_ani.param.unwatch(self.nodes_colorby_ani_watcher)
-                self.nodes_highlight_by_ani.param.unwatch(self.nodes_highlight_by_ani_watcher)
+                if not isinstance(self.feature_colormap_ani_watcher, str):
+                    self.feature_colormap_ani.param.unwatch(self.feature_colormap_ani_watcher)
+                if not isinstance(self.custom_colormap_clustermap_ani_watcher, str):
+                    self.custom_colormap_input_clustermap_ani.param.unwatch(self.custom_colormap_clustermap_ani_watcher)
+                if not isinstance(self.color_by_feature_clustermap_ani_watcher, str):
+                    self.color_by_feature_ani.param.unwatch(self.color_by_feature_clustermap_ani_watcher)
+                if not isinstance(self.continuous_clustermap_ani_watcher, str):
+                    self.is_continuous_clustermap_ani.param.unwatch(self.continuous_clustermap_ani_watcher)
+                if not isinstance(self.jitter_feature_ani_watcher, str):
+                    self.jitter_feature_select_ani.param.unwatch(self.jitter_feature_ani_watcher)
+                if not isinstance(self.continuous_network_ani_watcher, str):
+                    self.is_continuous_network_ani.param.unwatch(self.continuous_network_ani_watcher)
+                if not isinstance(self.colormap_ani_watcher, str):
+                    self.nodes_colormap_ani.param.unwatch(self.colormap_ani_watcher)
+                if not isinstance(self.custom_colormap_ani_watcher, str):
+                    self.custom_colormap_input_ani.param.unwatch(self.custom_colormap_ani_watcher)
+                if not isinstance(self.nodes_colorby_ani_watcher, str):
+                    self.nodes_color_by_ani.param.unwatch(self.nodes_colorby_ani_watcher)
+                if not isinstance(self.nodes_highlight_by_ani_watcher, str):
+                    self.nodes_highlight_by_ani.param.unwatch(self.nodes_highlight_by_ani_watcher)
 
         self.is_continuous_clustermap_ani.value = False
         self.feature_colormap_ani.options = config.categorical_colormap_dict
@@ -2196,21 +2210,35 @@ class StrainVisApp:
 
         # Unwatch watchers (if it's not the first time that this function is called)
         if self.clicked_button_display_APSS:
-            self.network_threshold_select.param.unwatch(self.threshold_select_watcher)
-            self.network_threshold_input.param.unwatch(self.threshold_input_watcher)
-            self.highlight_sample_input.param.unwatch(self.highlight_sample_watcher)
-            self.network_threshold_input.value = config.APSS_connections_threshold_default
+            if not isinstance(self.threshold_select_watcher, str):
+                self.network_threshold_select.param.unwatch(self.threshold_select_watcher)
+            if not isinstance(self.threshold_input_watcher, str):
+                self.network_threshold_input.param.unwatch(self.threshold_input_watcher)
+            if not isinstance(self.highlight_sample_watcher, str):
+                self.highlight_sample_input.param.unwatch(self.highlight_sample_watcher)
+            if not isinstance(self.APSS_connections_threshold_default, str):
+                self.network_threshold_input.value = config.APSS_connections_threshold_default
             if self.is_metadata:
-                self.is_continuous_network.param.unwatch(self.continuous_network_watcher)
-                self.nodes_colormap.param.unwatch(self.colormap_watcher)
-                self.custom_colormap_input.param.unwatch(self.custom_colormap_watcher)
-                self.nodes_color_by.param.unwatch(self.nodes_colorby_watcher)
-                self.nodes_highlight_by.param.unwatch(self.nodes_highlight_by_watcher)
-                self.feature_colormap.param.unwatch(self.feature_colormap_watcher)
-                self.custom_colormap_input_clustermap.param.unwatch(self.custom_colormap_clustermap_watcher)
-                self.color_by_feature.param.unwatch(self.color_by_feature_clustermap_watcher)
-                self.is_continuous_clustermap.param.unwatch(self.continuous_clustermap_watcher)
-                self.jitter_feature_select.param.unwatch(self.jitter_feature_watcher)
+                if not isinstance(self.continuous_network_watcher, str):
+                    self.is_continuous_network.param.unwatch(self.continuous_network_watcher)
+                if not isinstance(self.colormap_watcher, str):
+                    self.nodes_colormap.param.unwatch(self.colormap_watcher)
+                if not isinstance(self.custom_colormap_watcher, str):
+                    self.custom_colormap_input.param.unwatch(self.custom_colormap_watcher)
+                if not isinstance(self.nodes_colorby_watcher, str):
+                    self.nodes_color_by.param.unwatch(self.nodes_colorby_watcher)
+                if not isinstance(self.nodes_highlight_by_watcher, str):
+                    self.nodes_highlight_by.param.unwatch(self.nodes_highlight_by_watcher)
+                if not isinstance(self.feature_colormap_watcher, str):
+                    self.feature_colormap.param.unwatch(self.feature_colormap_watcher)
+                if not isinstance(self.custom_colormap_clustermap_watcher, str):
+                    self.custom_colormap_input_clustermap.param.unwatch(self.custom_colormap_clustermap_watcher)
+                if not isinstance(self.color_by_feature_clustermap_watcher, str):
+                    self.color_by_feature.param.unwatch(self.color_by_feature_clustermap_watcher)
+                if not isinstance(self.continuous_clustermap_watcher, str):
+                    self.is_continuous_clustermap.param.unwatch(self.continuous_clustermap_watcher)
+                if not isinstance(self.jitter_feature_watcher, str):
+                    self.jitter_feature_select.param.unwatch(self.jitter_feature_watcher)
         self.clicked_button_display_APSS = 1
 
         self.is_continuous_network.value = False
@@ -3998,6 +4026,7 @@ class StrainVisApp:
             self.threshold_select_ani_watcher = self.network_threshold_select_ani.param.watch(partial(
                 self.changed_threshold_select_ani, mean_ANI, mean_std, mean_2_std, mean_only, mean_std_only), 'value',
                 onlychanged=True)
+            self.is_defined_threshold_select_ani_watcher = 1
             self.threshold_input_ani_watcher = self.network_threshold_input_ani.param.watch(self.changed_threshold_input_ani,
                                                                                             'value', onlychanged=True)
             self.highlight_sample_ani_watcher = self.highlight_sample_input_ani.param.watch(self.change_highlighted_sample_ani,
