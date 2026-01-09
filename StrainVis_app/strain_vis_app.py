@@ -2216,8 +2216,7 @@ class StrainVisApp:
                 self.network_threshold_input.param.unwatch(self.threshold_input_watcher)
             if not isinstance(self.highlight_sample_watcher, str):
                 self.highlight_sample_input.param.unwatch(self.highlight_sample_watcher)
-            if not isinstance(self.APSS_connections_threshold_default, str):
-                self.network_threshold_input.value = config.APSS_connections_threshold_default
+            self.network_threshold_input.value = config.APSS_connections_threshold_default
             if self.is_metadata:
                 if not isinstance(self.continuous_network_watcher, str):
                     self.is_continuous_network.param.unwatch(self.continuous_network_watcher)
