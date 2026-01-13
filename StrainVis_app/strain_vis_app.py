@@ -288,6 +288,7 @@ class StrainVisApp:
         self.sorted_selected_genomes_subset_ani = []
         self.selected_subset_species_num = 0
         self.species_num_at_sampling_size = 0
+        self.species_num_in_subset_syntracker = 0
         self.species_num_in_subset_ani = 0
         self.ref_genome = ""
         self.sampling_size = ""
@@ -1502,6 +1503,7 @@ class StrainVisApp:
         self.sorted_selected_genomes_subset_ani = []
         self.selected_subset_species_num = 0
         self.species_num_at_sampling_size = 0
+        self.species_num_in_subset_syntracker = 0
         self.species_num_in_subset_ani = 0
         self.single_multi_genome_tabs.clear()
         self.main_single_column.clear()
@@ -5542,68 +5544,78 @@ class StrainVisApp:
         # Get the score-per-region table for the selected genomes only
         self.score_per_region_genomes_subset_df = dm.return_genomes_subset_table(self.score_per_region_all_genomes_df,
                                                                                  self.selected_genomes_subset)
+        # Get the number of genomes from the selected subset that actually appear in the SynTracker file
+        presented_genomes_list = self.score_per_region_genomes_subset_df['Ref_genome'].unique()
+        self.species_num_in_subset_syntracker = len(presented_genomes_list)
+        print("\ncreate_multi_genomes_column_syntracker_mode: Number of available species: " +
+              str(self.species_num_in_subset_syntracker))
 
-        # Get the number of selected species
-        self.selected_subset_species_num = len(self.selected_genomes_subset)
-
-        # Create the df for plot presenting the number of pairs vs. subsampled regions
-        self.pairs_num_per_sampling_size_multi_genomes_df = \
-            dm.create_pairs_num_per_sampling_size(self.score_per_region_genomes_subset_df)
-
-        # If the number of species with 40 sampled regions is smaller than the selected requested of species,
-        # present also the 'All regions' bar.
-        # If not, do not present this bar (and remove this option from the slider)
-        species_at_40 = self.pairs_num_per_sampling_size_multi_genomes_df['Number_of_species'].iloc[1]
-        if species_at_40 == self.selected_subset_species_num:
-            self.sample_sizes_slider_multi.options = config.sampling_sizes_wo_all
-            self.sample_sizes_slider_multi.value = config.sampling_sizes_wo_all[0]
-            is_all_regions = 0
+        # No synteny data for the selected genomes subset
+        if self.species_num_in_subset_syntracker == 0:
+            text = "None of the species in the selected subset appears in the SynTracker input file."
+            self.synteny_multi_initial_plots_column.append(pn.pane.Markdown(text, styles={'font-size': "18px",
+                                                                                          'color': config.title_red_color,
+                                                                                          'margin': "0"}))
+        # At least one selected species appear in the SynTracker file
         else:
-            self.sample_sizes_slider_multi.options = config.sampling_sizes
-            self.sample_sizes_slider_multi.value = config.sampling_sizes[0]
-            is_all_regions = 1
+            # Create the df for plot presenting the number of pairs vs. subsampled regions
+            self.pairs_num_per_sampling_size_multi_genomes_df = \
+                dm.create_pairs_num_per_sampling_size(self.score_per_region_genomes_subset_df)
 
-        # Create the number of pairs vs. subsampled regions bar plot
-        pairs_vs_sampling_size_bar_plot = pn.bind(pm.plot_pairs_vs_sampling_size_bar,
-                                                  df=self.pairs_num_per_sampling_size_multi_genomes_df,
-                                                  sampling_size=self.sample_sizes_slider_multi,
-                                                  is_all_regions=is_all_regions)
-        pairs_bar_plot_pane = pn.pane.HoloViews(pairs_vs_sampling_size_bar_plot, width=530, sizing_mode="fixed")
+            # If the number of species with 40 sampled regions is smaller than the selected requested of species,
+            # present also the 'All regions' bar.
+            # If not, do not present this bar (and remove this option from the slider)
+            species_at_40 = self.pairs_num_per_sampling_size_multi_genomes_df['Number_of_species'].iloc[1]
+            if species_at_40 == self.species_num_in_subset_syntracker:
+                self.sample_sizes_slider_multi.options = config.sampling_sizes_wo_all
+                self.sample_sizes_slider_multi.value = config.sampling_sizes_wo_all[0]
+                is_all_regions = 0
+            else:
+                self.sample_sizes_slider_multi.options = config.sampling_sizes
+                self.sample_sizes_slider_multi.value = config.sampling_sizes[0]
+                is_all_regions = 1
 
-        # Create a markdown for the pairs lost percent (binded to the slider)
-        binded_text = pn.bind(widgets.create_pairs_lost_text, self.pairs_num_per_sampling_size_multi_genomes_df,
-                              self.sample_sizes_slider_multi)
+            # Create the number of pairs vs. subsampled regions bar plot
+            pairs_vs_sampling_size_bar_plot = pn.bind(pm.plot_pairs_vs_sampling_size_bar,
+                                                      df=self.pairs_num_per_sampling_size_multi_genomes_df,
+                                                      sampling_size=self.sample_sizes_slider_multi,
+                                                      is_all_regions=is_all_regions)
+            pairs_bar_plot_pane = pn.pane.HoloViews(pairs_vs_sampling_size_bar_plot, width=530, sizing_mode="fixed")
 
-        pairs_plot_column = pn.Column(pn.pane.Markdown(refs=binded_text, align='center'), pairs_bar_plot_pane,
-                                      styles={'background-color': "white"})
+            # Create a markdown for the pairs lost percent (binded to the slider)
+            binded_text = pn.bind(widgets.create_pairs_lost_text, self.pairs_num_per_sampling_size_multi_genomes_df,
+                                  self.sample_sizes_slider_multi)
 
-        # Create the number of species vs. subsampled regions bar plot
-        species_vs_sampling_size_bar_plot = pn.bind(pm.plot_species_vs_sampling_size_bar,
-                                                    df=self.pairs_num_per_sampling_size_multi_genomes_df,
-                                                    sampling_size=self.sample_sizes_slider_multi,
-                                                    is_all_regions=is_all_regions)
-        species_bar_plot_pane = pn.pane.HoloViews(species_vs_sampling_size_bar_plot, width=530, sizing_mode="fixed")
+            pairs_plot_column = pn.Column(pn.pane.Markdown(refs=binded_text, align='center'), pairs_bar_plot_pane,
+                                          styles={'background-color': "white"})
 
-        # Create a markdown for the pairs lost percent (binded to the slider)
-        binded_text = pn.bind(widgets.create_species_num_text, self.pairs_num_per_sampling_size_multi_genomes_df,
-                              self.sample_sizes_slider_multi)
+            # Create the number of species vs. subsampled regions bar plot
+            species_vs_sampling_size_bar_plot = pn.bind(pm.plot_species_vs_sampling_size_bar,
+                                                        df=self.pairs_num_per_sampling_size_multi_genomes_df,
+                                                        sampling_size=self.sample_sizes_slider_multi,
+                                                        is_all_regions=is_all_regions)
+            species_bar_plot_pane = pn.pane.HoloViews(species_vs_sampling_size_bar_plot, width=530, sizing_mode="fixed")
 
-        species_plot_column = pn.Column(pn.pane.Markdown(refs=binded_text, align='center'), species_bar_plot_pane,
-                                        styles={'background-color': "white"})
+            # Create a markdown for the pairs lost percent (binded to the slider)
+            binded_text = pn.bind(widgets.create_species_num_text, self.pairs_num_per_sampling_size_multi_genomes_df,
+                                  self.sample_sizes_slider_multi)
 
-        plots_row = pn.Row(pairs_plot_column, pn.Spacer(width=20), species_plot_column)
-        slider_row = pn.Row(self.sample_sizes_slider_multi, align='center')
-        button_row = pn.Row(self.show_box_plot_multi_button,  align='center')
+            species_plot_column = pn.Column(pn.pane.Markdown(refs=binded_text, align='center'), species_bar_plot_pane,
+                                            styles={'background-color': "white"})
 
-        plots_column = pn.Column(
-            plots_row,
-            pn.Spacer(height=20),
-            slider_row,
-            button_row,
-            self.plots_by_size_multi_column,
-        )
+            plots_row = pn.Row(pairs_plot_column, pn.Spacer(width=20), species_plot_column)
+            slider_row = pn.Row(self.sample_sizes_slider_multi, align='center')
+            button_row = pn.Row(self.show_box_plot_multi_button,  align='center')
 
-        self.synteny_multi_initial_plots_column.append(plots_column)
+            plots_column = pn.Column(
+                plots_row,
+                pn.Spacer(height=20),
+                slider_row,
+                button_row,
+                self.plots_by_size_multi_column,
+            )
+
+            self.synteny_multi_initial_plots_column.append(plots_column)
 
     def create_multi_genomes_plots_by_APSS(self, event):
 
