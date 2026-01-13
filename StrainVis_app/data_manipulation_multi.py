@@ -76,7 +76,29 @@ def count_species_num(row, df):
     return species_num
 
 
-def create_sorted_by_pairs_genomes_list(score_per_region_all_genomes_df):
+def filter_genomes_ani(ani_scores_all_genomes_df):
+
+    pairs_num_df = ani_scores_all_genomes_df[['Ref_genome', 'ANI']].groupby('Ref_genome').count().\
+        sort_values('ANI', ascending=False).reset_index()
+    pairs_num_df.columns.values[1] = "Number_of_pairs"
+
+    print("\nfilter_genomes_ani:")
+    print(pairs_num_df)
+
+    # Leave only genomes, which have at lease 10 pairwise comparisons
+    pairs_num_filtered_df = pairs_num_df[pairs_num_df["Number_of_pairs"] >= 10]
+    print("\nAfter filteration:")
+    print(pairs_num_filtered_df)
+
+    filtered_genomes_list = list(pairs_num_filtered_df['Ref_genome'])
+
+    ani_scores_filtered_genomes_df = ani_scores_all_genomes_df[
+        ani_scores_all_genomes_df['Ref_genome'].isin(filtered_genomes_list)]
+
+    return ani_scores_filtered_genomes_df, filtered_genomes_list
+
+
+def create_sorted_by_pairs_genomes_list_syntracker(score_per_region_all_genomes_df):
     regions_num_per_pair_df = score_per_region_all_genomes_df[['Ref_genome', 'Sample1', 'Sample2', 'Synteny_score']]. \
         groupby(['Ref_genome', 'Sample1', 'Sample2']).count().reset_index(). \
         rename(columns={"Synteny_score": "Num_of_compared_regions"})
@@ -87,7 +109,7 @@ def create_sorted_by_pairs_genomes_list(score_per_region_all_genomes_df):
         sort_values('40', ascending=False).reset_index()
     pairs_num_at_40_regions_df.columns.values[1] = "Number_of_pairs"
 
-    print("\ncreate_sorted_by_pairs_genomes_list:")
+    print("\ncreate_sorted_by_pairs_genomes_list_syntracker:")
     print(pairs_num_at_40_regions_df)
 
     genomes_list_by_pairs_num = list(pairs_num_at_40_regions_df['Ref_genome'])

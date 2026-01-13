@@ -274,9 +274,12 @@ class StrainVisApp:
         self.groups_per_feature_dict = dict()
         self.metadata_features_list = []
         self.number_of_genomes = 0
+        self.number_of_genomes_syntracker = 0
         self.number_of_genomes_ani = 0
         self.ref_genomes_list = []
         self.ref_genomes_list_by_pairs_num = []
+        self.ref_genomes_list_syntracker = []
+        self.ref_genomes_list_by_pairs_num_syntracker = []
         self.ref_genomes_list_ani = []
         self.ref_genomes_list_by_pairs_num_ani = []
         self.annotation_per_ref_genome_dict = dict()
@@ -1489,6 +1492,8 @@ class StrainVisApp:
     def start_process(self):
         self.ref_genomes_list = []
         self.ref_genomes_list_by_pairs_num = []
+        self.ref_genomes_list_syntracker = []
+        self.ref_genomes_list_by_pairs_num_syntracker = []
         self.ref_genomes_list_ani = []
         self.ref_genomes_list_by_pairs_num_ani = []
         self.annotation_per_ref_genome_dict = {}
@@ -1546,10 +1551,17 @@ class StrainVisApp:
                 self.score_per_region_all_genomes_df['Ref_genome'] = 'Reference Genome'
 
             # Extract the number of genomes from the input file
-            self.number_of_genomes = self.score_per_region_all_genomes_df.groupby(['Ref_genome']).ngroups
-            self.ref_genomes_list = list(self.score_per_region_all_genomes_df.groupby(['Ref_genome']).groups)
-            print("\nNumber of species in SynTracker file: " + str(self.number_of_genomes))
-            #print("\Species list: " + str(self.ref_genomes_list))
+            self.number_of_genomes_syntracker = self.score_per_region_all_genomes_df.groupby(['Ref_genome']).ngroups
+            print("\nNumber of species in SynTracker file: " + str(self.number_of_genomes_syntracker))
+
+            # Get the genomes list, sorted by name
+            self.ref_genomes_list_syntracker = list(self.score_per_region_all_genomes_df.groupby(['Ref_genome']).groups)
+            #print("\Species list in SynTracker file: " + str(self.ref_genomes_list_syntracker))
+
+            # Calculate the number of pairs at 40 regions for all the genomes and create a sorted list of
+            # genomes
+            self.ref_genomes_list_by_pairs_num_syntracker = \
+                dm.create_sorted_by_pairs_genomes_list_syntracker(self.score_per_region_all_genomes_df)
 
         # Read the ANI input
         if self.input_mode == "ANI" or self.input_mode == "both":
@@ -1557,18 +1569,18 @@ class StrainVisApp:
             # Read the file directly from the path
             before = time.time()
             if self.is_ani_file_path == 1:
-                self.ani_scores_all_genomes_df = pd.read_table(self.ANI_text_input.value)
+                ani_scores_all_genomes_df = pd.read_table(self.ANI_text_input.value)
 
             # Read the content of the uploaded file
             else:
-                self.ani_scores_all_genomes_df = pd.read_table(io.BytesIO(self.ANI_input_file.value))
+                ani_scores_all_genomes_df = pd.read_table(io.BytesIO(self.ANI_input_file.value))
 
             after = time.time()
             duration = after - before
             print("\nReading ANI input file took " + str(duration) + " seconds.\n")
 
             # Verify that the file contains 4 columns
-            if self.ani_scores_all_genomes_df.shape[1] != 4:
+            if ani_scores_all_genomes_df.shape[1] != 4:
                 error = "The format of the uploaded ANI file is wrong - " \
                         "please verify that your file is tab-delimited and contains the following columns: " \
                         "'Ref_genome', 'Sample1', 'Sample2', 'ANI'."
@@ -1576,27 +1588,37 @@ class StrainVisApp:
 
             # To make sure that the column names are unified, replace the original names
             new_column_names = config.ANI_col_names
-            self.ani_scores_all_genomes_df.columns = new_column_names
+            ani_scores_all_genomes_df.columns = new_column_names
 
-            # Mode is ANI only -> extract the species list from the ANI file
-            if self.input_mode == "ANI":
+            # Filter out species with less than 10 pairwise comparisons and return the sorted-by-pairs-num genomes list
+            self.ani_scores_all_genomes_df, self.ref_genomes_list_by_pairs_num_ani = \
+                dm.filter_genomes_ani(ani_scores_all_genomes_df)
 
-                # Extract the number of genomes and genomes list from the input file and save them in the normal
-                # variables
-                self.number_of_genomes = self.ani_scores_all_genomes_df.groupby(['Ref_genome']).ngroups
-                self.ref_genomes_list = list(self.ani_scores_all_genomes_df.groupby(['Ref_genome']).groups)
-                self.ref_genomes_list_ani = self.ref_genomes_list
-                print("\nNumber of species in ANI file: " + str(self.number_of_genomes))
-                # print("\Species list: " + str(self.ref_genomes_list))
+            # Sort the genomes list alphabetically
+            self.ref_genomes_list_ani = sorted(self.ref_genomes_list_by_pairs_num_ani)
 
-            # Mode is 'both' - save the genomes list in a different variable
-            else:
-                # Extract the number of genomes and genomes list from the ANI input file and save them in the
-                # ANI-specific variables
-                self.number_of_genomes_ani = self.ani_scores_all_genomes_df.groupby(['Ref_genome']).ngroups
-                self.ref_genomes_list_ani = list(self.ani_scores_all_genomes_df.groupby(['Ref_genome']).groups)
-                print("\nNumber of species in ANI file: " + str(self.number_of_genomes_ani))
-                #print("Species list from ANI file: " + str(self.ref_genomes_list_ani))
+            # Get the number of genomes
+            self.number_of_genomes_ani = len(self.ref_genomes_list_ani)
+            print("\nNumber of species in ANI file: " + str(self.number_of_genomes_ani))
+            #print("\Species list in ANI file: " + str(self.ref_genomes_list_ani))
+
+        # Set the genomes list according to the input mode
+        if self.input_mode == "SynTracker":
+            self.ref_genomes_list = self.ref_genomes_list_syntracker
+            self.ref_genomes_list_by_pairs_num = self.ref_genomes_list_by_pairs_num_syntracker
+            self.number_of_genomes = self.number_of_genomes_syntracker
+        elif self.input_mode == "ANI":
+            self.ref_genomes_list = self.ref_genomes_list_ani
+            self.ref_genomes_list_by_pairs_num = self.ref_genomes_list_by_pairs_num_ani
+            self.number_of_genomes = self.number_of_genomes_ani
+        else:
+            # Unite the two genome lists (they are not necessarily identical)
+            self.ref_genomes_list = sorted(set(self.ref_genomes_list_syntracker) | set(self.ref_genomes_list_ani))
+            self.ref_genomes_list_by_pairs_num = list(dict.fromkeys(self.ref_genomes_list_by_pairs_num_syntracker +
+                                                      self.ref_genomes_list_by_pairs_num_ani))
+            self.number_of_genomes = len(self.ref_genomes_list)
+            print("\nNumber of total species from both files: " + str(self.number_of_genomes))
+            #print("Total species list from both files: " + str(self.ref_genomes_list))
 
         # Initialize the annotation dict
         for ref in self.ref_genomes_list:
@@ -1657,23 +1679,6 @@ class StrainVisApp:
 
             # Input file contains more than one ref-genome -> display two tabs, for single- and multi-genome views
             else:
-                if self.input_mode == "SynTracker":
-                    # Calculate the number of pairs at 40 regions for all the genomes and create a sorted list of
-                    # genomes
-                    self.ref_genomes_list_by_pairs_num = \
-                        dm.create_sorted_by_pairs_genomes_list(self.score_per_region_all_genomes_df)
-                elif self.input_mode == "ANI":
-                    # Return a sorted list of genomes according to the number of pairs
-                    self.ref_genomes_list_by_pairs_num = \
-                        dm.create_sorted_by_pairs_genomes_list_ani(self.ani_scores_all_genomes_df)
-                # Input mode is 'both'
-                else:
-                    # Return two sorted lists of ref-genomes, one for SynTracker and one for ANI
-                    self.ref_genomes_list_by_pairs_num = \
-                        dm.create_sorted_by_pairs_genomes_list(self.score_per_region_all_genomes_df)
-                    self.ref_genomes_list_by_pairs_num_ani = \
-                        dm.create_sorted_by_pairs_genomes_list_ani(self.ani_scores_all_genomes_df)
-
                 self.ref_genome = self.ref_genomes_list_by_pairs_num[0]
                 print("\nReference genome = " + self.ref_genome)
                 #pn.state.location.sync(self.genomes_select, {'value': 'ref_genome'})
@@ -1879,95 +1884,108 @@ class StrainVisApp:
         self.synteny_ani_single_tabs.append(('Combined', self.combined_single_plots_column))
 
     def create_single_genome_column_syntracker_mode(self):
-        before = time.time()
 
-        synteny_per_pos_message = "Preparing the plot - please wait..."
-        self.synteny_per_pos_plot_column.append(pn.pane.Markdown(synteny_per_pos_message, styles={'font-size': "20px",
+        # Verify that the current ref-genome is found in the SynTracker input
+        if self.ref_genome in self.ref_genomes_list_syntracker:
+            before = time.time()
+
+            synteny_per_pos_message = "Preparing the plot - please wait..."
+            self.synteny_per_pos_plot_column.append(pn.pane.Markdown(synteny_per_pos_message, styles={'font-size': "20px",
                                                                                                   'margin': "0"}))
 
-        # Get the score-per-region table for the selected genome only
-        self.score_per_region_selected_genome_df = ds.return_selected_genome_table(self.score_per_region_all_genomes_df,
-                                                                                   self.ref_genome)
+            # Get the score-per-region table for the selected genome only
+            self.score_per_region_selected_genome_df = ds.return_selected_genome_table(self.score_per_region_all_genomes_df,
+                                                                                       self.ref_genome)
 
-        # Run the task of creating the initial synteny_per_pos plots tab (without the plot itself) in another thread.
-        thread = threading.Thread(target=self.create_initial_synteny_per_pos_plot_tab)
-        thread.start()  # Start the thread
+            # Run the task of creating the initial synteny_per_pos plots tab (without the plot itself) in another thread.
+            thread = threading.Thread(target=self.create_initial_synteny_per_pos_plot_tab)
+            thread.start()  # Start the thread
 
-        # Initialize the dictionary that holds the calculated sampleing sizes
-        for size in config.sampling_sizes:
-            self.APSS_by_genome_all_sizes_dict[size] = pd.DataFrame()
-            self.calculated_APSS_genome_size_dict[size] = 0
+            # Initialize the dictionary that holds the calculated sampleing sizes
+            for size in config.sampling_sizes:
+                self.APSS_by_genome_all_sizes_dict[size] = pd.DataFrame()
+                self.calculated_APSS_genome_size_dict[size] = 0
 
-        # Create the df for plot presenting the number of pairs vs. subsampled regions
-        pairs_num_per_sampling_size_selected_genome_df = \
-            ds.create_pairs_num_per_sampling_size(self.score_per_region_selected_genome_df)
+            # Create the df for plot presenting the number of pairs vs. subsampled regions
+            pairs_num_per_sampling_size_selected_genome_df = \
+                ds.create_pairs_num_per_sampling_size(self.score_per_region_selected_genome_df)
 
-        # If the number of pairs with 40 sampled regions is smaller than 100, present also the 'All regions' bar
-        # If not (or if it is equal to the total number of pairs), do not present this bar
-        # (and remove this option from the slider)
-        pairs_at_40 = pairs_num_per_sampling_size_selected_genome_df['Number_of_pairs'].iloc[1]
-        self.total_pairs_genome = pairs_num_per_sampling_size_selected_genome_df['Number_of_pairs'].iloc[0]
-        if pairs_at_40 >= config.min_pairs_for_all_regions or pairs_at_40 == self.total_pairs_genome:
-            self.sample_sizes_slider.options = config.sampling_sizes_wo_all
-            self.sample_sizes_slider.value = config.sampling_sizes_wo_all[0]
-            is_all_regions = 0
+            # If the number of pairs with 40 sampled regions is smaller than 100, present also the 'All regions' bar
+            # If not (or if it is equal to the total number of pairs), do not present this bar
+            # (and remove this option from the slider)
+            pairs_at_40 = pairs_num_per_sampling_size_selected_genome_df['Number_of_pairs'].iloc[1]
+            self.total_pairs_genome = pairs_num_per_sampling_size_selected_genome_df['Number_of_pairs'].iloc[0]
+            if pairs_at_40 >= config.min_pairs_for_all_regions or pairs_at_40 == self.total_pairs_genome:
+                self.sample_sizes_slider.options = config.sampling_sizes_wo_all
+                self.sample_sizes_slider.value = config.sampling_sizes_wo_all[0]
+                is_all_regions = 0
+            else:
+                is_all_regions = 1
+                self.sample_sizes_slider.options = config.sampling_sizes
+                self.sample_sizes_slider.value = config.sampling_sizes[0]
+
+            # Create the number of pairs vs. subsampled regions bar plot
+            pairs_vs_sampling_size_bar_plot = pn.bind(ps.plot_pairs_vs_sampling_size_bar,
+                                                      df=pairs_num_per_sampling_size_selected_genome_df,
+                                                      sampling_size=self.sample_sizes_slider,
+                                                      is_all_regions=is_all_regions)
+            pairs_bar_plot_pane = pn.pane.HoloViews(pairs_vs_sampling_size_bar_plot, width=530, sizing_mode="fixed")
+
+            # Create a markdown for the pairs lost percent (binded to the slider)
+            binded_text = pn.bind(widgets.create_pairs_lost_text, pairs_num_per_sampling_size_selected_genome_df,
+                                  self.sample_sizes_slider)
+
+            pairs_plot_column = pn.Column(pn.pane.Markdown(refs=binded_text, align='center'), pairs_bar_plot_pane,
+                                          styles={'background-color': "white"})
+
+            # Create the number of samples vs. subsampled regions bar plot
+            samples_vs_sampling_size_bar_plot = pn.bind(ps.plot_samples_vs_sampling_size_bar,
+                                                        df=pairs_num_per_sampling_size_selected_genome_df,
+                                                        sampling_size=self.sample_sizes_slider,
+                                                        is_all_regions=is_all_regions)
+            samples_bar_plot_pane = pn.pane.HoloViews(samples_vs_sampling_size_bar_plot, width=530, sizing_mode="fixed")
+
+            # Create a markdown for the number of samples (binded to the slider)
+            binded_text = pn.bind(widgets.create_samples_num_text, pairs_num_per_sampling_size_selected_genome_df,
+                                  self.sample_sizes_slider)
+
+            samples_plot_column = pn.Column(pn.pane.Markdown(refs=binded_text, align='center'), samples_bar_plot_pane,
+                                            styles={'background-color': "white"})
+
+            plots_row = pn.Row(pairs_plot_column, pn.Spacer(width=20), samples_plot_column)
+            slider_row = pn.Row(self.sample_sizes_slider, align='center')
+            button_row = pn.Row(self.show_single_plots_button, align='center')
+
+            initial_plots_column = pn.Column(
+                plots_row,
+                pn.Spacer(height=20),
+                slider_row,
+                button_row,
+                self.plots_by_size_single_column,
+            )
+            self.APSS_analyses_single_column.append(initial_plots_column)
+
+            self.synteny_single_tabs.clear()
+            self.synteny_single_tabs.append(('APSS-based analyses', self.APSS_analyses_single_column))
+            self.synteny_single_tabs.append(('Synteny per position', self.synteny_per_pos_plot_column))
+
+            self.synteny_single_initial_plots_column.append(self.synteny_single_tabs)
+
+            self.synteny_single_tabs.param.watch(self.changed_single_tabs, 'active')
+
+            after = time.time()
+            duration = after - before
+            print("\ncreate_single_genome_column took " + str(duration) + " seconds.\n")
+
+        # The ref-genome is not found in the SynTracker file - display a message
         else:
-            is_all_regions = 1
-            self.sample_sizes_slider.options = config.sampling_sizes
-            self.sample_sizes_slider.value = config.sampling_sizes[0]
-
-        # Create the number of pairs vs. subsampled regions bar plot
-        pairs_vs_sampling_size_bar_plot = pn.bind(ps.plot_pairs_vs_sampling_size_bar,
-                                                  df=pairs_num_per_sampling_size_selected_genome_df,
-                                                  sampling_size=self.sample_sizes_slider,
-                                                  is_all_regions=is_all_regions)
-        pairs_bar_plot_pane = pn.pane.HoloViews(pairs_vs_sampling_size_bar_plot, width=530, sizing_mode="fixed")
-
-        # Create a markdown for the pairs lost percent (binded to the slider)
-        binded_text = pn.bind(widgets.create_pairs_lost_text, pairs_num_per_sampling_size_selected_genome_df,
-                              self.sample_sizes_slider)
-
-        pairs_plot_column = pn.Column(pn.pane.Markdown(refs=binded_text, align='center'), pairs_bar_plot_pane,
-                                      styles={'background-color': "white"})
-
-        # Create the number of samples vs. subsampled regions bar plot
-        samples_vs_sampling_size_bar_plot = pn.bind(ps.plot_samples_vs_sampling_size_bar,
-                                                    df=pairs_num_per_sampling_size_selected_genome_df,
-                                                    sampling_size=self.sample_sizes_slider,
-                                                    is_all_regions=is_all_regions)
-        samples_bar_plot_pane = pn.pane.HoloViews(samples_vs_sampling_size_bar_plot, width=530, sizing_mode="fixed")
-
-        # Create a markdown for the number of samples (binded to the slider)
-        binded_text = pn.bind(widgets.create_samples_num_text, pairs_num_per_sampling_size_selected_genome_df,
-                              self.sample_sizes_slider)
-
-        samples_plot_column = pn.Column(pn.pane.Markdown(refs=binded_text, align='center'), samples_bar_plot_pane,
-                                        styles={'background-color': "white"})
-
-        plots_row = pn.Row(pairs_plot_column, pn.Spacer(width=20), samples_plot_column)
-        slider_row = pn.Row(self.sample_sizes_slider, align='center')
-        button_row = pn.Row(self.show_single_plots_button, align='center')
-
-        initial_plots_column = pn.Column(
-            plots_row,
-            pn.Spacer(height=20),
-            slider_row,
-            button_row,
-            self.plots_by_size_single_column,
-        )
-        self.APSS_analyses_single_column.append(initial_plots_column)
-
-        self.synteny_single_tabs.clear()
-        self.synteny_single_tabs.append(('APSS-based analyses', self.APSS_analyses_single_column))
-        self.synteny_single_tabs.append(('Synteny per position', self.synteny_per_pos_plot_column))
-
-        self.synteny_single_initial_plots_column.append(self.synteny_single_tabs)
-
-        self.synteny_single_tabs.param.watch(self.changed_single_tabs, 'active')
-
-        after = time.time()
-        duration = after - before
-        print("\ncreate_single_genome_column took " + str(duration) + " seconds.\n")
+            message = "Species " + self.ref_genome + " is not found in the SynTracker input file."
+            self.synteny_single_initial_plots_column.clear()
+            self.synteny_single_initial_plots_column.append(pn.pane.Markdown(message,
+                                                                             styles={'font-size': "20px",
+                                                                                     'color': config.title_red_color,
+                                                                                     'padding': "20px",
+                                                                                     }))
 
     def create_single_genome_column_ANI_mode(self):
         self.jitter_card_ani.clear()
@@ -2067,6 +2085,14 @@ class StrainVisApp:
         # Verify that the current ref-genome is found in the ANI input. If not, display an error message
         if self.ref_genome not in self.ref_genomes_list_ani:
             message = "Species " + self.ref_genome + " is not found in the ANI input file - " \
+                                                     "cannot display the combined plot."
+            self.combined_single_plots_column.append(pn.pane.Markdown(message,
+                                                                      styles={'font-size': "20px",
+                                                                              'color': config.title_red_color,
+                                                                              }))
+        # Verify that the current ref-genome is found in the SynTracker input. If not, display an error message
+        elif self.ref_genome not in self.ref_genomes_list_syntracker:
+            message = "Species " + self.ref_genome + " is not found in the SynTracker input file - " \
                                                      "cannot display the combined plot."
             self.combined_single_plots_column.append(pn.pane.Markdown(message,
                                                                       styles={'font-size': "20px",
