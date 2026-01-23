@@ -14,7 +14,7 @@ import threading
 from functools import partial
 import networkx as nx
 import random
-from scipy.stats import ranksums, spearmanr
+from scipy.stats import mannwhitneyu, ranksums, spearmanr
 from statsmodels.stats.multitest import multipletests
 import seaborn as sns
 import StrainVis_app.config as config
@@ -81,17 +81,25 @@ def generate_rand_pos():
     return rand
 
 
-def return_p_value(data1, data2):
+def return_p_value_ranksums(data1, data2):
     stat, p_val = ranksums(data1, data2)
-    return p_val
+    return stat, p_val
+
+
+def return_p_value_mannwhitneyu(data1, data2):
+    u, p_val = mannwhitneyu(data1, data2)
+    return u, p_val
 
 
 def return_significance(row):
-    if str(row['P_value']) != "nan":
-        if row['P_value'] < 0.000005:
+    if str(row['P_value']) != "NaN":
+        # e-10
+        if row['P_value'] < 0.0000000005:
             return "***"
-        elif row['P_value'] < 0.0005:
+        # e-5
+        elif row['P_value'] < 0.00005:
             return "**"
+        # e-2
         elif row['P_value'] < 0.05:
             return "*"
         else:
@@ -137,7 +145,8 @@ def set_features_in_range(features, x_min, x_max):
 
 
 def load_genes_from_gff(gff_text):
-    print("\nload_genes_from_gff:")
+    #print("\nload_genes_from_gff:")
+    contigs_list = []
     contigs_dict = dict()
     for line in gff_text.splitlines():
         if line.startswith("#"):
@@ -146,8 +155,13 @@ def load_genes_from_gff(gff_text):
                 m = re.search(r'^##sequence-region\s+(\S+)\s+\d+\s+\d+', line)
                 if m:
                     contig = m.group(1)
+                    contigs_list.append(contig)
                     contigs_dict[contig] = []  # Initialize the new contig's features array
                     #print("Found new contig: " + contig)
+
+            # If found a FASTA section - stop reading the file
+            elif re.search("^##FASTA", line):
+                break
 
             else:
                 continue
@@ -156,26 +170,42 @@ def load_genes_from_gff(gff_text):
         else:
             seqid, source, feature_type, start, end, score, strand, phase, attrs = line.strip().split("\t")
 
-            if feature_type != "gene":
+            # Consider only CDC records
+            #if feature_type != "gene":
+            if feature_type != "CDS":
                 continue
 
-            strand = 1 if strand == "+" else -1
-            label = ""
-            for item in attrs.split(";"):
-                if item.startswith("Name="):
-                    label = item.replace("Name=", "")
-                    wrapped_label = wrap_label(label, width=12)  # Wrap labels to make them narrow and stacked
+            # Verify that the current record belongs to a contig from the list
+            if seqid in contigs_list:
+                is_gene = 0
+                contig = seqid
 
-            contigs_dict[contig].append(
-                GraphicFeature(
-                    start=int(start),
-                    end=int(end),
-                    strand=strand,
-                    color="#66c2a5",
-                    label=wrapped_label,
-                    fontdict={'fontsize': 7}
+                strand = 1 if strand == "+" else -1
+
+                for item in attrs.split(";"):
+                    if item.startswith("ID="):
+                        cds_id = item.replace("ID=", "")
+                    elif item.startswith("gene="):
+                        gene = item.replace("gene=", "")
+                        is_gene = 1
+
+                # If there is a gene name, use it as label. If not, use the CDS ID
+                if is_gene:
+                    label = gene
+                else:
+                    label = cds_id
+                wrapped_label = wrap_label(label, width=14)  # Wrap labels to make them narrow and stacked
+
+                contigs_dict[contig].append(
+                    GraphicFeature(
+                        start=int(start),
+                        end=int(end),
+                        strand=strand,
+                        color="#66c2a5",
+                        label=wrapped_label,
+                        fontdict={'fontsize': 7}
+                    )
                 )
-            )
 
     return contigs_dict
 
@@ -992,10 +1022,11 @@ class StrainVisApp:
         self.save_pvalues_table_path = pn.widgets.TextInput(
             name='Save P-values table as: (if no full path, the file is saved under \'Downloads/\')')
         self.download_pvalues_table_column = pn.Column()
-        self.download_pvalues_button = pn.widgets.Button(name='Download P-values table in csv format', button_type='primary',
-                                                    disabled=pn.bind(change_disabled_state_inverse,
-                                                                     chkbox_state=self.use_metadata_box_plot,
-                                                                     watch=True))
+        self.download_pvalues_button = pn.widgets.Button(name='Download P-values table in tsv format',
+                                                         button_type='primary',
+                                                         disabled=pn.bind(change_disabled_state_inverse,
+                                                                          chkbox_state=self.use_metadata_box_plot,
+                                                                          watch=True))
         self.download_pvalues_button.on_click(self.download_pvalues_table)
         self.download_multi_col = pn.Column
 
@@ -1036,7 +1067,7 @@ class StrainVisApp:
             name='Save P-values table as: (if no full path, the file is saved under \'Downloads/\')')
         self.download_pvalues_table_column_ani = pn.Column()
         self.download_multi_col_ani = pn.Column()
-        self.download_pvalues_button_ani = pn.widgets.Button(name='Download P-values table in csv format',
+        self.download_pvalues_button_ani = pn.widgets.Button(name='Download P-values table in tsv format',
                                                              button_type='primary',
                                                              disabled=pn.bind(change_disabled_state_inverse,
                                                                               chkbox_state=self.use_metadata_box_plot_ani,
@@ -2393,7 +2424,7 @@ class StrainVisApp:
 
         jitter_table_file = "Data_for_dist_plot_" + self.ref_genome + "_" + self.sampling_size + "_regions"
         self.save_jitter_table_path.placeholder = jitter_table_file
-        download_table_button = pn.widgets.Button(name='Download data table in csv format', button_type='primary')
+        download_table_button = pn.widgets.Button(name='Download data table in tsv format', button_type='primary')
         download_table_button.on_click(self.download_jitter_table)
 
         self.download_jitter_table_column = pn.Column(self.save_jitter_table_path,
@@ -2475,7 +2506,7 @@ class StrainVisApp:
 
         jitter_table_file = "Data_for_ANI_dist_plot_" + self.ref_genome
         self.save_jitter_table_path_ani.placeholder = jitter_table_file
-        download_table_button = pn.widgets.Button(name='Download data table in csv format', button_type='primary')
+        download_table_button = pn.widgets.Button(name='Download data table in tsv format', button_type='primary')
         download_table_button.on_click(self.download_jitter_table_ani)
 
         self.download_jitter_table_column_ani = pn.Column(self.save_jitter_table_path_ani,
@@ -2554,8 +2585,13 @@ class StrainVisApp:
 
             # Sample size is enough for P-value calculation
             if len(same_array) >= 1 and len(diff_array) >= 1:
-                p_val = return_p_value(same_array, diff_array)
-                print("\nP-value for " + feature + " comparison = " + str(p_val))
+                before = time.time()
+                u, p_val = return_p_value_mannwhitneyu(same_array, diff_array)
+                effect_size = abs(1 - (2 * u) / (len(same_array) * len(diff_array)))
+                after = time.time()
+                duration = after - before
+                print("\nP-value for " + feature + " comparison = " + str(p_val) + ", Effect size = " + str(effect_size))
+                #print("P-value calculation took " + str(duration) + " seconds.\n")
 
                 # Pvalue is valid and significant
                 if str(p_val) != "nan" and p_val <= 0.05:
@@ -2565,8 +2601,8 @@ class StrainVisApp:
                     y_max = self.df_for_jitter["APSS"].max()
                     ax.text(
                         0.5, y_max * 1.02,  # x = middle of the two boxes, y = above max
-                        f"p <= {p_val: .2e}",  # format p-value in scientific notation
-                        ha="center", va="bottom", fontsize=10
+                        f"p <= {p_val: .1e}\nEffect size = {effect_size: .2}",  # format p-value in scientific notation
+                        ha="center", va="bottom", fontsize=9
                     )
             # Sample size is not enough for P-value calculation
             else:
@@ -2647,8 +2683,13 @@ class StrainVisApp:
 
             # Sample size is enough for P-value calculation
             if len(same_array) >= 1 and len(diff_array) >= 1:
-                p_val = return_p_value(same_array, diff_array)
-                print("\nP-value for " + feature + " comparison = " + str(p_val))
+                before = time.time()
+                u, p_val = return_p_value_mannwhitneyu(same_array, diff_array)
+                effect_size = abs(1 - (2 * u) / (len(same_array) * len(diff_array)))
+                after = time.time()
+                duration = after - before
+                print("\nP-value for " + feature + " comparison = " + str(p_val) + ", Effect size = " + str(effect_size))
+                #print("P-value calculation took " + str(duration) + " seconds.\n")
 
                 # P-value is valid and significant
                 if str(p_val) != "nan" and p_val <= 0.05:
@@ -2657,9 +2698,9 @@ class StrainVisApp:
                     # Place the p-value text between the two boxes, slightly above the max APSS
                     y_max = self.df_for_jitter_ani["ANI"].max()
                     ax.text(
-                        0.5, y_max * 1.001,  # x = middle of the two boxes, y = above max
-                        f"p <= {p_val: .2e}",  # format p-value in scientific notation
-                        ha="center", va="bottom", fontsize=10
+                        0.5, y_max * 1.002,  # x = middle of the two boxes, y = above max
+                        f"p <= {p_val: .1e}\nEffect size = {effect_size: .2}",  # format p-value in scientific notation
+                        ha="center", va="bottom", fontsize=9
                     )
             # Sample size is not enough for P-value calculation
             else:
@@ -2759,7 +2800,7 @@ class StrainVisApp:
         self.download_jitter_column_ani.append(download_floatpanel)
 
     def download_jitter_table(self, event):
-        fformat = "csv"
+        fformat = "tsv"
 
         # Set the directory for saving
         if self.save_jitter_table_path.value == "":
@@ -2776,7 +2817,7 @@ class StrainVisApp:
             if not os.path.isabs(jitter_table_path):
                 jitter_table_path = self.downloads_dir_path + jitter_table_path
 
-        self.df_for_jitter.to_csv(jitter_table_path, index=False)
+        self.df_for_jitter.to_csv(jitter_table_path, sep='\t', index=False)
 
         download_message = "The table is successfully saved under:\n" + jitter_table_path
         markdown = pn.pane.Markdown(download_message, styles={'font-size': "12px", 'color': config.title_red_color})
@@ -2785,7 +2826,7 @@ class StrainVisApp:
         self.download_jitter_table_column.append(download_floatpanel)
 
     def download_jitter_table_ani(self, event):
-        fformat = "csv"
+        fformat = "tsv"
 
         # Set the directory for saving
         if self.save_jitter_table_path_ani.value == "":
@@ -2802,7 +2843,7 @@ class StrainVisApp:
             if not os.path.isabs(jitter_table_path):
                 jitter_table_path = self.downloads_dir_path + jitter_table_path
 
-        self.df_for_jitter_ani.to_csv(jitter_table_path, index=False)
+        self.df_for_jitter_ani.to_csv(jitter_table_path, sep='\t', index=False)
 
         download_message = "The table is successfully saved under:\n" + jitter_table_path
         markdown = pn.pane.Markdown(download_message, styles={'font-size': "12px", 'color': config.title_red_color})
@@ -3669,7 +3710,7 @@ class StrainVisApp:
         self.download_network_column.append(download_floatpanel)
 
     def download_network_table(self, event):
-        fformat = "txt"
+        fformat = "tsv"
 
         # Set the directory for saving
         if self.save_network_table_path.value == "":
@@ -4208,7 +4249,7 @@ class StrainVisApp:
         self.download_network_column_ani.append(download_floatpanel)
 
     def download_network_table_ani(self, event):
-        fformat = "txt"
+        fformat = "tsv"
 
         # Set the directory for saving
         if self.save_network_table_path_ani.value == "":
@@ -4444,7 +4485,7 @@ class StrainVisApp:
             combined_scatter_table_file = "Data_for_ANI_vs_APSS_plot_" + self.ref_genome + "_" + self.sampling_size + \
                                           "_regions"
             self.save_combined_scatter_table_path.placeholder = combined_scatter_table_file
-            download_table_button = pn.widgets.Button(name='Download data table in csv format', button_type='primary')
+            download_table_button = pn.widgets.Button(name='Download data table in tsv format', button_type='primary')
             download_table_button.on_click(self.download_combined_scatter_table)
 
             self.download_combined_scatter_table_column = pn.Column(self.save_combined_scatter_table_path,
@@ -4488,7 +4529,7 @@ class StrainVisApp:
         self.download_combined_scatter_column.append(download_floatpanel)
 
     def download_combined_scatter_table(self, event):
-        fformat = "csv"
+        fformat = "tsv"
 
         # Set the directory for saving
         if self.save_combined_scatter_table_path.value == "":
@@ -4506,7 +4547,7 @@ class StrainVisApp:
             if not os.path.isabs(combined_scatter_table_path):
                 combined_scatter_table_path = self.downloads_dir_path + combined_scatter_table_path
 
-        self.df_for_combined_scatter.to_csv(combined_scatter_table_path, index=False)
+        self.df_for_combined_scatter.to_csv(combined_scatter_table_path, sep='\t', index=False)
 
         download_message = "The table is successfully saved under:\n" + combined_scatter_table_path
         markdown = pn.pane.Markdown(download_message, styles={'font-size': "12px", 'color': config.title_red_color})
@@ -4808,7 +4849,7 @@ class StrainVisApp:
         synteny_per_pos_table = "Data_for_synteny_per_position_plot_" + self.ref_genome + "_" + self.contig_name
         self.save_synteny_per_pos_table_path.placeholder = synteny_per_pos_table
 
-        download_table_button = pn.widgets.Button(name='Download underling data in csv format', button_type='primary')
+        download_table_button = pn.widgets.Button(name='Download underling data in tsv format', button_type='primary')
         download_table_button.on_click(self.download_synteny_per_pos_table)
 
         self.download_synteny_per_pos_table_column = pn.Column(self.save_synteny_per_pos_table_path, pn.Spacer(height=10),
@@ -5085,7 +5126,7 @@ class StrainVisApp:
             self.ax_annotations.tick_params(axis='y', left=False, labelleft=False)
 
             # Set the Y-label
-            self.ax_annotations.set_ylabel("Annotated genes", labelpad=30, fontsize=10)
+            self.ax_annotations.set_ylabel("Annotated genes", labelpad=36, fontsize=10)
 
             # Add global X-label for the entire figure
             fig.supxlabel("Position in reference genome/contig", y=0.04, fontsize=10)
@@ -5404,7 +5445,7 @@ class StrainVisApp:
         self.download_synteny_per_pos_plot_column.append(download_floatpanel)
 
     def download_synteny_per_pos_table(self, event):
-        fformat = "csv"
+        fformat = "tsv"
 
         # Update the placeholder of the filenames adding the positions range
         start_pos = self.start_pos_input.value
@@ -5452,7 +5493,7 @@ class StrainVisApp:
                 self.avg_score_per_pos_contig['Position'] >= int(start_pos)]
             avg_score_per_pos_contig = avg_score_per_pos_contig[avg_score_per_pos_contig['Position'] < int(end_pos)]
 
-        avg_score_per_pos_contig.to_csv(synteny_per_pos_file_path, index=False)
+        avg_score_per_pos_contig.to_csv(synteny_per_pos_file_path, sep='\t', index=False)
 
         download_message = "The table is successfully saved under:\n" + synteny_per_pos_file_path
         markdown = pn.pane.Markdown(download_message, styles={'font-size': "12px", 'color': config.title_red_color})
@@ -5770,7 +5811,7 @@ class StrainVisApp:
                                                   self.box_plot_image_format, self.save_box_plot_file_path,
                                                   download_button, pn.pane.Markdown())
 
-        download_table_button = pn.widgets.Button(name='Download data table in csv format', button_type='primary')
+        download_table_button = pn.widgets.Button(name='Download data table in tsv format', button_type='primary')
         download_table_button.on_click(self.download_boxplot_table)
 
         self.download_boxplot_table_column = pn.Column(self.save_boxplot_table_path, download_table_button,
@@ -5814,6 +5855,7 @@ class StrainVisApp:
         self.box_plot_card.append(box_plot_row)
 
     def calculate_metadata_for_box_plot(self):
+        before = time.time()
 
         feature = self.box_plot_feature_select.value
 
@@ -5848,6 +5890,7 @@ class StrainVisApp:
         # Calculate P-values for each genome
         valid_pval_list = []
         genome_pval_dict = {}
+        genome_effect_size_dict = {}
         pval_corrected = []
         for genome in self.sorted_selected_genomes_subset:
             #print("\nGenome: " + genome + ", Feature: " + feature)
@@ -5857,35 +5900,60 @@ class StrainVisApp:
             diff_array = self.genomes_subset_selected_size_APSS_df[
                 (self.genomes_subset_selected_size_APSS_df['Ref_genome'] == genome) &
                 (self.genomes_subset_selected_size_APSS_df['Category'] == diff_feature)]['APSS']
-            p_val = return_p_value(same_array, diff_array)
-            if str(p_val) != "nan":
-                valid_pval_list.append(p_val)
-            genome_pval_dict[genome] = p_val
-            #print("P-value = " + str(p_val))
+            # Sample size is enough for P-value calculation
+            if len(same_array) >= 1 and len(diff_array) >= 1:
+                before = time.time()
+                u, p_val = return_p_value_mannwhitneyu(same_array, diff_array)
+                after = time.time()
+                duration = after - before
+                #print("\nP-value = " + str(p_val))
+                #print("P-value calculation took " + str(duration) + " seconds.\n")
+                if str(p_val) != "NaN":
+                    valid_pval_list.append(p_val)
+                    genome_pval_dict[genome] = p_val
+                    effect_size = abs(1 - (2 * u) / (len(same_array) * len(diff_array)))
+                    genome_effect_size_dict[genome] = effect_size
+                    #print("Effect size = " + str(effect_size))
+                # Sample size is not enough for P-value calculation
+            else:
+                genome_pval_dict[genome] = np.nan
+                genome_effect_size_dict[genome] = np.nan
+                print("\nCannot calculate P-value for feature " + feature + ": Sample size is not enough.")
 
-        #print("\nOriginal p-values:")
+        #print("\nOriginal valid p-values:")
         #print(valid_pval_list)
 
         if len(valid_pval_list) >= 2:
             reject, pval_corrected, _, q_values = multipletests(valid_pval_list, method='fdr_bh')
-            #print("Corrected p-values:")
-            #print(pval_corrected)
+            print("Corrected p-values:")
+            print(pval_corrected)
 
         valid_counter = 0
         if len(pval_corrected) > 0:
             for genome in self.sorted_selected_genomes_subset:
-                if str(genome_pval_dict[genome]) != "nan":
+                if not np.isnan(genome_pval_dict[genome]):
                     genome_pval_dict[genome] = pval_corrected[valid_counter]
                     valid_counter += 1
 
         updated_pval_list = genome_pval_dict.values()
-        genomes_pvalues_dict = {'Ref_genome': self.sorted_selected_genomes_subset, 'P_value': updated_pval_list}
+        effect_size_list = genome_effect_size_dict.values()
+        genomes_pvalues_dict = {'Ref_genome': self.sorted_selected_genomes_subset,
+                                'P_value': updated_pval_list, 'Effect_size': effect_size_list}
         self.boxplot_p_values_df = pd.DataFrame(genomes_pvalues_dict)
-        # print(pvalues_df)
 
         self.boxplot_p_values_df['Significance'] = self.boxplot_p_values_df.apply(lambda row: return_significance(row),
                                                                                   axis=1)
+        self.boxplot_p_values_df['P_value'] = \
+            self.boxplot_p_values_df['P_value'].map(lambda v: f"{v: .1e}" if pd.notna(v) else v)
+        self.boxplot_p_values_df['Effect_size'] = \
+            self.boxplot_p_values_df['Effect_size'].map(lambda v: round(v, 2) if pd.notna(v) else v)
+
+        print("\n")
         print(self.boxplot_p_values_df)
+
+        after = time.time()
+        duration = after - before
+        print("\ncalculate_metadata_for_box_plot took " + str(duration) + " seconds.\n")
 
     def update_feature_in_boxplot(self, event):
         self.calculate_metadata_for_box_plot()
@@ -5924,7 +5992,7 @@ class StrainVisApp:
         self.download_box_plot_column.append(download_floatpanel)
 
     def download_boxplot_table(self, event):
-        fformat = "csv"
+        fformat = "tsv"
 
         # Set the directory for saving
         if self.save_boxplot_table_path.value == "":
@@ -5950,7 +6018,7 @@ class StrainVisApp:
         self.download_boxplot_table_column.append(download_floatpanel)
 
     def download_pvalues_table(self, event):
-        fformat = "csv"
+        fformat = "tsv"
 
         # Set the directory for saving
         if self.save_pvalues_table_path.value == "":
@@ -6013,7 +6081,7 @@ class StrainVisApp:
                                                       self.box_plot_image_format_ani, self.save_box_plot_file_path_ani,
                                                       download_button, pn.pane.Markdown())
 
-        download_table_button = pn.widgets.Button(name='Download data table in csv format', button_type='primary')
+        download_table_button = pn.widgets.Button(name='Download data table in tsv format', button_type='primary')
         download_table_button.on_click(self.download_boxplot_table_ani)
 
         self.download_boxplot_table_column_ani = pn.Column(self.save_boxplot_table_path_ani, download_table_button,
@@ -6061,6 +6129,8 @@ class StrainVisApp:
 
     def calculate_metadata_for_box_plot_ani(self):
 
+        before = time.time()
+
         #presented_genomes_list = self.ani_scores_genomes_subset_df['Ref_genome'].unique()
         feature = self.box_plot_feature_select_ani.value
 
@@ -6089,47 +6159,77 @@ class StrainVisApp:
         same_feature = 'Same ' + feature
         diff_feature = 'Different ' + feature
 
-        # Calculate P-values for each genome
+        # Calculate P-value and effect size for each genome
         valid_pval_list = []
         genome_pval_dict = {}
+        genome_effect_size_dict = {}
         pval_corrected = []
         for genome in self.sorted_selected_genomes_subset_ani:
-            #print("\nGenome: " + genome + ", Feature: " + feature)
+            print("\nGenome: " + genome + ", Feature: " + feature)
             same_array = self.ani_scores_genomes_subset_df[
                 (self.ani_scores_genomes_subset_df['Ref_genome'] == genome) &
                 (self.ani_scores_genomes_subset_df['Category'] == same_feature)]['ANI']
             diff_array = self.ani_scores_genomes_subset_df[
                 (self.ani_scores_genomes_subset_df['Ref_genome'] == genome) &
                 (self.ani_scores_genomes_subset_df['Category'] == diff_feature)]['ANI']
-            p_val = return_p_value(same_array, diff_array)
-            if str(p_val) != "nan":
-                valid_pval_list.append(p_val)
-            genome_pval_dict[genome] = p_val
-            #print("P-value = " + str(p_val))
 
-        #print("\nOriginal p-values:")
-        #print(valid_pval_list)
+            # Sample size is enough for P-value calculation
+            if len(same_array) >= 1 and len(diff_array) >= 1:
+                before = time.time()
+                u, p_val = return_p_value_mannwhitneyu(same_array, diff_array)
+                after = time.time()
+                duration = after - before
+                #print("\nP-value = " + str(p_val))
+                #print("P-value calculation took " + str(duration) + " seconds.\n")
+                if str(p_val) != "NaN":
+                    valid_pval_list.append(p_val)
+                    genome_pval_dict[genome] = p_val
+                    effect_size = abs(1 - (2 * u) / (len(same_array) * len(diff_array)))
+                    genome_effect_size_dict[genome] = effect_size
+                    #print("Effect size = " + str(effect_size))
+            # Sample size is not enough for P-value calculation
+            else:
+                genome_pval_dict[genome] = np.nan
+                genome_effect_size_dict[genome] = np.nan
+                print("\nCannot calculate P-value for feature " + feature + ": Sample size is not enough.")
 
+        print("\nOriginal p-values:")
+        print(valid_pval_list)
+
+        # Need to apply multiple testing correction
         if len(valid_pval_list) >= 2:
             reject, pval_corrected, _, q_values = multipletests(valid_pval_list, method='fdr_bh')
-            #print("Corrected p-values:")
-            #print(pval_corrected)
+        else:
+            pval_corrected = valid_pval_list
+        print("\nCorrected p-values:")
+        print(pval_corrected)
 
         valid_counter = 0
         if len(pval_corrected) > 0:
             for genome in self.sorted_selected_genomes_subset_ani:
-                if str(genome_pval_dict[genome]) != "nan":
+                if not np.isnan(genome_pval_dict[genome]):
                     genome_pval_dict[genome] = pval_corrected[valid_counter]
                     valid_counter += 1
 
         updated_pval_list = genome_pval_dict.values()
-        genomes_pvalues_dict = {'Ref_genome': self.sorted_selected_genomes_subset_ani, 'P_value': updated_pval_list}
+        effect_size_list = genome_effect_size_dict.values()
+        genomes_pvalues_dict = {'Ref_genome': self.sorted_selected_genomes_subset_ani,
+                                'P_value': updated_pval_list, 'Effect_size': effect_size_list}
         self.boxplot_p_values_df_ani = pd.DataFrame(genomes_pvalues_dict)
-        # print(pvalues_df)
 
         self.boxplot_p_values_df_ani['Significance'] = self.boxplot_p_values_df_ani.apply(
             lambda row: return_significance(row), axis=1)
+
+        self.boxplot_p_values_df_ani['P_value'] = \
+            self.boxplot_p_values_df_ani['P_value'].map(lambda v: f"{v: .2e}" if pd.notna(v) else v)
+        self.boxplot_p_values_df_ani['Effect_size'] = \
+            self.boxplot_p_values_df_ani['Effect_size'].map(lambda v: round(v, 2) if pd.notna(v) else v)
+
         print(self.boxplot_p_values_df_ani)
+
+        after = time.time()
+        duration = after - before
+        print("\ncalculate_metadata_for_box_plot_ani took " + str(duration) + " seconds.\n")
 
     def update_feature_in_boxplot_ani(self, event):
         self.calculate_metadata_for_box_plot_ani()
@@ -6170,7 +6270,7 @@ class StrainVisApp:
         self.download_box_plot_column_ani.append(download_floatpanel)
 
     def download_boxplot_table_ani(self, event):
-        fformat = "csv"
+        fformat = "tsv"
 
         # Set the directory for saving
         if self.save_boxplot_table_path_ani.value == "":
@@ -6196,7 +6296,7 @@ class StrainVisApp:
         self.download_boxplot_table_column_ani.append(download_floatpanel)
 
     def download_pvalues_table_ani(self, event):
-        fformat = "csv"
+        fformat = "tsv"
 
         # Set the directory for saving
         if self.save_pvalues_table_path_ani.value == "":

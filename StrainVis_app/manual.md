@@ -1,6 +1,6 @@
 # StrainVis: a Python-based web application for interactive visual analysis of strain-tracking methods
 
-### Version 1.1.2
+### Version 1.1.3
 
 - [Overview](#overview)
 - [Installation](#installation)
@@ -194,7 +194,9 @@ The plot type can be changed between scatter (jitter) plot and boxplot, so as th
 
 **Including metadata:** Upon feature selection, the comparisons can be divided into two categories: same / different feature.  
 for example: if the selected feature is 'country', the two categories are 'same country' and 'different country'.  
-The features are derived from the upoaded metadata file and can be interactively selected from a drop-down menu.
+In case the difference between the two categories (calculated using the Mann-Whitney U test) is significant, the P-value 
+is reported together with the effect-size (calculated as Rank-Biserial correlation).
+The features are derived from the uploaded metadata file and can be interactively selected from a drop-down menu.
 
 ### Clustered heatmap plot
 
@@ -336,7 +338,8 @@ The annotation file must match the reference genome assembly that was used to cr
 Once an annotation file for the current species has been uploaded, it can be used to display the annotated genes for all the contigs that compose the reference genome.
 
 - **Show annotated genes for current contig:** 
-When this option is checked, the annotated genes, found within the displayed contig range, are plotted at the bottom of the main plot. 
+When this option is checked, the annotated genes (CDS), found within the displayed contig range, are plotted at the bottom of the main plot.  
+For CDS of hypothetical proteins, the CDS ID is presented instead of the gene name.  
 Please note that the annotated genes plot can only be displayed if the contig's length does not exceed 100,000 bp. 
 In such cases, the contig's length range can be set to fit these requirements.  
 If saving an image of the synteny per position plot while displaying the annotated genes, a combined plot will be saved. 
@@ -401,9 +404,11 @@ The plot color can be changed using the color-picker widget.
 **Including metadata:** When checking the 'Use metadata in plot' checkbox, it is possible to select a feature, 
 by which the comparisons can be divided into two categories: same / different.  
 for example: if the selected feature is 'country', the two categories are 'same country' and 'different country'.  
+In case the difference between the two categories (calculated using the Mann-Whitney U test) is significant, 
+the significance level (represented by stars) is presented in the plot. The actual P-values and the effect-size values 
+(calculated as Rank-Biserial correlation) can be downloaded as a table in tsv format.  
 The features are derived from the uploaded metadata file and can be interactively selected from a drop-down menu.  
 The colors of the same / different feature categories can be changed using the color-picker widgets.  
-When using metadata, the P-values of the comparisons for the selected feature can be downloaded in addition to the APSS table.
 
 ## Multiple species analysis of ANI results
 
