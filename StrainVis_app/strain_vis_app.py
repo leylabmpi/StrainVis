@@ -1923,8 +1923,9 @@ class StrainVisApp:
             before = time.time()
 
             synteny_per_pos_message = "Preparing the plot - please wait..."
-            self.synteny_per_pos_plot_column.append(pn.pane.Markdown(synteny_per_pos_message, styles={'font-size': "20px",
-                                                                                                  'margin': "0"}))
+            self.synteny_per_pos_plot_column.append(pn.pane.Markdown(synteny_per_pos_message,
+                                                                     styles={'font-size': "20px",
+                                                                             'margin': "0"}))
 
             # Get the score-per-region table for the selected genome only
             self.score_per_region_selected_genome_df = ds.return_selected_genome_table(self.score_per_region_all_genomes_df,
@@ -2008,7 +2009,7 @@ class StrainVisApp:
 
             after = time.time()
             duration = after - before
-            print("\ncreate_single_genome_column took " + str(duration) + " seconds.\n")
+            print("\ncreate_single_genome_column_syntracker_mode took " + str(duration) + " seconds.\n")
 
         # The ref-genome is not found in the SynTracker file - display a message
         else:
@@ -2032,6 +2033,8 @@ class StrainVisApp:
         self.highlight_sample_chkbox_ani.value = False
         self.highlight_nodes_by_feature_ani.value = False
         self.color_edges_by_feature_ani.value = False
+
+        before = time.time()
 
         # Unwatch ANI plots related watchers (if it's not the first time that this function is called
         # and only for watchers that have been defined before)
@@ -2113,7 +2116,13 @@ class StrainVisApp:
                                                                          'color': config.title_red_color,
                                                                          }))
 
+        after = time.time()
+        duration = after - before
+        print("\ncreate_single_genome_column_ANI_mode took " + str(duration) + " seconds.\n")
+
     def create_single_genome_column_combined_mode(self):
+
+        before = time.time()
 
         # Verify that the current ref-genome is found in the ANI input. If not, display an error message
         if self.ref_genome not in self.ref_genomes_list_ani:
@@ -2143,6 +2152,10 @@ class StrainVisApp:
                                                                           styles={'font-size': "20px",
                                                                                   'color': config.title_red_color
                                                                                   }))
+
+        after = time.time()
+        duration = after - before
+        print("\ncreate_single_genome_column_combined_mode took " + str(duration) + " seconds.\n")
 
     def create_initial_synteny_per_pos_plot_tab(self):
 
@@ -4843,17 +4856,20 @@ class StrainVisApp:
         synteny_per_pos_file = "Synteny_per_position_plot_" + self.ref_genome + "_" + self.contig_name
         self.save_synteny_per_pos_plot_path.placeholder = synteny_per_pos_file
 
-        self.download_synteny_per_pos_plot_column = pn.Column(self.synteny_per_pos_image_format, self.save_synteny_per_pos_plot_path,
-                                                       pn.Spacer(height=10), download_button, pn.pane.Markdown())
+        self.download_synteny_per_pos_plot_column = pn.Column(self.synteny_per_pos_image_format,
+                                                              self.save_synteny_per_pos_plot_path,
+                                                              pn.Spacer(height=10), download_button, pn.pane.Markdown(),
+                                                              align='end')
 
         synteny_per_pos_table = "Data_for_synteny_per_position_plot_" + self.ref_genome + "_" + self.contig_name
         self.save_synteny_per_pos_table_path.placeholder = synteny_per_pos_table
 
-        download_table_button = pn.widgets.Button(name='Download underling data in tsv format', button_type='primary')
+        download_table_button = pn.widgets.Button(name='Download underlying data in tsv format', button_type='primary')
         download_table_button.on_click(self.download_synteny_per_pos_table)
 
-        self.download_synteny_per_pos_table_column = pn.Column(self.save_synteny_per_pos_table_path, pn.Spacer(height=10),
-                                                        download_table_button, pn.pane.Markdown(), align='end')
+        self.download_synteny_per_pos_table_column = pn.Column(self.save_synteny_per_pos_table_path,
+                                                               pn.Spacer(height=10),
+                                                               download_table_button, pn.pane.Markdown(), align='end')
 
         download_files_row = pn.Row(self.download_synteny_per_pos_plot_column, pn.Spacer(width=100),
                                     self.download_synteny_per_pos_table_column)
@@ -5848,7 +5864,7 @@ class StrainVisApp:
                                 use_metadata=self.use_metadata_box_plot, feature=self.box_plot_feature_select.value,
                                 same_color=self.box_plot_same_color, different_color=self.box_plot_different_color)
 
-        self.box_plot_pane = pn.pane.Matplotlib(self.box_plot, width=700, dpi=300, tight=True, format='png')
+        self.box_plot_pane = pn.pane.Matplotlib(self.box_plot, width=720, dpi=300, tight=True, format='png')
 
         box_plot_row = pn.Row(self.download_multi_col, pn.Spacer(width=30), self.box_plot_pane,
                               styles={'padding': "15px"})
@@ -6121,7 +6137,7 @@ class StrainVisApp:
                                     same_color=self.box_plot_same_color_ani,
                                     different_color=self.box_plot_different_color_ani)
 
-        self.box_plot_pane_ani = pn.pane.Matplotlib(self.box_plot_ani, width=700, dpi=300, tight=True, format='png')
+        self.box_plot_pane_ani = pn.pane.Matplotlib(self.box_plot_ani, width=720, dpi=300, tight=True, format='png')
 
         box_plot_row = pn.Row(self.download_multi_col_ani, pn.Spacer(width=30), self.box_plot_pane_ani,
                               styles={'padding': "15px"})

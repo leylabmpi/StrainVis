@@ -1,6 +1,6 @@
 # StrainVis: a Python-based web application for interactive visual analysis of strain-tracking methods
 
-### Version 1.1.3
+### Version 1.1.4
 
 - [Overview](#overview)
 - [Installation](#installation)
@@ -405,7 +405,7 @@ The plot color can be changed using the color-picker widget.
 by which the comparisons can be divided into two categories: same / different.  
 for example: if the selected feature is 'country', the two categories are 'same country' and 'different country'.  
 In case the difference between the two categories (calculated using the Mann-Whitney U test) is significant, 
-the significance level (represented by stars) is presented in the plot. The actual P-values and the effect-size values 
+the significance level (represented by stars) and the effect size are presented in the plot. The actual P-values and the effect-size values 
 (calculated as Rank-Biserial correlation) can be downloaded as a table in tsv format.  
 The features are derived from the uploaded metadata file and can be interactively selected from a drop-down menu.  
 The colors of the same / different feature categories can be changed using the color-picker widgets.  

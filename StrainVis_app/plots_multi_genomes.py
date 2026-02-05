@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import hvplot.pandas  # Enable interactive
 from bokeh.models import HoverTool
 import seaborn as sns
@@ -61,7 +62,7 @@ def create_box_plot(avg_df, sorted_genomes_list, pvalues_df, color, use_metadata
         fig_height = 4
     else:
         fig_height = 0.5 * genomes_num
-    plt.figure(figsize=(7, fig_height))
+    plt.figure(figsize=(7.2, fig_height))
 
     # Use metadata to separate plot to same/different feature
     if use_metadata:
@@ -75,17 +76,35 @@ def create_box_plot(avg_df, sorted_genomes_list, pvalues_df, color, use_metadata
                                palette=[same_color, different_color]
         )
 
-        # Get the y-axis tick positions (corresponding to the groups)
+        # Get the x,y axes positions (corresponding to the groups)
         y_ticks = box_plot.get_yticks()
         x_ticks = box_plot.get_xticks()
         space_x = x_ticks[1] - x_ticks[0]
+        space_y = y_ticks[1] - y_ticks[0]
         x_range = box_plot.get_xlim()
+        y_range = box_plot.get_ylim()
         x_upper_limit = x_range[1]
-        x_pos_for_stars = x_upper_limit + space_x * 0.1
+        x_pos_for_stars = x_upper_limit + space_x * 0.2
+        x_pos_for_effect_size = x_pos_for_stars + space_x * 0.7
+        x_pos_for_title = x_upper_limit - space_x * 0.2
+        y_pos_for_title = y_range[1] - space_y * 0.4
+        is_significance = 0
+        is_effect_size = 0
         for i, row in pvalues_df.iterrows():
+            y_pos = y_ticks[i]  # This gives the y-position of the i-th group
             if row['Significance'] != "NS":
-                y_pos = y_ticks[i]  # This gives the y-position of the i-th group
-                box_plot.text(x=x_pos_for_stars, y=y_pos, s=row['Significance'], fontsize=14)
+                is_significance = 1
+                y_pos_for_stars = y_pos + space_y * 0.06
+                box_plot.text(x=x_pos_for_stars, y=y_pos_for_stars, s=row['Significance'], fontsize=14)
+                if pd.notna(row['Effect_size']):
+                    is_effect_size = 1
+                    box_plot.text(x=x_pos_for_effect_size, y=y_pos, s=row['Effect_size'], fontsize=11)
+        # If there is at least one row with significance / effect_size calculation, print title for them
+        if is_significance:
+            if is_effect_size:
+                box_plot.text(x=x_pos_for_title, y=y_pos_for_title, s='Significance  Effect-size', fontsize=10)
+            else:
+                box_plot.text(x=x_pos_for_title, y=y_pos_for_title, s='Significance', fontsize=11)
 
         box_plot.legend(title="", loc='lower left', bbox_to_anchor=(0, 1), fontsize=13)
 
@@ -119,7 +138,7 @@ def create_box_plot_ani(ani_df, sorted_genomes_list, pvalues_df, color, use_meta
         fig_height = 4
     else:
         fig_height = 0.5 * genomes_num
-    plt.figure(figsize=(7, fig_height))
+    plt.figure(figsize=(7.2, fig_height))
 
     # Use metadata to separate plot to same/different feature
     if use_metadata:
@@ -133,17 +152,36 @@ def create_box_plot_ani(ani_df, sorted_genomes_list, pvalues_df, color, use_meta
                                palette=[same_color, different_color]
         )
 
-        # Get the y-axis tick positions (corresponding to the groups)
+        # Get the x,y axes positions (corresponding to the groups)
         y_ticks = box_plot.get_yticks()
         x_ticks = box_plot.get_xticks()
         space_x = x_ticks[1] - x_ticks[0]
+        space_y = y_ticks[1] - y_ticks[0]
         x_range = box_plot.get_xlim()
+        y_range = box_plot.get_ylim()
         x_upper_limit = x_range[1]
-        x_pos_for_stars = x_upper_limit + space_x * 0.1
+        x_pos_for_stars = x_upper_limit + space_x * 0.2
+        x_pos_for_effect_size = x_pos_for_stars + space_x * 0.9
+        x_pos_for_title = x_upper_limit - space_x * 0.2
+        y_pos_for_title = y_range[1] - space_y * 0.4
+        is_significance = 0
+        is_effect_size = 0
+
         for i, row in pvalues_df.iterrows():
+            y_pos = y_ticks[i]  # This gives the y-position of the i-th group
             if row['Significance'] != "NS":
-                y_pos = y_ticks[i]  # This gives the y-position of the i-th group
-                box_plot.text(x=x_pos_for_stars, y=y_pos, s=row['Significance'], fontsize=14)
+                is_significance = 1
+                y_pos_for_stars = y_pos + space_y * 0.06
+                box_plot.text(x=x_pos_for_stars, y=y_pos_for_stars, s=row['Significance'], fontsize=14)
+                if pd.notna(row['Effect_size']):
+                    is_effect_size = 1
+                    box_plot.text(x=x_pos_for_effect_size, y=y_pos, s=row['Effect_size'], fontsize=11)
+        # If there is at least one row with significance / effect_size calculation, print title for them
+        if is_significance:
+            if is_effect_size:
+                box_plot.text(x=x_pos_for_title, y=y_pos_for_title, s='Significance  Effect-size', fontsize=10)
+            else:
+                box_plot.text(x=x_pos_for_title, y=y_pos_for_title, s='Significance', fontsize=11)
 
         box_plot.legend(title="", loc='lower left', bbox_to_anchor=(0, 1), fontsize=13)
 
