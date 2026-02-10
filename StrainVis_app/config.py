@@ -17,11 +17,11 @@ bottom_percentile = 0.1
 max_range_for_annotation = 100000
 
 ## Network-related parameters
-network_iterations_options = ['50', '100', '150', '200', '250', '300', '350', '400', '450', '500']
-network_thresholds_options = ['Mean APSS', 'Mean APSS+1 STD', 'Mean APSS+2 STD', 'Define another threshold']
-network_thresholds_options_ani = ['Mean ANI', 'Mean ANI+1 STD', 'Mean ANI+2 STD', 'Define another threshold']
+network_iterations_options = ['50', '100', '150', '200', '250', '300', '350', '400', '450', '500', '550', '600']
+network_thresholds_options = ['Mean APSS', 'Mean APSS+1 STD', 'Define another threshold']
+network_thresholds_options_ani = ['Mean ANI', 'Mean ANI+1 STD', 'Define another threshold']
 max_network_nodes = 300
-APSS_connections_threshold_default = 0.9
+APSS_connections_threshold_default = 0.8
 ANI_connections_threshold_default = 0.985
 hvnx_nodes_size = 20
 hvnx_highlighted_nodes_size = 30
@@ -30,6 +30,8 @@ nx_highlighted_nodes_size = 280
 outline_width = 0.5
 highlighted_outline_width = 3
 highlighted_outline_width_matplotlib = 2
+min_edge_width = 0.2
+max_edge_width = 5.0
 outline_color = 'black'
 highlighted_outline_color = 'cyan'
 max_groups_for_legend = 15

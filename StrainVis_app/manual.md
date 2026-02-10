@@ -1,6 +1,6 @@
 # StrainVis: a Python-based web application for interactive visual analysis of strain-tracking methods
 
-### Version 1.1.4
+### Version 1.1.5
 
 - [Overview](#overview)
 - [Installation](#installation)
@@ -242,15 +242,14 @@ The network plot is created using the Bokeh backend. The Bokeh interface allows 
 connected in the network or not (If the APSS of a comparison between two samples is equals to or greater than the threshold, 
 the samples are connected in the network). The threshold affects the clustering of the network when increasing the number of iterations.
 A higher threshold means less connections between the nodes, which results in a more fragmented network, composed of a larger number of smaller clusters.  
-StrainVis provides three pre-defined threshold options:   
+StrainVis provides two pre-defined threshold options:   
 Mean APSS (among all pairwise comparisons)  
 Mean APSS + 1 std  
-Mean APSS + 2 std (when the value <= 0.99)  
 By selecting the 'Define another threshold' option, it is possible to set a different threshold (between 0.5 and 1.0) 
 using the 'Define threshold' widget.
 - **Number of iterations:** Number of clustering iterations of the network, performed using the Fruchterman-Reingold algorithm.
 With each iteration, the nodes that have higher APSS score, become closer to each other in the 2D space and the network becomes more clustered.
-The slider widget allows to select the number of iterations between 50 and 500.
+The slider widget allows to select the number of iterations between 50 and 600.
 - **Initialize nodes positions:** Clicking this button assigns the nodes new initial positions in the 2D space (by random) 
 and starts the clustering process from the beginning, performing the selected number of iterations.
 - **Nodes / Edges color:** Enable to set a unified color for the nodes or for the edges of the network, using a color-picker widget.

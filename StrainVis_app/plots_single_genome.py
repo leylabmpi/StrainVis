@@ -324,6 +324,7 @@ def cretae_network_plot(network, is_metadata, nodes_feature, is_continuous, cmap
             # All edges have the same color
             else:
                 network.edges[u, v]['edge_color'] = edge_color
+            network.edges[u, v]['edge_width'] = network.edges[u, v]['width']
 
         # In case of numeric continuous feature:
         if is_continuous:
@@ -344,7 +345,7 @@ def cretae_network_plot(network, is_metadata, nodes_feature, is_continuous, cmap
             norm = Normalize(vmin=min_value, vmax=max_value)
 
             network_plot = hvnx.draw(network, pos, node_color=nodes_feature, cmap=cmap, norm=norm,
-                                     vmin=min_value, vmax=max_value, edge_width=hv.dim('weight')/5)
+                                     vmin=min_value, vmax=max_value)
 
             network_plot.opts(colorbar=True)
 
@@ -374,7 +375,7 @@ def cretae_network_plot(network, is_metadata, nodes_feature, is_continuous, cmap
             group_to_color = {group: cmap[i % cmap_length] for i, group in enumerate(unique_groups)}
             colors = [group_to_color[str(network.nodes[node][nodes_feature])] for node in network.nodes()]
 
-            network_plot = hvnx.draw(network, pos, node_color=colors, edge_width=hv.dim('weight')/5)
+            network_plot = hvnx.draw(network, pos, node_color=colors)
 
             # Add a legend if there are up to max. groups allowed (value is defined in the config file)
             if groups_num <= config.max_groups_for_legend:
@@ -392,8 +393,13 @@ def cretae_network_plot(network, is_metadata, nodes_feature, is_continuous, cmap
             ('SampleID', '@SampleID')
         ]
 
-        network_plot = hvnx.draw(network, pos, node_color=node_color, node_alpha=0.95,
-                                 edge_width=hv.dim('weight')/5, edge_color=edge_color)
+        # Reset the edges colors
+        edges = network.edges()
+        for u, v in edges:
+            network.edges[u, v]['edge_color'] = edge_color
+            network.edges[u, v]['edge_width'] = network.edges[u, v]['width']
+
+        network_plot = hvnx.draw(network, pos, node_color=node_color, node_alpha=0.95, edge_color=edge_color)
 
     hover = HoverTool(tooltips=tooltips)
     network_plot.opts(tools=[hover],
@@ -401,7 +407,8 @@ def cretae_network_plot(network, is_metadata, nodes_feature, is_continuous, cmap
                       node_line_color='outline_color',
                       node_line_width='outline_width',
                       node_alpha=0.95,
-                      edge_color='edge_color'
+                      edge_color='edge_color',
+                      edge_line_width='edge_width'
                       )
 
     if show_labels:
@@ -447,13 +454,14 @@ def cretae_network_plot_matplotlib(network, is_metadata, nodes_feature, is_conti
                                    is_edge_colorby, edges_feature, within_edge_color, between_edge_color,
                                    iterations, pos_dict, show_labels, all_or_highlighted, is_highlight_samples,
                                    samples_to_highlight, metadata_dict):
+    before = time.time()
     iter_num = int(iterations)
     #print("\nIn cretae_network_plot_matplotlib. Iterations number = " + str(iter_num))
     #print("cmap: " + str(cmap))
 
     # Preparing network drawing also with matplotlib for better image production
     fig, ax1 = plt.subplots(figsize=(8, 7))
-    widths = [network[u][v]['weight']/10 for u, v in network.edges()]
+    widths = [network[u][v]['width'] for u, v in network.edges()]
 
     pos = nx.layout.fruchterman_reingold_layout(network, iterations=iter_num, pos=pos_dict, k=2)
 
@@ -505,7 +513,7 @@ def cretae_network_plot_matplotlib(network, is_metadata, nodes_feature, is_conti
             else:
                 network.edges[u, v]['edge_color'] = edge_color
 
-            edge_colors = nx.get_edge_attributes(network, 'edge_color').values()
+        edge_colors = nx.get_edge_attributes(network, 'edge_color').values()
 
         # In case of numeric continuous feature:
         if is_continuous:
@@ -616,6 +624,10 @@ def cretae_network_plot_matplotlib(network, is_metadata, nodes_feature, is_conti
         )
 
     plt.close(fig)
+
+    after = time.time()
+    duration = after - before
+    print("\ncretae_network_plot_matplotlib: saving the network took " + str(duration) + " seconds.\n")
 
     return fig
 

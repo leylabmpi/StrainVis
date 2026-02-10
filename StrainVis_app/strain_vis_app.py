@@ -3385,9 +3385,7 @@ class StrainVisApp:
 
     def create_network_pane(self, selected_genome_and_size_avg_df):
         mean_only = 0
-        mean_std_only = 0
         mean_std = 0
-        mean_2_std = 0
 
         init_button = pn.widgets.Button(name='Initialize nodes positions', button_type='primary',
                                         button_style='outline')
@@ -3464,28 +3462,60 @@ class StrainVisApp:
         # Create a table for the network
         self.df_for_network = selected_genome_and_size_avg_df.loc[:, ['Sample1', 'Sample2', 'APSS']].copy()
 
+        eps = 1e-6
         self.df_for_network.loc[(self.df_for_network['APSS'] < 0), 'APSS'] = 0
-        self.df_for_network.loc[(self.df_for_network['APSS'] == 1), 'APSS'] = 0.999999
+        self.df_for_network.loc[(self.df_for_network['APSS'] == 1), 'APSS'] = 1 - eps
 
         # Set a score threshold for the connections (below it zero the weight).
         # The default threshold is the mean APSS + 1std
         mean_APSS = self.df_for_network.loc[:, 'APSS'].mean().round(2)
         std_APSS = self.df_for_network.loc[:, 'APSS'].std().round(2)
 
-        if mean_APSS < 0.99:
-            if mean_APSS + std_APSS < 0.99:
-                self.APSS_connections_threshold = mean_APSS + std_APSS
-            else:
-                self.APSS_connections_threshold = 0.99
-        else:
-            self.APSS_connections_threshold = 0.99
-        self.df_for_network['weight'] = np.where(self.df_for_network['APSS'] >= self.APSS_connections_threshold,
-                                                 np.negative(np.log(1 - self.df_for_network['APSS'])), 0)
-        #print("\nDF for network:")
-        #print(self.df_for_network)
         print("\ncreate_network_pane:")
         print("Mean APSS: " + str(mean_APSS))
         print("Standard deviation APSS: " + str(std_APSS) + "\n")
+
+        if mean_APSS <= 0.99:
+            self.APSS_connections_threshold = mean_APSS
+        else:
+            self.APSS_connections_threshold = 0.99
+
+        # First stage: zero the scores below the threshold
+        self.df_for_network['filtered_score'] = self.df_for_network['APSS'].where(self.df_for_network['APSS'] >=
+                                                                                  self.APSS_connections_threshold, 0)
+
+        # Second stage: perform min-max normalization on the scores above the threshold
+        mask = self.df_for_network['filtered_score'] > 0
+        min_val = self.df_for_network.loc[mask, 'filtered_score'].min()
+        max_val = self.df_for_network.loc[mask, 'filtered_score'].max()
+        print("min_value = " + str(min_val) + ", max_value = " + str(max_val))
+        self.df_for_network['norm_score'] = 0.0
+        # avoid division by zero if all remaining values are equal
+        if max_val > min_val:
+            self.df_for_network.loc[mask, 'norm_score'] = (self.df_for_network.loc[mask, 'filtered_score'] - min_val) / \
+                                                          (max_val - min_val)
+            # replace exact zeros and ones to avoid later problems in the log function
+            self.df_for_network.loc[mask, 'norm_score'] = \
+                self.df_for_network.loc[mask, 'norm_score'].clip(eps, 1 - eps)
+        else:
+            self.df_for_network.loc[mask, 'norm_score'] = max_val
+
+        # Third stage: apply the log function to transform the scores into weight values
+        self.df_for_network['weight'] = 0.0
+        self.df_for_network.loc[mask, 'weight'] = np.negative(np.log(1 - self.df_for_network.loc[mask, 'norm_score']))
+
+        # Forth stage: calculate line width from weights (normalize values between 0.5 and 4)
+        self.df_for_network['width'] = 0.0
+        min_width = self.df_for_network.loc[mask, 'weight'].min()
+        max_width = self.df_for_network.loc[mask, 'weight'].max()
+        new_min_width = config.min_edge_width
+        new_max_width = config.max_edge_width
+        self.df_for_network.loc[mask, 'width'] = new_min_width + \
+                                                 (self.df_for_network.loc[mask, 'weight'] - min_width) * \
+                                                 (new_max_width - new_min_width) / (max_width - min_width)
+
+        print("\nDF for network with weights and widths:")
+        print(self.df_for_network)
 
         # Update the placeholder of the filenames for download with the default threshold.
         network_file = "Network_plot_" + self.ref_genome + "_" + self.sampling_size + "_regions_" + \
@@ -3497,7 +3527,7 @@ class StrainVisApp:
 
         # Create a network using networkx
         self.network = nx.from_pandas_edgelist(self.df_for_network, source='Sample1', target='Sample2',
-                                               edge_attr='weight')
+                                               edge_attr=['weight', 'width'])
         self.nodes_list = list(self.network.nodes)
         nodes_num = len(self.nodes_list)
         #print("\nNumber of nodes in the network = " + str(nodes_num))
@@ -3529,46 +3559,28 @@ class StrainVisApp:
             self.network_threshold_input.disabled = True
             self.network_threshold_select.options = []
 
-            if mean_APSS >= 0.99:
+            if mean_APSS > 0.99:
                 mean_APSS = 0.99
-                str_mean = config.network_thresholds_options[0] + " (APSS=0.99)"
-                self.network_threshold_select.options.append(str_mean)
                 mean_only = 1
 
             else:
-                str_mean = config.network_thresholds_options[0] + " (APSS=" + str(mean_APSS) + ")"
-                self.network_threshold_select.options.append(str_mean)
-
                 mean_std = round((mean_APSS + std_APSS), 2)
-                if mean_std >= 0.99:
+                if mean_std > 0.99:
                     mean_std = 0.99
-                    str_mean_std = config.network_thresholds_options[1] + " (APSS=0.99)"
-                    self.network_threshold_select.options.append(str_mean_std)
-                    mean_std_only = 1
 
-                else:
-                    str_mean_std = config.network_thresholds_options[1] + " (APSS=" + str(mean_std) + ")"
-                    self.network_threshold_select.options.append(str_mean_std)
+            str_mean = config.network_thresholds_options[0] + " (APSS=" + str(mean_APSS) + ")"
+            self.network_threshold_select.options.append(str_mean)
+            if not mean_only:
+                str_mean_std = config.network_thresholds_options[1] + " (APSS=" + str(mean_std) + ")"
+                self.network_threshold_select.options.append(str_mean_std)
 
-                    # Add the mean + 2std option only if it's <= 0.99 (and mean + 1std also <= 0.99)
-                    mean_2_std = round((mean_APSS + 2 * std_APSS), 2)
-                    if mean_2_std <= 0.99:
-                        str_mean_2_std = config.network_thresholds_options[2] + " (APSS=" + str(mean_2_std) + ")"
-                        self.network_threshold_select.options.append(str_mean_2_std)
-                    else:
-                        mean_std_only = 1
-
-            self.network_threshold_select.options.append(config.network_thresholds_options[3])
-            # Only mean - set this as the default
-            if mean_only:
-                self.network_threshold_select.value = self.network_threshold_select.options[0]
-            # At least mean+std option available -> set this as the default
-            else:
-                self.network_threshold_select.value = self.network_threshold_select.options[1]
+            self.network_threshold_select.options.append(config.network_thresholds_options[2])
+            # Set the mean as the default threshold
+            self.network_threshold_select.value = self.network_threshold_select.options[0]
 
             # Set watchers for the threshold widgets
             self.threshold_select_watcher = self.network_threshold_select.param.watch(partial(
-                self.changed_threshold_select, mean_APSS, mean_std, mean_2_std, mean_only, mean_std_only), 'value',
+                self.changed_threshold_select, mean_APSS, mean_std, mean_only), 'value',
                 onlychanged=True)
             self.threshold_input_watcher = self.network_threshold_input.param.watch(self.changed_threshold_input,
                                                                                     'value', onlychanged=True)
@@ -3595,7 +3607,8 @@ class StrainVisApp:
                 self.nodes_highlight_by.options = self.metadata_features_list
                 self.nodes_highlight_by.value = first_feature
                 # Fill the groups for the first feature
-                unique_groups = sorted(list(set([str(self.network.nodes[node][first_feature]) for node in self.network.nodes()])))
+                unique_groups = sorted(list(set([str(self.network.nodes[node][first_feature]) for node in
+                                                 self.network.nodes()])))
                 if 'nan' in unique_groups:
                     unique_groups.remove('nan')
                     unique_groups.append('nan')
@@ -3740,7 +3753,8 @@ class StrainVisApp:
             if not os.path.isabs(network_table_path):
                 network_table_path = self.downloads_dir_path + network_table_path
 
-        self.df_for_network.to_csv(network_table_path, index=False, sep='\t')
+        # Export just the necessary columns to csv
+        self.df_for_network[['Sample1', 'Sample2', 'APSS', 'weight']].to_csv(network_table_path, index=False, sep='\t')
 
         download_message = "The table is successfully saved under:\n" + network_table_path
         markdown = pn.pane.Markdown(download_message, styles={'font-size': "12px", 'color': config.title_red_color})
@@ -3761,10 +3775,11 @@ class StrainVisApp:
             pos_tuple = (pos_x, pos_y)
             self.pos_dict[node] = pos_tuple
 
-    def changed_threshold_select(self, mean, mean_std, mean_2_std, mean_only, mean_std_only, event):
+    def changed_threshold_select(self, mean, mean_std, mean_only, event):
         #print("\nchanged_threshold_select:")
         #print("Current mean: " + str(mean))
 
+        # The mean option
         if self.network_threshold_select.value == self.network_threshold_select.options[0]:
             self.APSS_connections_threshold = mean
             self.network_threshold_input.disabled = True
@@ -3774,18 +3789,12 @@ class StrainVisApp:
             if mean_only:
                 self.APSS_connections_threshold = self.network_threshold_input.value
                 self.network_threshold_input.disabled = False
+            # The second option is the mean + 1std
             else:
                 self.APSS_connections_threshold = mean_std
                 self.network_threshold_input.disabled = True
 
-        elif self.network_threshold_select.value == self.network_threshold_select.options[2]:
-            # The third option is the custom threshold
-            if mean_std_only:
-                self.APSS_connections_threshold = self.network_threshold_input.value
-                self.network_threshold_input.disabled = False
-            else:
-                self.APSS_connections_threshold = mean_2_std
-                self.network_threshold_input.disabled = True
+        # The last option is custom threshold
         else:
             self.APSS_connections_threshold = self.network_threshold_input.value
             self.network_threshold_input.disabled = False
@@ -3811,15 +3820,48 @@ class StrainVisApp:
                      str(self.APSS_connections_threshold)
         self.save_network_table_path.placeholder = table_file
 
-        # Recalculate the weights
-        self.df_for_network['weight'] = np.where(self.df_for_network['APSS'] >= self.APSS_connections_threshold,
-                                                 np.negative(np.log(1 - self.df_for_network['APSS'])), 0)
-        #print(self.df_for_network)
+        ## Recalculate the weights
+        # First stage: zero the scores below the threshold
+        self.df_for_network['filtered_score'] = self.df_for_network['APSS'].where(self.df_for_network['APSS'] >=
+                                                                                  self.APSS_connections_threshold, 0)
+
+        # Second stage: perform min-max normalization on the scores above the threshold
+        mask = self.df_for_network['filtered_score'] > 0
+        min_val = self.df_for_network.loc[mask, 'filtered_score'].min()
+        max_val = self.df_for_network.loc[mask, 'filtered_score'].max()
+        self.df_for_network['norm_score'] = 0.0
+        # avoid division by zero if all remaining values are equal
+        eps = 1e-6
+        if max_val > min_val:
+            self.df_for_network.loc[mask, 'norm_score'] = (self.df_for_network.loc[mask, 'filtered_score'] - min_val) / \
+                                                          (max_val - min_val)
+            # replace exact zeros (min_val) with 10-6 (so that they will have a very low weight but not zero)
+            self.df_for_network.loc[mask, 'norm_score'] = \
+                self.df_for_network.loc[mask, 'norm_score'].clip(eps, 1 - eps)
+        else:
+            self.df_for_network.loc[mask, 'norm_score'] = max_val
+
+        # Third stage: apply the log function to transform the scores into weight values
+        self.df_for_network['weight'] = 0.0
+        self.df_for_network.loc[mask, 'weight'] = np.negative(np.log(1 - self.df_for_network.loc[mask, 'norm_score']))
+
+        # Forth stage: calculate line width from weights (normalize values between 0.5 and 4)
+        self.df_for_network['width'] = 0.0
+        min_width = self.df_for_network.loc[mask, 'weight'].min()
+        max_width = self.df_for_network.loc[mask, 'weight'].max()
+        new_min_width = config.min_edge_width
+        new_max_width = config.max_edge_width
+        self.df_for_network.loc[mask, 'width'] = new_min_width + \
+                                                 (self.df_for_network.loc[mask, 'weight'] - min_width) * \
+                                                 (new_max_width - new_min_width) / (max_width - min_width)
+
+        print("\nDF for network with weights and widths:")
+        print(self.df_for_network)
 
         before = time.time()
         # Create a new network from the updated df using networkx
         self.network = nx.from_pandas_edgelist(self.df_for_network, source='Sample1', target='Sample2',
-                                               edge_attr='weight')
+                                               edge_attr=['weight', 'width'])
         self.nodes_list = list(self.network.nodes)
 
         if self.is_metadata:
@@ -3925,9 +3967,7 @@ class StrainVisApp:
 
     def create_network_pane_ani(self, ani_scores_selected_genome_df):
         mean_only = 0
-        mean_std_only = 0
         mean_std = 0
-        mean_2_std = 0
 
         init_button = pn.widgets.Button(name='Initialize nodes positions', button_type='primary',
                                         button_style='outline')
@@ -4004,8 +4044,9 @@ class StrainVisApp:
         # Create a table for the network
         self.df_for_network_ani = ani_scores_selected_genome_df.loc[:, ['Sample1', 'Sample2', 'ANI']].copy()
 
+        eps = 1e-6
         self.df_for_network_ani.loc[(self.df_for_network_ani['ANI'] < 0), 'ANI'] = 0
-        self.df_for_network_ani.loc[(self.df_for_network_ani['ANI'] == 1), 'ANI'] = 0.999999
+        self.df_for_network_ani.loc[(self.df_for_network_ani['ANI'] == 1), 'ANI'] = 1 - eps
 
         # Set a score threshold for the connections (below it zero the weight).
         # The default threshold is the mean APSS + 1std
@@ -4017,10 +4058,43 @@ class StrainVisApp:
             self.ani_connections_threshold = mean_ANI
         else:
             self.ani_connections_threshold = 0.999
-        self.df_for_network_ani['weight'] = np.where(self.df_for_network_ani['ANI'] >= self.ani_connections_threshold,
-                                                     np.negative(np.log(1 - self.df_for_network_ani['ANI'])), 0)
-        #print("\nDF for network:")
-        #print(self.df_for_network)
+
+        # First stage: zero the scores below the threshold
+        self.df_for_network_ani['filtered_score'] = \
+            self.df_for_network_ani['ANI'].where(self.df_for_network_ani['ANI'] >= self.ani_connections_threshold, 0)
+
+        # Second stage: perform min-max normalization on the scores above the threshold
+        mask = self.df_for_network_ani['filtered_score'] > 0
+        min_val = self.df_for_network_ani.loc[mask, 'filtered_score'].min()
+        max_val = self.df_for_network_ani.loc[mask, 'filtered_score'].max()
+        self.df_for_network_ani['norm_score'] = 0.0
+        # avoid division by zero if all remaining values are equal
+        if max_val > min_val:
+            self.df_for_network_ani.loc[mask, 'norm_score'] = \
+                (self.df_for_network_ani.loc[mask, 'filtered_score'] - min_val) / (max_val - min_val)
+            # replace exact zeros (min_val) with 10-6 (so that they will have a very low weight but not zero)
+            self.df_for_network_ani.loc[mask, 'norm_score'] = \
+                self.df_for_network_ani.loc[mask, 'norm_score'].clip(eps, 1 - eps)
+        else:
+            self.df_for_network_ani.loc[mask, 'norm_score'] = max_val
+
+        # Third stage: apply the log function to transform the scores into weight values
+        self.df_for_network_ani['weight'] = 0.0
+        self.df_for_network_ani.loc[mask, 'weight'] = \
+            np.negative(np.log(1 - self.df_for_network_ani.loc[mask, 'norm_score']))
+
+        # Forth stage: calculate line width from weights (normalize values between 0.5 and 4)
+        self.df_for_network_ani['width'] = 0.0
+        min_width = self.df_for_network_ani.loc[mask, 'weight'].min()
+        max_width = self.df_for_network_ani.loc[mask, 'weight'].max()
+        new_min_width = config.min_edge_width
+        new_max_width = config.max_edge_width
+        self.df_for_network_ani.loc[mask, 'width'] = new_min_width + \
+                                                 (self.df_for_network_ani.loc[mask, 'weight'] - min_width) * \
+                                                 (new_max_width - new_min_width) / (max_width - min_width)
+
+        print("\nDF for network with weights and widths:")
+        print(self.df_for_network_ani)
         print("\ncreate_network_pane_ani:")
         print("Mean ANI: " + str(mean_ANI))
         print("Standard deviation ANI: " + str(std_ANI) + "\n")
@@ -4034,7 +4108,7 @@ class StrainVisApp:
 
         # Create a network using networkx
         self.network_ani = nx.from_pandas_edgelist(self.df_for_network_ani, source='Sample1', target='Sample2',
-                                                   edge_attr='weight')
+                                                   edge_attr=['weight', 'width'])
         self.nodes_list_ani = list(self.network_ani.nodes)
         nodes_num = len(self.nodes_list_ani)
         #print("\nNumber of nodes in the network = " + str(nodes_num))
@@ -4081,37 +4155,26 @@ class StrainVisApp:
                     mean_std = 0.999
                     str_mean_std = config.network_thresholds_options_ani[1] + " (ANI=0.999)"
                     self.network_threshold_select_ani.options.append(str_mean_std)
-                    mean_std_only = 1
 
                 else:
                     str_mean_std = config.network_thresholds_options_ani[1] + " (ANI=" + str(mean_std) + ")"
                     self.network_threshold_select_ani.options.append(str_mean_std)
 
-                    # Add the mean + 2std option only if it's <= 0.999 (and mean + 1std also <= 0.99)
-                    mean_2_std = round((mean_ANI + 2 * std_ANI), 3)
-                    if mean_2_std <= 0.999:
-                        str_mean_2_std = config.network_thresholds_options_ani[2] + " (ANI=" + str(mean_2_std) + ")"
-                        self.network_threshold_select_ani.options.append(str_mean_2_std)
-                    else:
-                        mean_std_only = 1
-
-            self.network_threshold_select_ani.options.append(config.network_thresholds_options_ani[3])
-            # Only mean - set this as the default
-            #if mean_only:
+            self.network_threshold_select_ani.options.append(config.network_thresholds_options_ani[2])
+            # Set the mean as the default threshold
             self.network_threshold_select_ani.value = self.network_threshold_select_ani.options[0]
-            # At least mean+std option available -> set this as the default
-            #else:
-            #    self.network_threshold_select_ani.value = self.network_threshold_select_ani.options[1]
 
             # Set watchers for the threshold widgets
             self.threshold_select_ani_watcher = self.network_threshold_select_ani.param.watch(partial(
-                self.changed_threshold_select_ani, mean_ANI, mean_std, mean_2_std, mean_only, mean_std_only), 'value',
+                self.changed_threshold_select_ani, mean_ANI, mean_std, mean_only), 'value',
                 onlychanged=True)
             self.is_defined_threshold_select_ani_watcher = 1
-            self.threshold_input_ani_watcher = self.network_threshold_input_ani.param.watch(self.changed_threshold_input_ani,
-                                                                                            'value', onlychanged=True)
-            self.highlight_sample_ani_watcher = self.highlight_sample_input_ani.param.watch(self.change_highlighted_sample_ani,
-                                                                                            'value', onlychanged=True)
+            self.threshold_input_ani_watcher = \
+                self.network_threshold_input_ani.param.watch(self.changed_threshold_input_ani,
+                                                             'value', onlychanged=True)
+            self.highlight_sample_ani_watcher = \
+                self.highlight_sample_input_ani.param.watch(self.change_highlighted_sample_ani,
+                                                            'value', onlychanged=True)
 
             # There is metadata
             if self.is_metadata:
@@ -4279,7 +4342,9 @@ class StrainVisApp:
             if not os.path.isabs(network_table_path):
                 network_table_path = self.downloads_dir_path + network_table_path
 
-        self.df_for_network_ani.to_csv(network_table_path, index=False, sep='\t')
+        # Export just the necessary columns to csv
+        self.df_for_network_ani[['Sample1', 'Sample2', 'ANI', 'weight']].to_csv(network_table_path, index=False,
+                                                                                sep='\t')
 
         download_message = "The table is successfully saved under:\n" + network_table_path
         markdown = pn.pane.Markdown(download_message, styles={'font-size': "12px", 'color': config.title_red_color})
@@ -4300,7 +4365,7 @@ class StrainVisApp:
             pos_tuple = (pos_x, pos_y)
             self.pos_dict_ani[node] = pos_tuple
 
-    def changed_threshold_select_ani(self, mean, mean_std, mean_2_std, mean_only, mean_std_only, event):
+    def changed_threshold_select_ani(self, mean, mean_std, mean_only, event):
         #print("\nchanged_threshold_select:")
         #print("Current mean: " + str(mean))
 
@@ -4317,14 +4382,6 @@ class StrainVisApp:
                 self.ani_connections_threshold = mean_std
                 self.network_threshold_input_ani.disabled = True
 
-        elif self.network_threshold_select_ani.value == self.network_threshold_select_ani.options[2]:
-            # The third option is the custom threshold
-            if mean_std_only:
-                self.ani_connections_threshold = self.network_threshold_input_ani.value
-                self.network_threshold_input_ani.disabled = False
-            else:
-                self.ani_connections_threshold = mean_2_std
-                self.network_threshold_input_ani.disabled = True
         else:
             self.ani_connections_threshold = self.network_threshold_input_ani.value
             self.network_threshold_input_ani.disabled = False
@@ -4342,7 +4399,7 @@ class StrainVisApp:
         print("\nchange_weight_attribute_ani:")
         print("ANI_connections_threshold = " + str(self.ani_connections_threshold))
 
-        # Update the threshold in the deafult filenames for download
+        # Update the threshold in the default filenames for download
         network_file = "Network_plot_ANI_" + self.ref_genome + "_" + \
                        self.network_iterations_ani.value + "_iterations_threshold_" + str(self.ani_connections_threshold)
         self.save_network_plot_path_ani.placeholder = network_file
@@ -4350,14 +4407,50 @@ class StrainVisApp:
         self.save_network_table_path_ani.placeholder = table_file
 
         # Recalculate the weights
-        self.df_for_network_ani['weight'] = np.where(self.df_for_network_ani['ANI'] >= self.ani_connections_threshold,
-                                                     np.negative(np.log(1 - self.df_for_network_ani['ANI'])), 0)
-        #print(self.df_for_network)
+        #self.df_for_network_ani['weight'] = np.where(self.df_for_network_ani['ANI'] >= self.ani_connections_threshold,
+        #                                             np.negative(np.log(1 - self.df_for_network_ani['ANI'])), 0)
+        # First stage: zero the scores below the threshold
+        self.df_for_network_ani['filtered_score'] = \
+            self.df_for_network_ani['ANI'].where(self.df_for_network_ani['ANI'] >= self.ani_connections_threshold, 0)
+
+        # Second stage: perform min-max normalization on the scores above the threshold
+        mask = self.df_for_network_ani['filtered_score'] > 0
+        min_val = self.df_for_network_ani.loc[mask, 'filtered_score'].min()
+        max_val = self.df_for_network_ani.loc[mask, 'filtered_score'].max()
+        self.df_for_network_ani['norm_score'] = 0.0
+        # avoid division by zero if all remaining values are equal
+        eps = 1e-6
+        if max_val > min_val:
+            self.df_for_network_ani.loc[mask, 'norm_score'] = \
+                (self.df_for_network_ani.loc[mask, 'filtered_score'] - min_val) / (max_val - min_val)
+            # replace exact zeros (min_val) with 10-6 (so that they will have a very low weight but not zero)
+            self.df_for_network_ani.loc[mask, 'norm_score'] = \
+                self.df_for_network_ani.loc[mask, 'norm_score'].clip(eps, 1 - eps)
+        else:
+            self.df_for_network_ani.loc[mask, 'norm_score'] = max_val
+
+        # Third stage: apply the log function to transform the scores into weight values
+        self.df_for_network_ani['weight'] = 0.0
+        self.df_for_network_ani.loc[mask, 'weight'] = \
+            np.negative(np.log(1 - self.df_for_network_ani.loc[mask, 'norm_score']))
+
+        # Forth stage: calculate line width from weights (normalize values between 0.5 and 4)
+        self.df_for_network_ani['width'] = 0.0
+        min_width = self.df_for_network_ani.loc[mask, 'weight'].min()
+        max_width = self.df_for_network_ani.loc[mask, 'weight'].max()
+        new_min_width = config.min_edge_width
+        new_max_width = config.max_edge_width
+        self.df_for_network_ani.loc[mask, 'width'] = new_min_width + \
+                                                     (self.df_for_network_ani.loc[mask, 'weight'] - min_width) * \
+                                                     (new_max_width - new_min_width) / (max_width - min_width)
+
+        print("\nDF for network with weights and widths:")
+        print(self.df_for_network_ani)
 
         before = time.time()
         # Create a new network from the updated df using networkx
         self.network_ani = nx.from_pandas_edgelist(self.df_for_network_ani, source='Sample1', target='Sample2',
-                                                   edge_attr='weight')
+                                                   edge_attr=['weight', 'width'])
         self.nodes_list_ani = list(self.network_ani.nodes)
 
         if self.is_metadata:
