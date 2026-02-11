@@ -72,7 +72,7 @@ def count_samples_num(row, df):
 
 
 def create_pairs_num_per_sampling_size(score_per_region_df):
-    print("\ncreate_pairs_num_per_sampling_size:")
+    #print("\ncreate_pairs_num_per_sampling_size:")
 
     regions_num_per_pair_df = score_per_region_df[['Sample1', 'Sample2', 'Synteny_score']].\
         groupby(['Sample1', 'Sample2']).count().reset_index(). \
@@ -106,7 +106,7 @@ def create_pairs_num_per_sampling_size(score_per_region_df):
     pairs_num_per_sampling_size_df['Number_of_samples'] = \
         pairs_num_per_sampling_size_df.apply(lambda row: count_samples_num(row, regions_num_per_pair_df), axis=1)
 
-    print(pairs_num_per_sampling_size_df)
+    #print(pairs_num_per_sampling_size_df)
 
     return pairs_num_per_sampling_size_df
 

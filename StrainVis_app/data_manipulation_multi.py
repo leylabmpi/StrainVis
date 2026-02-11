@@ -82,13 +82,10 @@ def filter_genomes_ani(ani_scores_all_genomes_df):
         sort_values('ANI', ascending=False).reset_index()
     pairs_num_df.columns.values[1] = "Number_of_pairs"
 
-    print("\nfilter_genomes_ani:")
-    print(pairs_num_df)
-
     # Leave only genomes, which have at lease 10 pairwise comparisons
     pairs_num_filtered_df = pairs_num_df[pairs_num_df["Number_of_pairs"] >= 10]
-    print("\nAfter filteration:")
-    print(pairs_num_filtered_df)
+    #print("\nfilter_genomes_ani:")
+    #print(pairs_num_filtered_df)
 
     filtered_genomes_list = list(pairs_num_filtered_df['Ref_genome'])
 
@@ -109,8 +106,8 @@ def create_sorted_by_pairs_genomes_list_syntracker(score_per_region_all_genomes_
         sort_values('40', ascending=False).reset_index()
     pairs_num_at_40_regions_df.columns.values[1] = "Number_of_pairs"
 
-    print("\ncreate_sorted_by_pairs_genomes_list_syntracker:")
-    print(pairs_num_at_40_regions_df)
+    #print("\ncreate_sorted_by_pairs_genomes_list_syntracker:")
+    #print(pairs_num_at_40_regions_df)
 
     genomes_list_by_pairs_num = list(pairs_num_at_40_regions_df['Ref_genome'])
     #print("\nGenomes list sorted by pairs number:")
@@ -174,8 +171,8 @@ def create_pairs_num_per_sampling_size(score_per_region_selected_genomes_df):
     summary_df['Number_of_species'] = \
         summary_df.apply(lambda row: count_species_num(row, pairs_num_per_sampling_size_df), axis=1)
 
-    print("\ncreate_pairs_num_per_sampling_size:")
-    print(summary_df)
+    #print("\ncreate_pairs_num_per_sampling_size:")
+    #print(summary_df)
 
     return summary_df
 

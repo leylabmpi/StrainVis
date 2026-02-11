@@ -1904,17 +1904,27 @@ class StrainVisApp:
             self.ref_genome_column.append(self.synteny_ani_single_tabs)
 
     def create_single_genome_column_both_mode(self):
-        self.create_single_genome_column_syntracker_mode()
-        self.create_single_genome_column_ANI_mode()
-        self.create_single_genome_column_combined_mode()
+        before = time.time()
+        print("\nStart create_single_genome_column_both_mode")
 
         self.synteny_single_initial_plots_column.styles = config.both_mode_SynTracker_single_style
         self.ani_single_plots_column.styles = config.both_mode_other_style
+
+        # Run the task of creating the ANI single view in another thread.
+        thread_ani = threading.Thread(target=self.create_single_genome_column_ANI_mode)
+        thread_ani.start()  # Start the thread
+
+        self.create_single_genome_column_syntracker_mode()
+        self.create_single_genome_column_combined_mode()
 
         self.synteny_ani_single_tabs.clear()
         self.synteny_ani_single_tabs.append(('SynTracker', self.synteny_single_initial_plots_column))
         self.synteny_ani_single_tabs.append(('ANI', self.ani_single_plots_column))
         self.synteny_ani_single_tabs.append(('Combined', self.combined_single_plots_column))
+
+        after = time.time()
+        duration = after - before
+        print("\ncreate_single_genome_column_both_mode took " + str(duration) + " seconds.\n")
 
     def create_single_genome_column_syntracker_mode(self):
 
@@ -1932,8 +1942,8 @@ class StrainVisApp:
                                                                                        self.ref_genome)
 
             # Run the task of creating the initial synteny_per_pos plots tab (without the plot itself) in another thread.
-            thread = threading.Thread(target=self.create_initial_synteny_per_pos_plot_tab)
-            thread.start()  # Start the thread
+            thread_synteny_per_pos = threading.Thread(target=self.create_initial_synteny_per_pos_plot_tab)
+            thread_synteny_per_pos.start()  # Start the thread
 
             # Initialize the dictionary that holds the calculated sampleing sizes
             for size in config.sampling_sizes:
@@ -2035,6 +2045,7 @@ class StrainVisApp:
         self.color_edges_by_feature_ani.value = False
 
         before = time.time()
+        print("\n\nStart create_single_genome_column_ANI_mode in another thread.")
 
         # Unwatch ANI plots related watchers (if it's not the first time that this function is called
         # and only for watchers that have been defined before)
@@ -2079,8 +2090,8 @@ class StrainVisApp:
             # Get the ANI scores table for the selected genome only
             self.ani_scores_selected_genome_df = ds.return_selected_genome_ani_table(self.ani_scores_all_genomes_df,
                                                                                      self.ref_genome)
-            print("\nANI df selected genome:")
-            print(self.ani_scores_selected_genome_df)
+            #print("\nANI df selected genome:")
+            #print(self.ani_scores_selected_genome_df)
 
             # Display the number of samples and the number of compared pairs
             num_samples = pd.unique(self.ani_scores_selected_genome_df[["Sample1", "Sample2"]].values.ravel()).shape[0]
@@ -2235,8 +2246,6 @@ class StrainVisApp:
                 time.sleep(1)
 
             # Building the initial synteny_per_pos plots tab has finished
-            #if self.finished_initial_synteny_per_pos_plot:
-
             contigs_num = len(self.contigs_list_by_name)
 
             # If there is more than one contig -
@@ -3514,8 +3523,8 @@ class StrainVisApp:
                                                  (self.df_for_network.loc[mask, 'weight'] - min_width) * \
                                                  (new_max_width - new_min_width) / (max_width - min_width)
 
-        print("\nDF for network with weights and widths:")
-        print(self.df_for_network)
+        #print("\nDF for network with weights and widths:")
+        #print(self.df_for_network)
 
         # Update the placeholder of the filenames for download with the default threshold.
         network_file = "Network_plot_" + self.ref_genome + "_" + self.sampling_size + "_regions_" + \
@@ -3855,8 +3864,8 @@ class StrainVisApp:
                                                  (self.df_for_network.loc[mask, 'weight'] - min_width) * \
                                                  (new_max_width - new_min_width) / (max_width - min_width)
 
-        print("\nDF for network with weights and widths:")
-        print(self.df_for_network)
+        #print("\nDF for network with weights and widths:")
+        #print(self.df_for_network)
 
         before = time.time()
         # Create a new network from the updated df using networkx
@@ -4093,8 +4102,8 @@ class StrainVisApp:
                                                  (self.df_for_network_ani.loc[mask, 'weight'] - min_width) * \
                                                  (new_max_width - new_min_width) / (max_width - min_width)
 
-        print("\nDF for network with weights and widths:")
-        print(self.df_for_network_ani)
+        #print("\nDF for network with weights and widths:")
+        #print(self.df_for_network_ani)
         print("\ncreate_network_pane_ani:")
         print("Mean ANI: " + str(mean_ANI))
         print("Standard deviation ANI: " + str(std_ANI) + "\n")
@@ -4444,8 +4453,8 @@ class StrainVisApp:
                                                      (self.df_for_network_ani.loc[mask, 'weight'] - min_width) * \
                                                      (new_max_width - new_min_width) / (max_width - min_width)
 
-        print("\nDF for network with weights and widths:")
-        print(self.df_for_network_ani)
+        #print("\nDF for network with weights and widths:")
+        #print(self.df_for_network_ani)
 
         before = time.time()
         # Create a new network from the updated df using networkx
@@ -6009,6 +6018,7 @@ class StrainVisApp:
             diff_array = self.genomes_subset_selected_size_APSS_df[
                 (self.genomes_subset_selected_size_APSS_df['Ref_genome'] == genome) &
                 (self.genomes_subset_selected_size_APSS_df['Category'] == diff_feature)]['APSS']
+        
             # Sample size is enough for P-value calculation
             if len(same_array) >= 1 and len(diff_array) >= 1:
                 before = time.time()
@@ -6034,8 +6044,8 @@ class StrainVisApp:
 
         if len(valid_pval_list) >= 2:
             reject, pval_corrected, _, q_values = multipletests(valid_pval_list, method='fdr_bh')
-            print("Corrected p-values:")
-            print(pval_corrected)
+            #print("Corrected p-values:")
+            #print(pval_corrected)
 
         valid_counter = 0
         if len(pval_corrected) > 0:
