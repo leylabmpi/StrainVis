@@ -1,5 +1,4 @@
 import gc
-
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from dna_features_viewer import GraphicFeature, GraphicRecord
@@ -5660,15 +5659,26 @@ class StrainVisApp:
             self.main_multi_column.append(self.synteny_ani_multi_tabs)
 
     def create_multi_genomes_column_both_mode(self):
-        self.create_multi_genomes_column_syntracker_mode()
-        self.create_multi_genomes_column_ANI_mode()
+        before = time.time()
+        print("\nStart create_multi_genomes_column_both_mode")
 
         self.synteny_multi_initial_plots_column.styles = config.both_mode_other_style
         self.ani_multi_plots_column.styles = config.both_mode_other_style
 
+        # Run the task of creating the ANI single view in another thread.
+        thread_ani_multi = threading.Thread(target=self.create_multi_genomes_column_ANI_mode)
+        thread_ani_multi.start()  # Start the thread
+
+        self.create_multi_genomes_column_syntracker_mode()
+        #self.create_multi_genomes_column_ANI_mode()
+
         self.synteny_ani_multi_tabs.clear()
         self.synteny_ani_multi_tabs.append(('SynTracker', self.synteny_multi_initial_plots_column))
         self.synteny_ani_multi_tabs.append(('ANI', self.ani_multi_plots_column))
+
+        after = time.time()
+        duration = after - before
+        print("\ncreate_multi_genomes_column_both_mode took " + str(duration) + " seconds.\n")
 
     def update_genomes_selection(self, event):
         # Build the two bar-plots for subsampled regions based on the selected list of genomes
@@ -5851,6 +5861,8 @@ class StrainVisApp:
             self.plots_by_size_multi_column.append(self.box_plot_card)
 
     def create_multi_genomes_column_ANI_mode(self):
+        before = time.time()
+        print("\n\nStart create_multi_genomes_column_ANI_mode in another thread.")
 
         # Unwatch watchers (if it's not the first time that this function is called)
         if self.visited_ANI_tab_multi and self.is_metadata:
@@ -5867,7 +5879,7 @@ class StrainVisApp:
 
         presented_genomes_list = self.ani_scores_genomes_subset_df['Ref_genome'].unique()
         self.species_num_in_subset_ani = len(presented_genomes_list)
-        print("\ncreate_multi_genomes_column_ANI_mode: Number of available species: " +
+        print("\nNumber of available species for ANI analysis: " +
               str(self.species_num_in_subset_ani))
 
         # No data for the selected genomes subset
@@ -5887,6 +5899,10 @@ class StrainVisApp:
             # Add the plots to the layout
             self.create_box_plot_multi_pane_ani()
             self.ani_multi_plots_column.append(self.box_plot_card_ani)
+
+        after = time.time()
+        duration = after - before
+        print("\ncreate_multi_genomes_column_ANI_mode took " + str(duration) + " seconds.\n")
 
     def create_box_plot_multi_pane(self):
         styling_title = "Plot styling options:"
@@ -6037,7 +6053,7 @@ class StrainVisApp:
             else:
                 genome_pval_dict[genome] = np.nan
                 genome_effect_size_dict[genome] = np.nan
-                print("\nCannot calculate P-value for feature " + feature + ": Sample size is not enough.")
+                #print("\nCannot calculate P-value for feature " + feature + ": Sample size is not enough.")
 
         #print("\nOriginal valid p-values:")
         #print(valid_pval_list)
@@ -6284,7 +6300,7 @@ class StrainVisApp:
         genome_effect_size_dict = {}
         pval_corrected = []
         for genome in self.sorted_selected_genomes_subset_ani:
-            print("\nGenome: " + genome + ", Feature: " + feature)
+            #print("\nGenome: " + genome + ", Feature: " + feature)
             same_array = self.ani_scores_genomes_subset_df[
                 (self.ani_scores_genomes_subset_df['Ref_genome'] == genome) &
                 (self.ani_scores_genomes_subset_df['Category'] == same_feature)]['ANI']
@@ -6310,18 +6326,18 @@ class StrainVisApp:
             else:
                 genome_pval_dict[genome] = np.nan
                 genome_effect_size_dict[genome] = np.nan
-                print("\nCannot calculate P-value for feature " + feature + ": Sample size is not enough.")
+                #print("\nCannot calculate P-value for feature " + feature + ": Sample size is not enough.")
 
-        print("\nOriginal p-values:")
-        print(valid_pval_list)
+        #print("\nOriginal p-values:")
+        #print(valid_pval_list)
 
         # Need to apply multiple testing correction
         if len(valid_pval_list) >= 2:
             reject, pval_corrected, _, q_values = multipletests(valid_pval_list, method='fdr_bh')
         else:
             pval_corrected = valid_pval_list
-        print("\nCorrected p-values:")
-        print(pval_corrected)
+        #print("\nCorrected p-values:")
+        #print(pval_corrected)
 
         valid_counter = 0
         if len(pval_corrected) > 0:
