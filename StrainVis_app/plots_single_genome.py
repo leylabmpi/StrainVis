@@ -1,5 +1,6 @@
 import time
 import re
+import math
 import numpy as np
 import pandas as pd
 import networkx as nx
@@ -133,9 +134,9 @@ def create_clustermap(matrix, type, cmap, method, is_metadata, feature, is_conti
                     feature_colors.append(cmap_metadata_mpl(normalized_values[i]))  # Apply the colormap to the value
             feature_colors_df = pd.DataFrame({feature: feature_colors}, index=matrix.index)
 
-            clustermap = sns.clustermap(matrix, metric=method, cmap=colmap, row_cluster=True, linewidths=.5,
-                                        cbar_pos=(0.04, 0.82, 0.02, 0.15), xticklabels=1, yticklabels=1,
-                                        dendrogram_ratio=(0.2, 0.2), mask=mask_array, row_colors=feature_colors_df)
+            clustermap = sns.clustermap(matrix, metric=method, cmap=colmap, linewidths=.5,
+                                        cbar_pos=(0.05, 0.92, 0.02, 0.15), xticklabels=1, yticklabels=1,
+                                        dendrogram_ratio=0.1, mask=mask_array, row_colors=feature_colors_df)
 
             # Create a ScalarMappable to associate the colormap with the normalized values
             norm = Normalize(vmin=min_value, vmax=max_value)
@@ -144,14 +145,14 @@ def create_clustermap(matrix, type, cmap, method, is_metadata, feature, is_conti
 
             # Add the colorbar next to the heatmap
             # [left, bottom, width, height] in figure coordinates
-            cbar_ax = clustermap.fig.add_axes([0.95, 0.82, 0.02, 0.15])
+            cbar_ax = clustermap.fig.add_axes([0.935, 0.92, 0.02, 0.15])
 
             cbar = clustermap.fig.colorbar(
                 sm, cax=cbar_ax, orientation='vertical'
             )
 
             # Customize the colorbar label
-            cbar.set_label(label=feature, labelpad=8)
+            cbar.set_label(label=feature, labelpad=7, fontsize=14)
 
         # Categorical feature
         else:
@@ -199,25 +200,33 @@ def create_clustermap(matrix, type, cmap, method, is_metadata, feature, is_conti
             colors_df = pd.DataFrame({feature: colors}, index=matrix.index)
             #print(colors_df)
 
-            clustermap = sns.clustermap(matrix, metric=method, cmap=colmap, row_cluster=True, linewidths=.5,
-                                        cbar_pos=(0.04, 0.82, 0.02, 0.15), xticklabels=1, yticklabels=1,
-                                        dendrogram_ratio=(0.2, 0.2), mask=mask_array, row_colors=colors_df)
+            # If number of groups <= 10, add legend and place the colorbar at the same height
+            if groups_num <= 12:
+                clustermap = sns.clustermap(matrix, metric=method, cmap=colmap, linewidths=.5,
+                                            cbar_pos=(0.04, 0.97, 0.02, 0.15), xticklabels=1, yticklabels=1,
+                                            dendrogram_ratio=0.1, mask=mask_array, row_colors=colors_df)
 
-            # If number of groups <= 10, add legend
-            if groups_num <= 10:
+                ncol = math.ceil(len(unique_groups) / 3)
                 legend_handles = [
-                    Line2D([0], [0], marker='o', color='w', markerfacecolor=group_to_color[group], markersize=8,
+                    Line2D([0], [0], marker='o', color='w', markerfacecolor=group_to_color[group], markersize=9,
                            markeredgecolor='black', markeredgewidth=0.1, label=group) for group in unique_groups]
 
                 # Add the legend to the plot
-                clustermap.ax_heatmap.legend(handles=legend_handles, title=feature, loc="upper left",
-                                             bbox_to_anchor=(1.06, 1.25), fontsize=10)
+                clustermap.ax_heatmap.legend(handles=legend_handles, title=feature, loc="upper left", ncol=ncol,
+                                             bbox_to_anchor=(0.0, 1.3), fontsize=14, title_fontsize=14,
+                                             columnspacing=1.0, handletextpad=0.4)
+
+            # More than 9 groups -> don't display legend
+            else:
+                clustermap = sns.clustermap(matrix, metric=method, cmap=colmap, linewidths=.5,
+                                            cbar_pos=(0.05, 0.92, 0.02, 0.15), xticklabels=1, yticklabels=1,
+                                            dendrogram_ratio=0.1, mask=mask_array, row_colors=colors_df)
 
     # No metadata
     else:
-        clustermap = sns.clustermap(matrix, metric=method, cmap=colmap, row_cluster=True, linewidths=.5,
-                                    cbar_pos=(0.04, 0.82, 0.02, 0.15), xticklabels=1, yticklabels=1,
-                                    dendrogram_ratio=(0.2, 0.2), mask=mask_array)
+        clustermap = sns.clustermap(matrix, metric=method, cmap=colmap, linewidths=.5,
+                                    cbar_pos=(0.02, 0.92, 0.02, 0.15), xticklabels=1, yticklabels=1,
+                                    dendrogram_ratio=0.1, mask=mask_array)
 
     if col_num <= 10:
         font_size = 14
@@ -248,7 +257,7 @@ def create_clustermap(matrix, type, cmap, method, is_metadata, feature, is_conti
                                           rotation='horizontal')
 
     # Access the colorbar and add a label
-    clustermap.cax.set_ylabel(type, labelpad=8)
+    clustermap.cax.set_ylabel(type, labelpad=7, fontsize=14)
     # Turn on the colorbar border
     clustermap.cax.spines['top'].set_visible(True)
     clustermap.cax.spines['right'].set_visible(True)

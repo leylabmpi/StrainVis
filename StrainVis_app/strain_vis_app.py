@@ -2623,7 +2623,7 @@ class StrainVisApp:
                     ax.text(
                         0.5, y_max * 1.02,  # x = middle of the two boxes, y = above max
                         f"p <= {p_val: .1e}\nEffect size = {effect_size: .2}",  # format p-value in scientific notation
-                        ha="center", va="bottom", fontsize=9
+                        ha="center", va="bottom", fontsize=10
                     )
             # Sample size is not enough for P-value calculation
             else:
@@ -2979,9 +2979,9 @@ class StrainVisApp:
                                            custom_cmap=self.custom_colormap_input_clustermap.value,
                                            metadata_dict=self.metadata_dict)
 
-            self.clustermap_pane = pn.pane.Matplotlib(self.clustermap_plot, height=600, dpi=300, tight=True,
+            self.clustermap_pane = pn.pane.Matplotlib(self.clustermap_plot, width=700, dpi=300, tight=True,
                                                       format='png')
-            clustermap_row = pn.Row(controls_col, pn.Spacer(width=30), self.clustermap_pane, styles={'padding': "15px"})
+            clustermap_row = pn.Row(controls_col, pn.Spacer(width=20), self.clustermap_pane, styles={'padding': "15px"})
 
             self.clustermap_card.append(clustermap_row)
 
@@ -3210,9 +3210,9 @@ class StrainVisApp:
                                                custom_cmap=self.custom_colormap_input_clustermap_ani.value,
                                                metadata_dict=self.metadata_dict)
 
-            self.clustermap_pane_ani = pn.pane.Matplotlib(self.clustermap_plot_ani, height=600, dpi=300, tight=True,
+            self.clustermap_pane_ani = pn.pane.Matplotlib(self.clustermap_plot_ani, width=700, dpi=300, tight=True,
                                                           format='png')
-            clustermap_row = pn.Row(controls_col, pn.Spacer(width=30), self.clustermap_pane_ani,
+            clustermap_row = pn.Row(controls_col, pn.Spacer(width=20), self.clustermap_pane_ani,
                                     styles={'padding': "15px"})
 
             self.clustermap_card_ani.append(clustermap_row)
@@ -5626,12 +5626,6 @@ class StrainVisApp:
         self.selected_genomes_subset = self.ref_genomes_list_by_pairs_num
         self.selected_subset_species_num = len(self.selected_genomes_subset)
 
-        # Doesn't work
-        #if self.number_of_genomes > 20:
-        #    self.genomes_subset_select.size = 20
-        #else:
-        #    self.genomes_subset_select.size = self.number_of_genomes
-
         self.genomes_select_card.append(self.genomes_subset_select)
 
         all_or_subset_row = pn.Row(self.all_or_subset_radio, pn.Spacer(width=15), self.genomes_sort_select_multi)
@@ -5644,18 +5638,28 @@ class StrainVisApp:
             styles={'margin': "0 0 10px 0", 'padding': "0"}
         )
         self.main_multi_column.clear()
-        self.main_multi_column.append(species_select_col)
+        calc_title = "Calculating, please wait..."
+
+        self.main_multi_column.append(pn.pane.Markdown(calc_title,
+                                                       styles={'font-size': "20px", 'color': config.title_purple_color,
+                                                               'margin': "0"}))
 
         if self.input_mode == "SynTracker":
             self.create_multi_genomes_column_syntracker_mode()
+            self.main_multi_column.clear()
+            self.main_multi_column.append(species_select_col)
             self.main_multi_column.append(self.synteny_multi_initial_plots_column)
 
         elif self.input_mode == "ANI":
             self.create_multi_genomes_column_ANI_mode()
+            self.main_multi_column.clear()
+            self.main_multi_column.append(species_select_col)
             self.main_multi_column.append(self.ani_multi_plots_column)
 
         else:
             self.create_multi_genomes_column_both_mode()
+            self.main_multi_column.clear()
+            self.main_multi_column.append(species_select_col)
             self.main_multi_column.append(self.synteny_ani_multi_tabs)
 
     def create_multi_genomes_column_both_mode(self):
