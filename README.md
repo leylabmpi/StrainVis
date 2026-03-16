@@ -137,3 +137,16 @@ The user may enter the name of the file (including full path), or use the defaul
 A detailed documentation about all types of provided analyses and customization options is found here: https://github.com/leylabmpi/StrainVis/blob/main/StrainVis_app/manual.md
 
 The manual can also be viewed from the StrainVis web-application, under the 'Help' tab.
+
+## Citation
+
+If you use StrainVis please cite:
+
+**StrainVis: interactive visual strain-level analysis of microbiome data**  
+Paz I, Ley RE and Enav H.  
+bioRxiv (2026). DOI: https://doi.org/10.64898/2026.03.11.711087
+
+## Contact
+
+If you encounter any issues or require assistance using StrainVis, please send an email to:   
+inbal.paz@tuebingen.mpg.de or hagay.enav@tuebingen.mpg.de .

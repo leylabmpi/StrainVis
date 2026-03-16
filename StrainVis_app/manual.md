@@ -42,6 +42,14 @@ It also enables to interactively select the metadata feature by which the sample
 
 Each of the presented plots can be downloaded and saved as a high-resolution image, in several common image formats.
 
+## Citation
+
+If you use StrainVis please cite:
+
+**StrainVis: interactive visual strain-level analysis of microbiome data**  
+Paz I, Ley RE and Enav H.  
+bioRxiv (2026). DOI: https://doi.org/10.64898/2026.03.11.711087
+
 ## Installation
 
 Download the latest release of StrainVis from: https://github.com/leylabmpi/StrainVis/releases.
