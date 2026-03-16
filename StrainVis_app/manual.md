@@ -3,6 +3,7 @@
 ### Version 1.1.6
 
 - [Overview](#overview)
+- [Citation](#citation)
 - [Installation](#installation)
 - [Open StrainVis web-application](#open-strainvis-web-application)
 - [Run StrainVis on a remote server and open it in a local browser](#run-strainvis-on-a-remote-server-and-open-it-in-a-local-browser)
