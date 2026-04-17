@@ -1,4 +1,4 @@
-name: StrainVis_1_1
+name: StrainVis_1_2
 
 channels:
   - conda-forge
@@ -7,6 +7,7 @@ channels:
 dependencies:
   - python
   - panel>=1.6.1
+  - psutil
   - hvplot
   - seaborn
   - scipy

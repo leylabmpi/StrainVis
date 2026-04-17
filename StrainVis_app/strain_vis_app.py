@@ -29,8 +29,37 @@ pn.extension(disconnect_notification='Connection lost, try reloading the page!')
 pn.extension('floatpanel')
 
 
+def create_new_session(event):
+    print("\n\nIn create_new_session")
+    print("DF count before cleanup:", count_dataframes())
+    pn.state.location.reload = True
+
+
 def destroyed(session_context):
     print("\n\n\nThe session is closed...")
+
+    # Clear any global or cached objects
+    pn.state.cache.clear()
+
+    gc.collect()
+
+
+def count_dataframes():
+    return sum(1 for obj in gc.get_objects() if isinstance(obj, pd.DataFrame))
+
+
+def find_live_dfs():
+    dfs = [obj for obj in gc.get_objects() if isinstance(obj, pd.DataFrame)]
+
+    print(f"\nFound {len(dfs)} live DataFrames:\n")
+
+    for df in dfs:
+        leak_id = getattr(df, "_leak_id", "NO_ID")
+        size = df.memory_usage(deep=True).sum() / 1024 ** 2
+
+        print(f"ID={leak_id} | shape={df.shape} | size={size:.2f} MB")
+
+    return dfs
 
 
 def change_disabled_state_inverse(chkbox_state):
@@ -286,42 +315,7 @@ class StrainVisApp:
 
     def __init__(self):
 
-        # Variables
-        self.is_syntracker_file_path = 0
-        self.is_ani_file_path = 0
-        self.input_mode = "SynTracker"  # Options: SynTracker / ANI / both
-        self.active_input_mode = "SynTracker"  # In case of both, can be: SynTracker / ANI
-        self.score_type = "APSS"  # Options: APSS / ANI
-        self.syntracker_filename = ""
-        self.ani_filename = ""
-        self.input_file_loaded = 0
-        self.syntracker_loaded = 0
-        self.ani_loaded = 0
-        self.is_metadata = 0
-        self.valid_metadata = 1
-        self.metadata_dict = dict()
-        self.groups_per_feature_dict = dict()
-        self.metadata_features_list = []
-        self.number_of_genomes = 0
-        self.number_of_genomes_syntracker = 0
-        self.number_of_genomes_ani = 0
-        self.ref_genomes_list = []
-        self.ref_genomes_list_by_pairs_num = []
-        self.ref_genomes_list_syntracker = []
-        self.ref_genomes_list_by_pairs_num_syntracker = []
-        self.ref_genomes_list_ani = []
-        self.ref_genomes_list_by_pairs_num_ani = []
-        self.annotation_per_ref_genome_dict = dict()
-        self.selected_genomes_subset = []
-        self.sorted_selected_genomes_subset = []
-        self.sorted_selected_genomes_subset_ani = []
-        self.selected_subset_species_num = 0
-        self.species_num_at_sampling_size = 0
-        self.species_num_in_subset_syntracker = 0
-        self.species_num_in_subset_ani = 0
-        self.ref_genome = ""
-        self.sampling_size = ""
-        self.sampling_size_multi = ""
+        # Dataframes
         self.score_per_region_all_genomes_df = pd.DataFrame()
         self.score_per_region_genomes_subset_df = pd.DataFrame()
         self.score_per_region_selected_genome_df = pd.DataFrame()
@@ -336,14 +330,386 @@ class StrainVisApp:
         self.pairs_num_per_sampling_size_multi_genomes_df = pd.DataFrame()
         self.boxplot_p_values_df = pd.DataFrame()
         self.boxplot_p_values_df_ani = pd.DataFrame()
+        self.scores_matrix = pd.DataFrame()
+        self.scores_matrix_ani = pd.DataFrame()
+        self.df_for_jitter = pd.DataFrame()
+        self.df_for_jitter_ani = pd.DataFrame()
+        self.df_for_combined_scatter = pd.DataFrame()
+        self.df_for_network = pd.DataFrame()
+        self.df_for_network_ani = pd.DataFrame()
+
+        # Dictionaries
+        self.metadata_dict = dict()
+        self.groups_per_feature_dict = dict()
+        self.annotation_per_ref_genome_dict = dict()
         self.APSS_by_genome_all_sizes_dict = dict()
         self.APSS_all_genomes_all_sizes_dict = dict()
         self.calculated_APSS_genome_size_dict = dict()
         self.calculated_APSS_all_genomes_size_dict = dict()
-        self.working_directory = os.getcwd()
-        self.downloads_dir_path = self.working_directory + config.downloads_dir
+        self.pos_dict = dict()
+        self.pos_dict_ani = dict()
+
+        # Lists
+        self.metadata_features_list = []
+        self.ref_genomes_list = []
+        self.ref_genomes_list_by_pairs_num = []
+        self.ref_genomes_list_syntracker = []
+        self.ref_genomes_list_by_pairs_num_syntracker = []
+        self.ref_genomes_list_ani = []
+        self.ref_genomes_list_by_pairs_num_ani = []
+        self.selected_genomes_subset = []
+        self.sorted_selected_genomes_subset = []
+        self.sorted_selected_genomes_subset_ani = []
         self.contigs_list_by_name = []
         self.contigs_list_by_length = []
+        self.nodes_list = []
+        self.nodes_list_ani = []
+
+        # Watchers
+        self.genomes_select_watcher = None
+        self.genomes_sort_select_watcher = None
+        self.genomes_sort_select_multi_watcher = None
+        self.threshold_select_watcher = None
+        self.threshold_input_watcher = None
+        self.highlight_sample_watcher = None
+        self.threshold_select_ani_watcher = None
+        self.threshold_input_ani_watcher = None
+        self.highlight_sample_ani_watcher = None
+        self.feature_select_watcher = None
+        self.feature_select_ani_watcher = None
+        self.continuous_network_watcher = None
+        self.colormap_watcher = None
+        self.custom_colormap_watcher = None
+        self.nodes_colorby_watcher = None
+        self.nodes_highlight_by_watcher = None
+        self.continuous_network_ani_watcher = None
+        self.colormap_ani_watcher = None
+        self.custom_colormap_ani_watcher = None
+        self.nodes_colorby_ani_watcher = None
+        self.nodes_highlight_by_ani_watcher = None
+        self.feature_colormap_watcher = None
+        self.custom_colormap_clustermap_watcher = None
+        self.feature_colormap_ani_watcher = None
+        self.custom_colormap_clustermap_ani_watcher = None
+        self.continuous_clustermap_watcher = None
+        self.continuous_clustermap_ani_watcher = None
+        self.color_by_feature_clustermap_watcher = None
+        self.color_by_feature_clustermap_ani_watcher = None
+        self.jitter_feature_watcher = None
+        self.jitter_feature_ani_watcher = None
+        self.synteny_per_pos_feature_select_watcher = None
+        self.contig_select_watcher = None
+        self.sorting_select_watcher = None
+        self.avg_plot_chkbox_watcher = None
+        self.avg_plot_color_watcher = None
+        self.coverage_plot_chkbox_watcher = None
+        self.coverage_plot_color_watcher = None
+        self.hypervar_chkbox_watcher = None
+        self.hypervar_color_watcher = None
+        self.hypercons_chkbox_watcher = None
+        self.hypercons_color_watcher = None
+        self.alpha_slider_watcher = None
+        self.show_annotations_watcher = None
+
+        # Panel Widgets
+        self.header_buttons = None
+        self.input_type_radio_group = None
+        self.SynTracker_text_input = None
+        self.SynTracker_input_file = None
+        self.ANI_text_input = None
+        self.ANI_input_file = None
+        self.metadata_file = None
+        self.submit_button = None
+        self.new_file_button = None
+        self.genomes_select = None
+        self.genomes_sort_select = None
+        self.sample_sizes_slider = None
+        self.show_single_plots_button = None
+        self.all_or_subset_radio = None
+        self.genomes_subset_select = None
+        self.genomes_sort_select_multi = None
+        self.update_genomes_selection_button = None
+        self.sample_sizes_slider_multi = None
+        self.show_box_plot_multi_button = None
+        self.clustermap_cmap = None
+        self.clustermap_method = None
+        self.clustermap_image_format = None
+        self.save_clustermap_file_path = None
+        self.save_matrix_file_path = None
+        self.use_metadata_clustermap = None
+        self.color_by_feature = None
+        self.is_continuous_clustermap = None
+        self.feature_colormap = None
+        self.custom_colormap_input_clustermap = None
+        self.clustermap_cmap_ani = None
+        self.clustermap_method_ani = None
+        self.clustermap_image_format_ani = None
+        self.save_clustermap_file_path_ani = None
+        self.save_matrix_file_path_ani = None
+        self.use_metadata_clustermap_ani = None
+        self.color_by_feature_ani = None
+        self.is_continuous_clustermap_ani = None
+        self.feature_colormap_ani = None
+        self.custom_colormap_input_clustermap_ani = None
+        self.use_metadata_jitter = None
+        self.jitter_color = None
+        self.jitter_type_select = None
+        self.jitter_feature_select = None
+        self.jitter_same_color = None
+        self.jitter_different_color = None
+        self.jitter_image_format = None
+        self.save_jitter_file_path = None
+        self.save_jitter_table_path = None
+        self.use_metadata_jitter_ani = None
+        self.jitter_color_ani = None
+        self.jitter_type_select_ani = None
+        self.jitter_feature_select_ani = None
+        self.jitter_same_color_ani = None
+        self.jitter_different_color_ani = None
+        self.jitter_image_format_ani = None
+        self.save_jitter_file_path_ani = None
+        self.save_jitter_table_path_ani = None
+        self.sample_sizes_combined_scatter_slider = None
+        self.use_metadata_combined_scatter = None
+        self.combined_scatter_color = None
+        self.combined_scatter_feature_select = None
+        self.combined_scatter_same_color = None
+        self.combined_scatter_different_color = None
+        self.combined_scatter_image_format = None
+        self.save_combined_scatter_file_path = None
+        self.save_combined_scatter_table_path = None
+        self.use_metadata_network = None
+        self.network_node_color = None
+        self.network_edge_color = None
+        self.nodes_color_by = None
+        self.is_continuous_network = None
+        self.nodes_colormap = None
+        self.custom_colormap_input = None
+        self.highlight_nodes_by_feature = None
+        self.nodes_highlight_by = None
+        self.nodes_highlight_group_select = None
+        self.color_edges_by_feature = None
+        self.edges_color_by = None
+        self.network_within_color = None
+        self.network_between_color = None
+        self.show_labels_chkbox = None
+        self.all_or_highlighted_select = None
+        self.highlight_sample_chkbox = None
+        self.highlight_sample_input = None
+        self.network_threshold_select = None
+        self.network_threshold_input = None
+        self.network_iterations = None
+        self.network_image_format = None
+        self.save_network_plot_path = None
+        self.save_network_table_path = None
+        self.use_metadata_network_ani = None
+        self.network_node_color_ani = None
+        self.network_edge_color_ani = None
+        self.nodes_color_by_ani = None
+        self.is_continuous_network_ani = None
+        self.nodes_colormap_ani = None
+        self.custom_colormap_input_ani = None
+        self.highlight_nodes_by_feature_ani = None
+        self.nodes_highlight_by_ani = None
+        self.nodes_highlight_group_select_ani = None
+        self.color_edges_by_feature_ani = None
+        self.edges_color_by_ani = None
+        self.network_within_color_ani = None
+        self.network_between_color_ani = None
+        self.show_labels_chkbox_ani = None
+        self.all_or_highlighted_select_ani = None
+        self.highlight_sample_chkbox_ani = None
+        self.highlight_sample_input_ani = None
+        self.network_threshold_select_ani = None
+        self.network_threshold_input_ani = None
+        self.network_iterations_ani = None
+        self.network_image_format_ani = None
+        self.save_network_plot_path_ani = None
+        self.save_network_table_path_ani = None
+        self.use_metadata_box_plot = None
+        self.box_plot_color = None
+        self.box_plot_feature_select = None
+        self.box_plot_same_color = None
+        self.box_plot_different_color = None
+        self.box_plot_image_format = None
+        self.save_box_plot_file_path = None
+        self.save_boxplot_table_path = None
+        self.save_pvalues_table_path = None
+        self.download_pvalues_button = None
+        self.use_metadata_box_plot_ani = None
+        self.box_plot_color_ani = None
+        self.box_plot_feature_select_ani = None
+        self.box_plot_same_color_ani = None
+        self.box_plot_different_color_ani = None
+        self.box_plot_image_format_ani = None
+        self.save_box_plot_file_path_ani = None
+        self.save_boxplot_table_path_ani = None
+        self.save_pvalues_table_path_ani = None
+        self.download_pvalues_button_ani = None
+        self.contig_select = None
+        self.sorting_select = None
+        self.start_pos_input = None
+        self.end_pos_input = None
+        self.avg_plot_chkbox = None
+        self.avg_plot_color = None
+        self.coverage_plot_chkbox = None
+        self.coverage_plot_color = None
+        self.hypervar_chkbox = None
+        self.hypervar_color = None
+        self.hypercons_chkbox = None
+        self.hypercons_color = None
+        self.alpha_slider = None
+        self.synteny_per_pos_image_format = None
+        self.save_synteny_per_pos_plot_path = None
+        self.save_synteny_per_pos_table_path = None
+        self.synteny_per_pos_feature_select = None
+        self.synteny_per_pos_groups_select = None
+        self.filter_synteny_per_pos_button = None
+        self.reset_filter_synteny_per_pos_button = None
+        self.upload_annotation_file = None
+        self.submit_annotation_file_button = None
+        self.show_annotations_chkbox = None
+        self.annotation_help_button = None
+
+        # Panel layouts
+        self.menu_row = None
+        self.header_container = None
+        self.main_container = None
+        self.main_area = None
+        self.help_area = None
+        self.mandatory_input_card = None
+        self.optional_input_card = None
+        self.ani_upload_row = None
+        self.genomes_select_card = None
+        self.single_multi_genome_tabs = None
+        self.synteny_ani_single_tabs = None
+        self.synteny_ani_multi_tabs = None
+        self.main_single_column = None
+        self.main_multi_column = None
+        self.ref_genome_column = None
+        self.synteny_single_initial_plots_column = None
+        self.ani_single_plots_column = None
+        self.combined_single_plots_column = None
+        self.synteny_single_tabs = None
+        self.APSS_analyses_single_column = None
+        self.synteny_per_pos_plot_column = None
+        self.plots_by_size_single_column = None
+        self.synteny_multi_initial_plots_column = None
+        self.ani_multi_plots_column = None
+        self.plots_by_size_multi_column = None
+        self.selected_contig_column = None
+        self.clustermap_card = None
+        self.jitter_card = None
+        self.clustermap_card_ani = None
+        self.jitter_card_ani = None
+        self.network_card = None
+        self.network_card_ani = None
+        self.combined_scatter_card = None
+        self.box_plot_card = None
+        self.box_plot_card_ani = None
+        self.download_clustermap_column = None
+        self.download_matrix_column = None
+        self.download_clustermap_column_ani = None
+        self.download_matrix_column_ani = None
+        self.metadata_clustermap_card = None
+        self.metadata_clustermap_card_ani = None
+        self.metadata_jitter_card = None
+        self.download_jitter_column = None
+        self.download_jitter_table_column = None
+        self.metadata_jitter_card_ani = None
+        self.download_jitter_column_ani = None
+        self.download_jitter_table_column_ani = None
+        self.metadata_combined_scatter_card = None
+        self.download_combined_scatter_column = None
+        self.download_combined_scatter_table_column = None
+        self.layout_parameters_card = None
+        self.metadata_colorby_card = None
+        self.download_network_column = None
+        self.download_network_table_column = None
+        self.layout_parameters_card_ani = None
+        self.metadata_colorby_card_ani = None
+        self.download_network_column_ani = None
+        self.download_network_table_column_ani = None
+        self.metadata_box_plot_card = None
+        self.download_box_plot_column = None
+        self.download_boxplot_table_column = None
+        self.download_pvalues_table_column = None
+        self.download_multi_col = None
+        self.metadata_box_plot_card_ani = None
+        self.download_box_plot_column_ani = None
+        self.download_pvalues_table_column_ani = None
+        self.download_boxplot_table_column_ani = None
+        self.download_multi_col_ani = None
+        self.download_synteny_per_pos_plot_column = None
+        self.download_synteny_per_pos_table_column = None
+        self.filter_by_metadata_card = None
+        self.add_annotation_card = None
+        self.annotation_upload_col = None
+        self.show_annotations_col = None
+        self.show_annotations_row = None
+        self.metadata_upload_row = None
+
+        # Panel panes
+        self.clustermap_pane = ""
+        self.clustermap_pane_ani = ""
+        self.jitter_pane = ""
+        self.jitter_pane_ani = ""
+        self.network_pane = ""
+        self.network_pane_ani = ""
+        self.box_plot_pane = ""
+        self.box_plot_pane_ani = ""
+        self.synteny_per_pos_pane = ""
+
+        # Plots objects
+        self.clustermap_plot = ""
+        self.clustermap_plot_ani = ""
+        self.jitter_plot = ""
+        self.jitter_plot_ani = ""
+        self.combined_scatter_plot = ""
+        self.network_plot_hv = ""
+        self.network_plot_matplotlib = ""
+        self.network_plot_hv_ani = ""
+        self.network_plot_matplotlib_ani = ""
+        self.box_plot = ""
+        self.box_plot_ani = ""
+        self.synteny_per_pos_plot = ""
+        self.ax_for_synteny_per_pos_plot = ""
+        self.coverage_plot = ""
+        self.line_avg_plot = ""
+        self.hypervar_bars = ""
+        self.hypercons_bars = ""
+
+        # Store watchers and callbacks for session cleanup
+        self._watchers = []
+        self._button_callbacks = []
+        self._bounded_functions = []
+        self._bounded_panes = []
+
+        # Other variables
+        self.is_syntracker_file_path = 0
+        self.is_ani_file_path = 0
+        self.input_mode = "SynTracker"  # Options: SynTracker / ANI / both
+        self.active_input_mode = "SynTracker"  # In case of both, can be: SynTracker / ANI
+        self.score_type = "APSS"  # Options: APSS / ANI
+        self.syntracker_filename = ""
+        self.ani_filename = ""
+        self.input_file_loaded = 0
+        self.syntracker_loaded = 0
+        self.ani_loaded = 0
+        self.is_metadata = 0
+        self.valid_metadata = 1
+        self.number_of_genomes = 0
+        self.number_of_genomes_syntracker = 0
+        self.number_of_genomes_ani = 0
+        self.selected_subset_species_num = 0
+        self.species_num_at_sampling_size = 0
+        self.species_num_in_subset_syntracker = 0
+        self.species_num_in_subset_ani = 0
+        self.ref_genome = ""
+        self.sampling_size = ""
+        self.sampling_size_multi = ""
+        self.working_directory = os.getcwd()
+        self.downloads_dir_path = self.working_directory + config.downloads_dir
         self.total_pairs_genome = 0
         self.avg_score_genome = 0
         self.std_score_genome = 0
@@ -353,50 +719,37 @@ class StrainVisApp:
         self.median_counts_filtered = 0
         self.bottom_percentile_counts = 0
         self.bottom_percentile_counts_filtered = 0
-        self.genomes_select_watcher = ""
-        self.genomes_sort_select_watcher = ""
-        self.genomes_sort_select_multi_watcher = ""
-        self.threshold_select_watcher = ""
-        self.threshold_input_watcher = ""
-        self.highlight_sample_watcher = ""
-        self.threshold_select_ani_watcher = ""
-        self.threshold_input_ani_watcher = ""
-        self.highlight_sample_ani_watcher = ""
-        self.feature_select_watcher = ""
-        self.feature_select_ani_watcher = ""
-        self.continuous_network_watcher = ""
-        self.colormap_watcher = ""
-        self.custom_colormap_watcher = ""
-        self.nodes_colorby_watcher = ""
-        self.nodes_highlight_by_watcher = ""
-        self.continuous_network_ani_watcher = ""
-        self.colormap_ani_watcher = ""
-        self.custom_colormap_ani_watcher = ""
-        self.nodes_colorby_ani_watcher = ""
-        self.nodes_highlight_by_ani_watcher = ""
-        self.feature_colormap_watcher = ""
-        self.custom_colormap_clustermap_watcher = ""
-        self.feature_colormap_ani_watcher = ""
-        self.custom_colormap_clustermap_ani_watcher = ""
-        self.continuous_clustermap_watcher = ""
-        self.continuous_clustermap_ani_watcher = ""
-        self.color_by_feature_clustermap_watcher = ""
-        self.color_by_feature_clustermap_ani_watcher = ""
-        self.jitter_feature_watcher = ""
-        self.jitter_feature_ani_watcher = ""
-        self.synteny_per_pos_feature_select_watcher = ""
         self.visited_multi_genome_tab = 0
         self.activated_synteny_per_pos_tab = 0
         self.clicked_button_display_APSS = 0
         self.visited_ANI_tab = 0
         self.clicked_button_display_APSS_multi = 0
         self.visited_ANI_tab_multi = 0
+        self.network = ""
+        self.APSS_connections_threshold = config.APSS_connections_threshold_default
+        self.network_ani = ""
+        self.ani_connections_threshold = config.ANI_connections_threshold_default
+        self.visited_synteny_per_pos_tab = 0
+        self.finished_initial_synteny_per_pos_plot = 0
+        self.ax_annotations = ""
+        self.contig_name = ""
+        self.contig_length = ""
+        self.filter_plot_by_metadata = 0
+        self.gff_filename = ""
+        self.show_annotations = False
 
         # Bootstrap template
         self.template = pn.template.VanillaTemplate(
             title='StrainVis',
             site_url="strain_vis",
         )
+
+        ###################################################################
+        # Build the template only after the session is loaded
+        #pn.state.onload(self._build_template)
+
+    def _build_template(self):
+        #print("\n\nBuilding the template")
 
         # Apply custom CSS to adjust button font size in the header
         button_css = '''
@@ -416,7 +769,8 @@ class StrainVisApp:
 
         self.header_buttons = pn.widgets.ToggleGroup(name='header_buttons', options=['Home', 'Help'], behavior="radio",
                                                      button_type='primary', stylesheets=[button_css])
-        self.header_buttons.param.watch(self.load_correct_page, 'value')
+        header_buttons_watcher = self.header_buttons.param.watch(self.load_correct_page, 'value')
+        self._watchers.append(header_buttons_watcher)
         self.menu_row = pn.Row(self.header_buttons, styles=config.menu_row_style)
         self.header_container = pn.Column(
             self.menu_row,
@@ -457,7 +811,8 @@ class StrainVisApp:
                                                                       'Both SynTracker and ANI files (for the same species)'],
                                                              behavior="radio", widget_type="box", inline=True,
                                                              stylesheets=[radio_group_css])
-        self.input_type_radio_group.param.watch(self.update_input_card, 'value', onlychanged=True)
+        input_type_watcher = self.input_type_radio_group.param.watch(self.update_input_card, 'value', onlychanged=True)
+        self._watchers.append(input_type_watcher)
         self.SynTracker_text_input = pn.widgets.TextInput(name='', placeholder='Enter SynTracker file path here...')
         self.SynTracker_input_file = pn.widgets.FileInput(accept='.csv, .tab, .txt')
         self.ANI_text_input = pn.widgets.TextInput(name='', placeholder='Enter ANI file path here...')
@@ -471,10 +826,12 @@ class StrainVisApp:
                                                                 ani_file_input=self.ANI_input_file,
                                                                 ani_text_input=self.ANI_text_input,
                                                                 watch=True))
-        self.submit_button.on_click(self.load_input_file)
+        sb = self.submit_button.on_click(self.load_input_file)
+        self._button_callbacks.append((self.submit_button, sb))
 
         self.new_file_button = pn.widgets.Button(name='Process a new input file', button_type='primary')
-        self.new_file_button.on_click(self.create_new_session)
+        nfb = self.new_file_button.on_click(create_new_session)
+        self._button_callbacks.append((self.new_file_button, nfb))
 
         self.genomes_select = pn.widgets.Select(name='Select a species to process:', value=None,
                                                 options=[], styles={'margin': "0"})
@@ -484,7 +841,8 @@ class StrainVisApp:
                                                              bar_color='white')
         self.show_single_plots_button = pn.widgets.Button(name='Display plots using the selected number of regions',
                                                           button_type='primary', margin=(25, 0))
-        self.show_single_plots_button.on_click(self.create_single_genome_plots_by_APSS)
+        sdpb = self.show_single_plots_button.on_click(self.create_single_genome_plots_by_APSS)
+        self._button_callbacks.append((self.show_single_plots_button, sdpb))
 
         self.all_or_subset_radio = pn.widgets.RadioBoxGroup(name='all_or_subset',
                                                             options=['All species', 'Select a subset of species'],
@@ -505,14 +863,16 @@ class StrainVisApp:
         self.update_genomes_selection_button = pn.widgets.Button(name='Update species selection/sorting',
                                                                  button_type='primary',
                                                                  styles={'margin': "12px 0 12px 10px"})
-        self.update_genomes_selection_button.on_click(self.update_genomes_selection)
+        ugsb = self.update_genomes_selection_button.on_click(self.update_genomes_selection)
+        self._button_callbacks.append((self.update_genomes_selection_button, ugsb))
         self.sample_sizes_slider_multi = pn.widgets.DiscreteSlider(name='Subsampled regions',
                                                                    options=config.sampling_sizes, bar_color='white',
                                                                    styles={'font-size': "16px", 'width': "450px",
                                                                            'text-align': "center"})
         self.show_box_plot_multi_button = pn.widgets.Button(name='Display plot using the selected number of regions',
                                                             button_type='primary', margin=(25, 0))
-        self.show_box_plot_multi_button.on_click(self.create_multi_genomes_plots_by_APSS)
+        sbpmb = self.show_box_plot_multi_button.on_click(self.create_multi_genomes_plots_by_APSS)
+        self._button_callbacks.append((self.show_box_plot_multi_button, sbpmb))
 
         # Panel layouts
         single_multi_tabs_css = '''
@@ -597,9 +957,6 @@ class StrainVisApp:
         download_table_text = 'Save data table as: (if no full path, the file is saved under \'Downloads/\')'
 
         # Clustermap elements
-        self.clustermap_plot = ""
-        self.clustermap_pane = ""
-        self.scores_matrix = pd.DataFrame()
         self.clustermap_cmap = pn.widgets.Select(value=config.clustermap_colormaps_list[0],
                                                  options=config.clustermap_colormaps_list,
                                                  name="Select colormap from the following list:")
@@ -633,9 +990,6 @@ class StrainVisApp:
             disabled=pn.bind(change_disabled_state_custom_colormap, value=self.feature_colormap, watch=True))
 
         # Clustermap ANI elements
-        self.clustermap_plot_ani = ""
-        self.clustermap_pane_ani = ""
-        self.scores_matrix_ani = pd.DataFrame()
         self.clustermap_cmap_ani = pn.widgets.Select(value=config.clustermap_colormaps_list[0],
                                                      options=config.clustermap_colormaps_list,
                                                      name="Select colormap from the following list:")
@@ -668,9 +1022,6 @@ class StrainVisApp:
             disabled=pn.bind(change_disabled_state_custom_colormap, value=self.feature_colormap_ani, watch=True))
 
         # Jitter plot elements
-        self.jitter_plot = ""
-        self.jitter_pane = ""
-        self.df_for_jitter = pd.DataFrame()
         self.use_metadata_jitter = pn.widgets.Checkbox(name='Use metadata in plot', value=False,
                                                        styles={'font-size': "14px"})
         self.jitter_color = pn.widgets.ColorPicker(name='Select color', value='#3b89be',
@@ -704,9 +1055,6 @@ class StrainVisApp:
         self.download_jitter_table_column = pn.Column()
 
         # Jitter plot ANI elements
-        self.jitter_plot_ani = ""
-        self.jitter_pane_ani = ""
-        self.df_for_jitter_ani = pd.DataFrame()
         self.use_metadata_jitter_ani = pn.widgets.Checkbox(name='Use metadata in plot', value=False,
                                                            styles={'font-size': "14px"})
         self.jitter_color_ani = pn.widgets.ColorPicker(name='Select color', value='#3b89be',
@@ -781,10 +1129,6 @@ class StrainVisApp:
         self.download_combined_scatter_table_column = pn.Column()
 
         # Network plot elements
-        self.network = ""
-        self.network_plot_hv = ""
-        self.network_plot_matplotlib = ""
-        self.df_for_network = pd.DataFrame()
         self.use_metadata_network = pn.widgets.Checkbox(name='Or, use metadata for coloring', value=False,
                                                         styles={'font-size': "14px"})
         self.layout_parameters_card = pn.Card(title='Layout parameters', header_background="#ffffff",
@@ -876,17 +1220,8 @@ class StrainVisApp:
         self.download_network_column = pn.Column()
         self.save_network_table_path = pn.widgets.TextInput(name=download_table_text)
         self.download_network_table_column = pn.Column()
-        self.network_pane = ""
-        self.pos_dict = dict()
-        self.nodes_list = []
-        self.network = ""
-        self.APSS_connections_threshold = config.APSS_connections_threshold_default
 
         # Network plot ANI elements
-        self.network_ani = ""
-        self.network_plot_hv_ani = ""
-        self.network_plot_matplotlib_ani = ""
-        self.df_for_network_ani = pd.DataFrame()
         self.use_metadata_network_ani = pn.widgets.Checkbox(name='Or, use metadata for coloring', value=False,
                                                             styles={'font-size': "14px"})
         self.layout_parameters_card_ani = pn.Card(title='Layout parameters', header_background="#ffffff",
@@ -979,15 +1314,8 @@ class StrainVisApp:
         self.download_network_column_ani = pn.Column()
         self.save_network_table_path_ani = pn.widgets.TextInput(name=download_table_text)
         self.download_network_table_column_ani = pn.Column()
-        self.network_pane_ani = ""
-        self.pos_dict_ani = dict()
-        self.nodes_list_ani = []
-        self.network_ani = ""
-        self.ani_connections_threshold = config.ANI_connections_threshold_default
 
         # Box-plot elements
-        self.box_plot = ""
-        self.box_plot_pane = ""
         self.use_metadata_box_plot = pn.widgets.Checkbox(name='Use metadata in plot', value=False,
                                                          styles={'font-size': "14px"})
         self.box_plot_color = pn.widgets.ColorPicker(name='Select color', value=config.diff_color,
@@ -1026,12 +1354,11 @@ class StrainVisApp:
                                                          disabled=pn.bind(change_disabled_state_inverse,
                                                                           chkbox_state=self.use_metadata_box_plot,
                                                                           watch=True))
-        self.download_pvalues_button.on_click(self.download_pvalues_table)
+        dpb = self.download_pvalues_button.on_click(self.download_pvalues_table)
+        self._button_callbacks.append((self.download_pvalues_button, dpb))
         self.download_multi_col = pn.Column
 
         # Box-plot ANI elements
-        self.box_plot_ani = ""
-        self.box_plot_pane_ani = ""
         self.use_metadata_box_plot_ani = pn.widgets.Checkbox(name='Use metadata in plot', value=False,
                                                              styles={'font-size': "14px"})
         self.box_plot_color_ani = pn.widgets.ColorPicker(name='Select color', value=config.diff_color,
@@ -1071,64 +1398,51 @@ class StrainVisApp:
                                                              disabled=pn.bind(change_disabled_state_inverse,
                                                                               chkbox_state=self.use_metadata_box_plot_ani,
                                                                               watch=True))
-        self.download_pvalues_button_ani.on_click(self.download_pvalues_table_ani)
+        dpba = self.download_pvalues_button_ani.on_click(self.download_pvalues_table_ani)
+        self._button_callbacks.append((self.download_pvalues_button_ani, dpba))
 
         # synteny_per_pos plots elements
-        self.visited_synteny_per_pos_tab = 0
-        self.finished_initial_synteny_per_pos_plot = 0
-        self.ax_for_synteny_per_pos_plot = ""
-        self.ax_annotations = ""
-        self.synteny_per_pos_plot = ""
-        self.coverage_plot = ""
-        self.line_avg_plot = ""
-        self.hypervar_bars = ""
-        self.hypercons_bars = ""
-        self.synteny_per_pos_pane = ""
         self.contig_select = pn.widgets.Select(name='Select a contig:', options=[], styles={'margin': "0"})
-        self.contig_select_watcher = ""
-        self.contig_name = ""
-        self.contig_length = ""
-        self.filter_plot_by_metadata = 0
         self.sorting_select = pn.widgets.Select(name='Sort by:', options=config.contig_sorting_options,
                                                 styles={'margin': "0"})
-        self.sorting_select_watcher = ""
+
         self.start_pos_input = pn.widgets.TextInput(name='Start position', styles={'font-size': "14px"})
         self.end_pos_input = pn.widgets.TextInput(name='End position', styles={'font-size': "14px"})
         self.avg_plot_chkbox = pn.widgets.Checkbox(name='Show average synteny scores', value=True,
                                                    styles={'font-size': "14px"})
-        self.avg_plot_chkbox_watcher = ""
+
         self.avg_plot_color = pn.widgets.ColorPicker(name='Color:', value='#000080',
                                                      disabled=pn.bind(change_disabled_state_inverse,
                                                                       chkbox_state=self.avg_plot_chkbox,
                                                                       watch=True))
-        self.avg_plot_color_watcher = ""
+
         self.coverage_plot_chkbox = pn.widgets.Checkbox(name='Show all synteny scores', value=True,
                                                         styles={'font-size': "14px"})
-        self.coverage_plot_chkbox_watcher = ""
+
         self.coverage_plot_color = pn.widgets.ColorPicker(name='Color:', value='#ba55d3',
                                                           disabled=pn.bind(change_disabled_state_inverse,
                                                                            chkbox_state=self.coverage_plot_chkbox,
                                                                            watch=True))
-        self.coverage_plot_color_watcher = ""
+
         self.hypervar_chkbox = pn.widgets.Checkbox(name='Highlight hypervariable regions', value=True,
                                                    styles={'font-size': "14px"})
-        self.hypervar_chkbox_watcher = ""
+
         self.hypervar_color = pn.widgets.ColorPicker(name='Color:', value=config.variable_color,
                                                      disabled=pn.bind(change_disabled_state_inverse,
                                                                       chkbox_state=self.hypervar_chkbox,
                                                                       watch=True))
-        self.hypervar_color_watcher = ""
+
         self.hypercons_chkbox = pn.widgets.Checkbox(name='Highlight hyperconserved regions', value=True,
                                                     styles={'font-size': "14px"})
-        self.hypercons_chkbox_watcher = ""
+
         self.hypercons_color = pn.widgets.ColorPicker(name='Color:', value=config.conserved_color,
                                                       disabled=pn.bind(change_disabled_state_inverse,
                                                                        chkbox_state=self.hypercons_chkbox,
                                                                        watch=True))
-        self.hypercons_color_watcher = ""
+
         self.alpha_slider = pn.widgets.FloatSlider(name='Alpha transparency', start=0, end=1, step=0.1, value=0.3,
                                                    styles={'font-size': "14px"})
-        self.alpha_slider_watcher = ""
+
         self.synteny_per_pos_image_format = pn.widgets.Select(value=config.matplotlib_file_formats[0],
                                                        options=config.matplotlib_file_formats,
                                                        name="Select image format:")
@@ -1144,14 +1458,16 @@ class StrainVisApp:
         self.synteny_per_pos_groups_select = pn.widgets.MultiSelect(options=[], width=350, height=200, size=5,
                                                                     name='Include the following groups in the plot:')
         self.filter_synteny_per_pos_button = pn.widgets.Button(name='Filter plot', button_type='primary')
-        self.filter_synteny_per_pos_button.on_click(self.filter_synteny_per_pos_plot)
+        fsppb = self.filter_synteny_per_pos_button.on_click(self.filter_synteny_per_pos_plot)
+        self._button_callbacks.append((self.filter_synteny_per_pos_button, fsppb))
         self.reset_filter_synteny_per_pos_button = pn.widgets.Button(name='Reset filteration', button_type='primary')
-        self.reset_filter_synteny_per_pos_button.on_click(self.reset_filter_synteny_per_pos_plot)
+        rfsppb = self.reset_filter_synteny_per_pos_button.on_click(self.reset_filter_synteny_per_pos_plot)
+        self._button_callbacks.append((self.reset_filter_synteny_per_pos_button, rfsppb))
 
         self.add_annotation_card = pn.Card(title='Add annotation data', collapsed=True,
                                            styles={'margin': "5px 0 5px 10px", 'width': "1050px"})
         self.upload_annotation_file = pn.widgets.FileInput(accept='.gff')
-        self.gff_filename = ""
+
         self.annotation_upload_col = pn.Column()
         self.show_annotations_col = pn.Column()
         self.show_annotations_row = pn.Row()
@@ -1161,9 +1477,8 @@ class StrainVisApp:
                                                            styles={'font-size': "14px"})
         self.annotation_help_button = pn.widgets.ButtonIcon(icon="help", size="1.5em",
                                                             description="Genes plot help", margin=(3, 0, 0, 0))
-        self.annotation_help_button.on_click(self.show_annotations_help_float_panel)
-        self.show_annotations_watcher = ""
-        self.show_annotations = False
+        ahb = self.annotation_help_button.on_click(self.show_annotations_help_float_panel)
+        self._button_callbacks.append((self.annotation_help_button, ahb))
 
         # Build the initial layout
         mandatory_input_title = "Mandatory input"
@@ -1200,7 +1515,8 @@ class StrainVisApp:
         metadata_upload_title = "Upload a metadata file for the compared samples (in tab delimited format):"
         metadata_help_button = pn.widgets.ButtonIcon(icon="help", size="1.5em", description="Metadata help",
                                                      margin=(17, 5, 0, 0))
-        metadata_help_button.on_click(self.show_metadata_help_float_panel)
+        mhb = metadata_help_button.on_click(self.show_metadata_help_float_panel)
+        self._button_callbacks.append((metadata_help_button, mhb))
         self.metadata_upload_row = pn.Row(pn.pane.Markdown(metadata_upload_title, styles={'font-size': "16px",
                                                                                           'margin-bottom': "0",
                                                                                           'margin-top': "0"}),
@@ -1213,9 +1529,93 @@ class StrainVisApp:
 
         self.main_area.append(self.submit_button)
 
-        pn.state.on_session_destroyed(destroyed)
+    def _cleanup(self, session_context):
+        print("\n\nCleaning session: ", session_context.id)
+        #print("\n\nCleaning session:", id(self))
 
-        self.template.servable()
+        # Stop param watchers
+        for w in getattr(self, "_watchers", []):
+            try:
+                if hasattr(w, "stop"):
+                    w.stop()
+                elif hasattr(w, "inst") and hasattr(w.inst, "param"):
+                    w.inst.param.unwatch(w)
+            except Exception as e:
+                print(f"Cannot stop watcher {w}: {e}")
+        self._watchers = []
+
+        # Remove button / widget callbacks
+        for obj, cb in self._button_callbacks:
+            try:
+                if hasattr(obj, "remove_on_click"):
+                    obj.remove_on_click(cb)
+            except Exception:
+                print("Cannot remove_on_click object " + str(obj))
+                pass
+        self._button_callbacks.clear()
+
+        # Remove bounded objects from panes
+        for pane in self._bounded_panes:
+            pane.object = None
+
+        # Delete the DFs
+        del self.score_per_region_all_genomes_df
+        del self.score_per_region_genomes_subset_df
+        del self.score_per_region_selected_genome_df
+        del self.ani_scores_all_genomes_df
+        del self.ani_scores_genomes_subset_df
+        del self.ani_scores_selected_genome_df
+        del self.score_per_pos_contig
+        del self.score_per_pos_contig_filtered
+        del self.genomes_subset_selected_size_APSS_df
+        del self.pairs_num_per_sampling_size_multi_genomes_df
+        del self.boxplot_p_values_df
+        del self.boxplot_p_values_df_ani
+        del self.df_for_jitter
+        del self.df_for_jitter_ani
+        del self.scores_matrix
+        del self.scores_matrix_ani
+        del self.df_for_network
+        del self.df_for_network_ani
+        del self.df_for_combined_scatter
+        del self.avg_score_per_pos_contig
+        del self.avg_score_per_pos_contig_filtered
+
+        # Delete the dataframes within dictionaries
+        for key in list(self.APSS_by_genome_all_sizes_dict.keys()):
+            del self.APSS_by_genome_all_sizes_dict[key]
+        for key in list(self.APSS_all_genomes_all_sizes_dict.keys()):
+            del self.APSS_all_genomes_all_sizes_dict[key]
+
+        # Delete the dictionaries
+        del self.metadata_dict
+        del self.groups_per_feature_dict
+        del self.APSS_by_genome_all_sizes_dict
+        del self.APSS_all_genomes_all_sizes_dict
+        del self.calculated_APSS_genome_size_dict
+        del self.calculated_APSS_all_genomes_size_dict
+        del self.annotation_per_ref_genome_dict
+        del self.pos_dict
+        del self.pos_dict_ani
+
+        # Break self references (important!)
+        self.__dict__.clear()
+
+        # Clear any global or cached objects
+        pn.state.cache.clear()
+
+        # Clear Bokeh session document
+        doc = getattr(session_context, "_document", None)
+        if doc is not None:
+            for cb in list(doc.session_callbacks):
+                try:
+                    doc.remove_periodic_callback(cb)
+                except Exception as e:
+                    print("Failed removing periodic callbacks:", e)
+
+        gc.collect()
+
+        #print("\nStrainVisApp instances:", len([o for o in gc.get_objects() if isinstance(o, StrainVisApp)]))
 
     def show_metadata_help_float_panel(self, event):
         metadata_note = "The metadata file may contain an unlimited number of columns (features).  " \
@@ -1254,7 +1654,8 @@ class StrainVisApp:
         ani_file_input_title = "Upload tab-delimited ANI file for one or multiple species:"
         ani_help_button = pn.widgets.ButtonIcon(icon="help", size="1.5em", description="ANI help",
                                                 margin=(17, 5, 0, 0))
-        ani_help_button.on_click(self.show_ani_help_float_panel)
+        ahb = ani_help_button.on_click(self.show_ani_help_float_panel)
+        self._button_callbacks.append((ani_help_button, ahb))
         text_input_title = "Or, if the file size is bigger than 300 Mb, enter it's full path here:"
 
         self.mandatory_input_card.clear()
@@ -1340,6 +1741,7 @@ class StrainVisApp:
         self.ani_upload_row.append(floatpanel)
 
     def init_parameters(self):
+        # Delete the DFs
         del self.score_per_region_all_genomes_df
         del self.score_per_region_genomes_subset_df
         del self.score_per_region_selected_genome_df
@@ -1357,17 +1759,32 @@ class StrainVisApp:
         del self.scores_matrix
         del self.scores_matrix_ani
         del self.df_for_network
+        del self.df_for_network_ani
+        del self.df_for_combined_scatter
         del self.avg_score_per_pos_contig
         del self.avg_score_per_pos_contig_filtered
+
+        # Delete the dictionaries
         del self.metadata_dict
         del self.groups_per_feature_dict
         del self.APSS_by_genome_all_sizes_dict
         del self.APSS_all_genomes_all_sizes_dict
+        del self.calculated_APSS_genome_size_dict
+        del self.calculated_APSS_all_genomes_size_dict
 
-        gc.collect()
+        self.SynTracker_text_input.value = None
+        self.SynTracker_input_file.value = None
+        self.ANI_text_input.value = None
+        self.ANI_input_file.value = None
+        self.metadata_file.value = None
+
+        # Clear any global or cached objects
+        pn.state.cache.clear()
+
+        #gc.collect()
 
     def create_new_session(self, event):
-        self.init_parameters()
+        print("\n\nIn create_new_session")
         pn.state.location.reload = True
 
     def submit_new_file_button(self):
@@ -1729,10 +2146,13 @@ class StrainVisApp:
                 self.genomes_select_watcher = self.genomes_select.param.watch(partial(self.select_ref_genome,
                                                                               self.genomes_select), 'value',
                                                                               onlychanged=True)
+                self._watchers.append(self.genomes_select_watcher)
                 self.genomes_sort_select_watcher = self.genomes_sort_select.param.watch(
                     self.changed_genomes_sorting, 'value', onlychanged=True)
+                self._watchers.append(self.genomes_sort_select_watcher)
                 self.genomes_sort_select_multi_watcher = self.genomes_sort_select_multi.param.watch(
                     self.changed_multi_genomes_sorting, 'value', onlychanged=True)
+                self._watchers.append(self.genomes_sort_select_multi_watcher)
 
                 self.single_multi_genome_tabs.append(('Single species analyses', self.main_single_column))
 
@@ -1741,7 +2161,8 @@ class StrainVisApp:
                                                                                       'margin': "0"}))
                 self.single_multi_genome_tabs.append(('Multiple species analyses', self.main_multi_column))
 
-                self.single_multi_genome_tabs.param.watch(self.changed_single_multi_tabs, 'active')
+                single_multi_tabs_watcher = self.single_multi_genome_tabs.param.watch(self.changed_single_multi_tabs, 'active')
+                self._watchers.append(single_multi_tabs_watcher)
 
                 self.main_area.clear()
 
@@ -1837,8 +2258,9 @@ class StrainVisApp:
                 self.hypercons_chkbox.param.unwatch(self.hypercons_chkbox_watcher)
                 self.hypercons_color.param.unwatch(self.hypercons_color_watcher)
                 self.alpha_slider.param.unwatch(self.alpha_slider_watcher)
-                self.synteny_per_pos_feature_select.param.unwatch(self.synteny_per_pos_feature_select_watcher)
                 self.show_annotations_chkbox.param.unwatch(self.show_annotations_watcher)
+                if self.is_metadata:
+                    self.synteny_per_pos_feature_select.param.unwatch(self.synteny_per_pos_feature_select_watcher)
 
             # Initialize variables
             self.contigs_list_by_length = []
@@ -1972,28 +2394,36 @@ class StrainVisApp:
                                                       df=pairs_num_per_sampling_size_selected_genome_df,
                                                       sampling_size=self.sample_sizes_slider,
                                                       is_all_regions=is_all_regions)
+            self._bounded_functions.append(pairs_vs_sampling_size_bar_plot)
             pairs_bar_plot_pane = pn.pane.HoloViews(pairs_vs_sampling_size_bar_plot, width=530, sizing_mode="fixed")
+            self._bounded_panes.append(pairs_bar_plot_pane)
 
             # Create a markdown for the pairs lost percent (binded to the slider)
             binded_text = pn.bind(widgets.create_pairs_lost_text, pairs_num_per_sampling_size_selected_genome_df,
                                   self.sample_sizes_slider)
+            self._bounded_functions.append(binded_text)
 
-            pairs_plot_column = pn.Column(pn.pane.Markdown(refs=binded_text, align='center'), pairs_bar_plot_pane,
-                                          styles={'background-color': "white"})
+            markdown_pane = pn.pane.Markdown(refs=binded_text, align='center')
+            pairs_plot_column = pn.Column(markdown_pane, pairs_bar_plot_pane, styles={'background-color': "white"})
+            self._bounded_panes.append(markdown_pane)
 
             # Create the number of samples vs. subsampled regions bar plot
             samples_vs_sampling_size_bar_plot = pn.bind(ps.plot_samples_vs_sampling_size_bar,
                                                         df=pairs_num_per_sampling_size_selected_genome_df,
                                                         sampling_size=self.sample_sizes_slider,
                                                         is_all_regions=is_all_regions)
+            self._bounded_functions.append(samples_vs_sampling_size_bar_plot)
             samples_bar_plot_pane = pn.pane.HoloViews(samples_vs_sampling_size_bar_plot, width=530, sizing_mode="fixed")
+            self._bounded_panes.append(samples_bar_plot_pane)
 
             # Create a markdown for the number of samples (binded to the slider)
             binded_text = pn.bind(widgets.create_samples_num_text, pairs_num_per_sampling_size_selected_genome_df,
                                   self.sample_sizes_slider)
+            self._bounded_functions.append(binded_text)
 
-            samples_plot_column = pn.Column(pn.pane.Markdown(refs=binded_text, align='center'), samples_bar_plot_pane,
-                                            styles={'background-color': "white"})
+            md_pane = pn.pane.Markdown(refs=binded_text, align='center')
+            samples_plot_column = pn.Column(md_pane, samples_bar_plot_pane, styles={'background-color': "white"})
+            self._bounded_panes.append(md_pane)
 
             plots_row = pn.Row(pairs_plot_column, pn.Spacer(width=20), samples_plot_column)
             slider_row = pn.Row(self.sample_sizes_slider, align='center')
@@ -2014,7 +2444,8 @@ class StrainVisApp:
 
             self.synteny_single_initial_plots_column.append(self.synteny_single_tabs)
 
-            self.synteny_single_tabs.param.watch(self.changed_single_tabs, 'active')
+            synteny_single_tabs_watcher = self.synteny_single_tabs.param.watch(self.changed_single_tabs, 'active')
+            self._watchers.append(synteny_single_tabs_watcher)
 
             after = time.time()
             duration = after - before
@@ -2254,6 +2685,7 @@ class StrainVisApp:
                 self.contig_select_watcher = self.contig_select.param.watch(partial(self.changed_contig,
                                                                                     self.contig_select),
                                                                             'value', onlychanged=True)
+                self._watchers.append(self.contig_select_watcher)
 
                 # When the selection of sorting method is changed, sort the contigs in the contigs-select drop-down
                 # menu accordingly
@@ -2261,6 +2693,7 @@ class StrainVisApp:
                                                                                       self.sorting_select,
                                                                                       self.contig_select),
                                                                               'value', onlychanged=True)
+                self._watchers.append(self.sorting_select_watcher)
                 self.contig_select.param.trigger('value')
 
             # Create the synteny_per_pos plot for the Ref-genome
@@ -2407,7 +2840,8 @@ class StrainVisApp:
 
         save_file_title = "Plot download options:"
         download_button = pn.widgets.Button(name='Download high-resolution image', button_type='primary')
-        download_button.on_click(self.download_jitter)
+        db = download_button.on_click(self.download_jitter)
+        self._button_callbacks.append((download_button, db))
 
         jitter_file = "Dist_plot_" + self.ref_genome + "_" + self.sampling_size + "_regions"
         self.save_jitter_file_path.placeholder = jitter_file
@@ -2430,6 +2864,7 @@ class StrainVisApp:
             self.jitter_feature_watcher = self.jitter_feature_select.param.watch(partial(self.change_jitter_feature,
                                                                                          selected_genome_and_size_avg_df),
                                                                                  'value', onlychanged=True)
+            self._watchers.append(self.jitter_feature_watcher)
 
         # No metadata
         else:
@@ -2440,13 +2875,16 @@ class StrainVisApp:
                                    type=self.jitter_type_select, color=self.jitter_color,
                                    use_metadata=self.use_metadata_jitter, feature=self.jitter_feature_select.value,
                                    same_color=self.jitter_same_color, different_color=self.jitter_different_color)
+        self._bounded_functions.append(self.jitter_plot)
 
         self.jitter_pane = pn.pane.Matplotlib(self.jitter_plot, width=520, dpi=300, tight=True, format='png')
+        self._bounded_panes.append(self.jitter_pane)
 
         jitter_table_file = "Data_for_dist_plot_" + self.ref_genome + "_" + self.sampling_size + "_regions"
         self.save_jitter_table_path.placeholder = jitter_table_file
         download_table_button = pn.widgets.Button(name='Download data table in tsv format', button_type='primary')
-        download_table_button.on_click(self.download_jitter_table)
+        dtb = download_table_button.on_click(self.download_jitter_table)
+        self._button_callbacks.append((download_table_button, dtb))
 
         self.download_jitter_table_column = pn.Column(self.save_jitter_table_path,
                                                       download_table_button,
@@ -2488,7 +2926,8 @@ class StrainVisApp:
 
         save_file_title = "Plot download options:"
         download_button = pn.widgets.Button(name='Download high-resolution image', button_type='primary')
-        download_button.on_click(self.download_jitter_ani)
+        db = download_button.on_click(self.download_jitter_ani)
+        self._button_callbacks.append((download_button, db))
 
         jitter_file = "ANI_Dist_plot_" + self.ref_genome
         self.save_jitter_file_path_ani.placeholder = jitter_file
@@ -2510,6 +2949,7 @@ class StrainVisApp:
             # Define a watcher for the jitter_feature_select widget
             self.jitter_feature_ani_watcher = self.jitter_feature_select_ani.param.watch(
                 partial(self.change_jitter_feature_ani, ani_df), 'value', onlychanged=True)
+            self._watchers.append(self.jitter_feature_ani_watcher)
 
         # No metadata
         else:
@@ -2522,13 +2962,16 @@ class StrainVisApp:
                                        feature=self.jitter_feature_select_ani.value,
                                        same_color=self.jitter_same_color_ani,
                                        different_color=self.jitter_different_color_ani)
+        self._bounded_functions.append(self.jitter_plot_ani)
 
         self.jitter_pane_ani = pn.pane.Matplotlib(self.jitter_plot_ani, width=520, dpi=300, tight=True, format='png')
+        self._bounded_panes.append(self.jitter_pane_ani)
 
         jitter_table_file = "Data_for_ANI_dist_plot_" + self.ref_genome
         self.save_jitter_table_path_ani.placeholder = jitter_table_file
         download_table_button = pn.widgets.Button(name='Download data table in tsv format', button_type='primary')
-        download_table_button.on_click(self.download_jitter_table_ani)
+        dtb = download_table_button.on_click(self.download_jitter_table_ani)
+        self._button_callbacks.append((download_table_button, dtb))
 
         self.download_jitter_table_column_ani = pn.Column(self.save_jitter_table_path_ani,
                                                           download_table_button, pn.pane.Markdown())
@@ -2895,7 +3338,8 @@ class StrainVisApp:
 
         save_file_title = "Plot download options:"
         download_button = pn.widgets.Button(name='Download high-resolution image', button_type='primary')
-        download_button.on_click(self.download_clustermap)
+        db = download_button.on_click(self.download_clustermap)
+        self._button_callbacks.append((download_button, db))
 
         clustermap_file = "Clustermap_" + self.ref_genome + "_" + self.sampling_size + "_regions"
         self.save_clustermap_file_path.placeholder = clustermap_file
@@ -2910,7 +3354,8 @@ class StrainVisApp:
         matrix_file = "Matrix_for_clustermap_" + self.ref_genome + "_" + self.sampling_size + "_regions"
         self.save_matrix_file_path.placeholder = matrix_file
         download_table_button = pn.widgets.Button(name='Download matrix', button_type='primary')
-        download_table_button.on_click(self.download_matrix)
+        dtb = download_table_button.on_click(self.download_matrix)
+        self._button_callbacks.append((download_table_button, dtb))
 
         self.download_matrix_column = pn.Column(self.save_matrix_file_path,
                                                 download_table_button,
@@ -2958,13 +3403,17 @@ class StrainVisApp:
                 # Define watchers for the metadata widgets
                 self.color_by_feature_clustermap_watcher = self.color_by_feature.param.watch(
                     self.set_not_continuous_clustermap, 'value', onlychanged=True)
+                self._watchers.append(self.color_by_feature_clustermap_watcher)
                 self.continuous_clustermap_watcher = self.is_continuous_clustermap.param.watch(
                     self.change_continuous_state_clustermap, 'value', onlychanged=True)
+                self._watchers.append(self.continuous_clustermap_watcher)
                 self.feature_colormap_watcher = self.feature_colormap.param.watch(self.change_colormap_clustermap,
                                                                                   'value', onlychanged=True)
+                self._watchers.append(self.feature_colormap_watcher)
                 self.custom_colormap_clustermap_watcher = \
                     self.custom_colormap_input_clustermap.param.watch(self.get_custom_colormap_clustermap,
                                                                       'value', onlychanged=True)
+                self._watchers.append(self.custom_colormap_clustermap_watcher)
 
             # No metadata
             else:
@@ -2978,9 +3427,11 @@ class StrainVisApp:
                                            cmap_metadata=self.feature_colormap.value_name,
                                            custom_cmap=self.custom_colormap_input_clustermap.value,
                                            metadata_dict=self.metadata_dict)
+            self._bounded_functions.append(self.clustermap_plot)
 
             self.clustermap_pane = pn.pane.Matplotlib(self.clustermap_plot, width=700, dpi=300, tight=True,
                                                       format='png')
+            self._bounded_panes.append(self.clustermap_pane)
             clustermap_row = pn.Row(controls_col, pn.Spacer(width=20), self.clustermap_pane, styles={'padding': "15px"})
 
             self.clustermap_card.append(clustermap_row)
@@ -3125,7 +3576,8 @@ class StrainVisApp:
 
         save_file_title = "Plot download options:"
         download_button = pn.widgets.Button(name='Download high-resolution image', button_type='primary')
-        download_button.on_click(self.download_clustermap_ani)
+        db = download_button.on_click(self.download_clustermap_ani)
+        self._button_callbacks.append((download_button, db))
 
         clustermap_file = "ANI_Clustermap_" + self.ref_genome
         self.save_clustermap_file_path_ani.placeholder = clustermap_file
@@ -3141,7 +3593,8 @@ class StrainVisApp:
         matrix_file = "Matrix_for_ANI_Clustermap_" + self.ref_genome
         self.save_matrix_file_path_ani.placeholder = matrix_file
         download_table_button = pn.widgets.Button(name='Download matrix', button_type='primary')
-        download_table_button.on_click(self.download_matrix_ani)
+        dtb = download_table_button.on_click(self.download_matrix_ani)
+        self._button_callbacks.append((download_table_button, dtb))
 
         self.download_matrix_column_ani = pn.Column(self.save_matrix_file_path_ani,
                                                     download_table_button, pn.pane.Markdown())
@@ -3188,14 +3641,18 @@ class StrainVisApp:
                 # Define watchers for the metadata widgets
                 self.color_by_feature_clustermap_ani_watcher = self.color_by_feature_ani.param.watch(
                     self.set_not_continuous_clustermap_ani, 'value', onlychanged=True)
+                self._watchers.append(self.color_by_feature_clustermap_ani_watcher)
                 self.continuous_clustermap_ani_watcher = self.is_continuous_clustermap_ani.param.watch(
                     self.change_continuous_state_clustermap_ani, 'value', onlychanged=True)
+                self._watchers.append(self.continuous_clustermap_ani_watcher)
                 self.feature_colormap_ani_watcher = \
                     self.feature_colormap_ani.param.watch(self.change_colormap_clustermap_ani,
                                                           'value', onlychanged=True)
+                self._watchers.append(self.feature_colormap_ani_watcher)
                 self.custom_colormap_clustermap_ani_watcher = \
                     self.custom_colormap_input_clustermap_ani.param.watch(self.get_custom_colormap_clustermap_ani,
                                                                           'value', onlychanged=True)
+                self._watchers.append(self.custom_colormap_clustermap_ani_watcher)
 
             # No metadata
             else:
@@ -3209,9 +3666,11 @@ class StrainVisApp:
                                                cmap_metadata=self.feature_colormap_ani.value_name,
                                                custom_cmap=self.custom_colormap_input_clustermap_ani.value,
                                                metadata_dict=self.metadata_dict)
+            self._bounded_functions.append(self.clustermap_plot_ani)
 
             self.clustermap_pane_ani = pn.pane.Matplotlib(self.clustermap_plot_ani, width=700, dpi=300, tight=True,
                                                           format='png')
+            self._bounded_panes.append(self.clustermap_pane_ani)
             clustermap_row = pn.Row(controls_col, pn.Spacer(width=20), self.clustermap_pane_ani,
                                     styles={'padding': "15px"})
 
@@ -3262,13 +3721,13 @@ class StrainVisApp:
     def update_clustermap_plot_ani(self):
         print("\nIn update_clustermap_plot_ani")
         self.clustermap_plot_ani = pn.bind(ps.create_clustermap, matrix=self.scores_matrix_ani, type="ANI",
-                                           cmap=self.clustermap_cmap_ani, method=self.clustermap_method_ani,
-                                           is_metadata=self.use_metadata_clustermap_ani,
-                                           feature=self.color_by_feature_ani.value,
-                                           is_continuous=self.is_continuous_clustermap_ani.value,
-                                           cmap_metadata=self.feature_colormap_ani.value_name,
-                                           custom_cmap=self.custom_colormap_input_clustermap_ani.value,
-                                           metadata_dict=self.metadata_dict)
+                                                 cmap=self.clustermap_cmap_ani, method=self.clustermap_method_ani,
+                                                 is_metadata=self.use_metadata_clustermap_ani,
+                                                 feature=self.color_by_feature_ani.value,
+                                                 is_continuous=self.is_continuous_clustermap_ani.value,
+                                                 cmap_metadata=self.feature_colormap_ani.value_name,
+                                                 custom_cmap=self.custom_colormap_input_clustermap_ani.value,
+                                                 metadata_dict=self.metadata_dict)
 
         self.clustermap_pane_ani.object = self.clustermap_plot_ani
 
@@ -3397,7 +3856,8 @@ class StrainVisApp:
 
         init_button = pn.widgets.Button(name='Initialize nodes positions', button_type='primary',
                                         button_style='outline')
-        init_button.on_click(self.init_positions)
+        ib = init_button.on_click(self.init_positions)
+        self._button_callbacks.append((init_button, ib))
         init_button_row = pn.Row(init_button, align='center')
 
         styling_title = "Network customization options:"
@@ -3448,7 +3908,8 @@ class StrainVisApp:
 
         save_file_title = "Plot download options:"
         download_button = pn.widgets.Button(name='Download high-resolution image', button_type='primary')
-        download_button.on_click(self.download_network)
+        db = download_button.on_click(self.download_network)
+        self._button_callbacks.append((download_button, db))
 
         self.download_network_column = pn.Column(pn.pane.Markdown(save_file_title,
                                                                   styles={'font-size': "15px",
@@ -3458,7 +3919,8 @@ class StrainVisApp:
                                                  self.network_image_format, self.save_network_plot_path,
                                                  download_button, pn.pane.Markdown())
         download_table_button = pn.widgets.Button(name='Download network data in tsv format', button_type='primary')
-        download_table_button.on_click(self.download_network_table)
+        dtb = download_table_button.on_click(self.download_network_table)
+        self._button_callbacks.append((download_table_button, dtb))
 
         self.download_network_table_column = pn.Column(self.save_network_table_path, download_table_button,
                                                        pn.pane.Markdown())
@@ -3590,10 +4052,13 @@ class StrainVisApp:
             self.threshold_select_watcher = self.network_threshold_select.param.watch(partial(
                 self.changed_threshold_select, mean_APSS, mean_std, mean_only), 'value',
                 onlychanged=True)
+            self._watchers.append(self.threshold_select_watcher)
             self.threshold_input_watcher = self.network_threshold_input.param.watch(self.changed_threshold_input,
                                                                                     'value', onlychanged=True)
+            self._watchers.append(self.threshold_input_watcher)
             self.highlight_sample_watcher = self.highlight_sample_input.param.watch(self.change_highlighted_sample,
                                                                                     'value', onlychanged=True)
+            self._watchers.append(self.highlight_sample_watcher)
 
             # There is metadata
             if self.is_metadata:
@@ -3625,14 +4090,19 @@ class StrainVisApp:
 
                 self.nodes_colorby_watcher = self.nodes_color_by.param.watch(self.set_not_continuous_network, 'value',
                                                                              onlychanged=True)
+                self._watchers.append(self.nodes_colorby_watcher)
                 self.continuous_network_watcher = self.is_continuous_network.param.watch(
                     self.change_continuous_state_network, 'value', onlychanged=True)
+                self._watchers.append(self.continuous_network_watcher)
                 self.colormap_watcher = self.nodes_colormap.param.watch(self.change_colormap_network, 'value',
                                                                         onlychanged=True)
+                self._watchers.append(self.colormap_watcher)
                 self.custom_colormap_watcher = self.custom_colormap_input.param.watch(self.get_custom_colormap_network,
                                                                                       'value', onlychanged=True)
+                self._watchers.append(self.custom_colormap_watcher)
                 self.nodes_highlight_by_watcher = self.nodes_highlight_by.param.watch(self.fill_feature_groups,
                                                                                       'value', onlychanged=True)
+                self._watchers.append(self.nodes_highlight_by_watcher)
 
             # No metadata
             else:
@@ -3644,27 +4114,29 @@ class StrainVisApp:
 
             # Create the network plot using the selected parameters
             self.network_plot_hv = pn.bind(ps.cretae_network_plot, network=self.network,
-                                           is_metadata=self.use_metadata_network,
-                                           nodes_feature=self.nodes_color_by.value,
-                                           is_continuous=self.is_continuous_network.value,
-                                           cmap=self.nodes_colormap.value,
-                                           custom_cmap=self.custom_colormap_input.value,
-                                           node_color=self.network_node_color,
-                                           edge_color=self.network_edge_color,
-                                           is_highlight_group=self.highlight_nodes_by_feature,
-                                           highlight_feature=self.nodes_highlight_by.value,
-                                           highlight_group=self.nodes_highlight_group_select,
-                                           is_edge_colorby=self.color_edges_by_feature,
-                                           edges_feature=self.edges_color_by,
-                                           within_edge_color=self.network_within_color,
-                                           between_edge_color=self.network_between_color,
-                                           iterations=self.network_iterations, pos_dict=self.pos_dict,
-                                           show_labels=self.show_labels_chkbox,
-                                           all_or_highlighted=self.all_or_highlighted_select,
-                                           is_highlight_samples=self.highlight_sample_chkbox,
-                                           samples_to_highlight=self.highlight_sample_input.value,
-                                           metadata_dict=self.metadata_dict)
+                                                 is_metadata=self.use_metadata_network,
+                                                 nodes_feature=self.nodes_color_by.value,
+                                                 is_continuous=self.is_continuous_network.value,
+                                                 cmap=self.nodes_colormap.value,
+                                                 custom_cmap=self.custom_colormap_input.value,
+                                                 node_color=self.network_node_color,
+                                                 edge_color=self.network_edge_color,
+                                                 is_highlight_group=self.highlight_nodes_by_feature,
+                                                 highlight_feature=self.nodes_highlight_by.value,
+                                                 highlight_group=self.nodes_highlight_group_select,
+                                                 is_edge_colorby=self.color_edges_by_feature,
+                                                 edges_feature=self.edges_color_by,
+                                                 within_edge_color=self.network_within_color,
+                                                 between_edge_color=self.network_between_color,
+                                                 iterations=self.network_iterations, pos_dict=self.pos_dict,
+                                                 show_labels=self.show_labels_chkbox,
+                                                 all_or_highlighted=self.all_or_highlighted_select,
+                                                 is_highlight_samples=self.highlight_sample_chkbox,
+                                                 samples_to_highlight=self.highlight_sample_input.value,
+                                                 metadata_dict=self.metadata_dict)
+            self._bounded_functions.append(self.network_plot_hv)
             self.network_pane = pn.pane.HoloViews(self.network_plot_hv, height=600, width=700, sizing_mode="fixed")
+            self._bounded_panes.append(self.network_pane)
 
             network_row = pn.Row(controls_col, pn.Spacer(width=15), self.network_pane, styles={'padding': "15px"})
             self.network_card.append(network_row)
@@ -3733,6 +4205,7 @@ class StrainVisApp:
                                                is_highlight_samples=self.highlight_sample_chkbox,
                                                samples_to_highlight=self.highlight_sample_input.value,
                                                metadata_dict=self.metadata_dict)
+        self._bounded_functions.append(self.network_plot_matplotlib)
 
         # Save the network plot in the requested format using matplotlib
         self.network_plot_matplotlib().savefig(network_file_path, format=fformat, dpi=300.0, bbox_inches='tight')
@@ -3900,22 +4373,25 @@ class StrainVisApp:
     def update_network_plot(self):
         #print("\nIn update_network_plot")
         self.network_plot_hv = pn.bind(ps.cretae_network_plot, network=self.network,
-                                       is_metadata=self.use_metadata_network, nodes_feature=self.nodes_color_by.value,
-                                       is_continuous=self.is_continuous_network.value, cmap=self.nodes_colormap.value,
-                                       custom_cmap=self.custom_colormap_input.value,
-                                       node_color=self.network_node_color, edge_color=self.network_edge_color,
-                                       is_highlight_group=self.highlight_nodes_by_feature,
-                                       highlight_feature=self.nodes_highlight_by.value,
-                                       highlight_group=self.nodes_highlight_group_select,
-                                       is_edge_colorby=self.color_edges_by_feature, edges_feature=self.edges_color_by,
-                                       within_edge_color=self.network_within_color,
-                                       between_edge_color=self.network_between_color,
-                                       iterations=self.network_iterations, pos_dict=self.pos_dict,
-                                       show_labels=self.show_labels_chkbox,
-                                       all_or_highlighted=self.all_or_highlighted_select,
-                                       is_highlight_samples=self.highlight_sample_chkbox,
-                                       samples_to_highlight=self.highlight_sample_input.value,
-                                       metadata_dict=self.metadata_dict)
+                                             is_metadata=self.use_metadata_network,
+                                             nodes_feature=self.nodes_color_by.value,
+                                             is_continuous=self.is_continuous_network.value,
+                                             cmap=self.nodes_colormap.value,
+                                             custom_cmap=self.custom_colormap_input.value,
+                                             node_color=self.network_node_color, edge_color=self.network_edge_color,
+                                             is_highlight_group=self.highlight_nodes_by_feature,
+                                             highlight_feature=self.nodes_highlight_by.value,
+                                             highlight_group=self.nodes_highlight_group_select,
+                                             is_edge_colorby=self.color_edges_by_feature,
+                                             edges_feature=self.edges_color_by,
+                                             within_edge_color=self.network_within_color,
+                                             between_edge_color=self.network_between_color,
+                                             iterations=self.network_iterations, pos_dict=self.pos_dict,
+                                             show_labels=self.show_labels_chkbox,
+                                             all_or_highlighted=self.all_or_highlighted_select,
+                                             is_highlight_samples=self.highlight_sample_chkbox,
+                                             samples_to_highlight=self.highlight_sample_input.value,
+                                             metadata_dict=self.metadata_dict)
 
         self.network_pane.object = self.network_plot_hv
     def change_continuous_state_network_ani(self, event):
@@ -3979,7 +4455,8 @@ class StrainVisApp:
 
         init_button = pn.widgets.Button(name='Initialize nodes positions', button_type='primary',
                                         button_style='outline')
-        init_button.on_click(self.init_positions_ani)
+        ib = init_button.on_click(self.init_positions_ani)
+        self._button_callbacks.append((init_button, ib))
         init_button_row = pn.Row(init_button, align='center')
 
         styling_title = "Network customization options:"
@@ -4030,7 +4507,8 @@ class StrainVisApp:
 
         save_file_title = "Plot download options:"
         download_button = pn.widgets.Button(name='Download high-resolution image', button_type='primary')
-        download_button.on_click(self.download_network_ani)
+        db = download_button.on_click(self.download_network_ani)
+        self._button_callbacks.append((download_button, db))
 
         self.download_network_column_ani = pn.Column(pn.pane.Markdown(save_file_title,
                                                                       styles={'font-size': "15px",
@@ -4040,7 +4518,8 @@ class StrainVisApp:
                                                      self.network_image_format_ani, self.save_network_plot_path_ani,
                                                      download_button, pn.pane.Markdown())
         download_table_button = pn.widgets.Button(name='Download network data in tsv format', button_type='primary')
-        download_table_button.on_click(self.download_network_table_ani)
+        dtb = download_table_button.on_click(self.download_network_table_ani)
+        self._button_callbacks.append((download_table_button, dtb))
 
         self.download_network_table_column_ani = pn.Column(self.save_network_table_path_ani, download_table_button,
                                                            pn.pane.Markdown())
@@ -4176,13 +4655,16 @@ class StrainVisApp:
             self.threshold_select_ani_watcher = self.network_threshold_select_ani.param.watch(partial(
                 self.changed_threshold_select_ani, mean_ANI, mean_std, mean_only), 'value',
                 onlychanged=True)
+            self._watchers.append(self.threshold_select_ani_watcher)
             self.is_defined_threshold_select_ani_watcher = 1
             self.threshold_input_ani_watcher = \
                 self.network_threshold_input_ani.param.watch(self.changed_threshold_input_ani,
                                                              'value', onlychanged=True)
+            self._watchers.append(self.threshold_input_ani_watcher)
             self.highlight_sample_ani_watcher = \
                 self.highlight_sample_input_ani.param.watch(self.change_highlighted_sample_ani,
                                                             'value', onlychanged=True)
+            self._watchers.append(self.highlight_sample_ani_watcher)
 
             # There is metadata
             if self.is_metadata:
@@ -4214,14 +4696,19 @@ class StrainVisApp:
 
                 self.nodes_colorby_ani_watcher = self.nodes_color_by_ani.param.watch(
                     self.set_not_continuous_network_ani, 'value', onlychanged=True)
+                self._watchers.append(self.nodes_colorby_ani_watcher)
                 self.continuous_network_ani_watcher = self.is_continuous_network_ani.param.watch(
                     self.change_continuous_state_network_ani, 'value', onlychanged=True)
+                self._watchers.append(self.continuous_network_ani_watcher)
                 self.colormap_ani_watcher = self.nodes_colormap_ani.param.watch(self.change_colormap_network_ani,
                                                                                 'value', onlychanged=True)
+                self._watchers.append(self.colormap_ani_watcher)
                 self.custom_colormap_ani_watcher = self.custom_colormap_input_ani.param.watch(
                     self.get_custom_colormap_network_ani, 'value', onlychanged=True)
+                self._watchers.append(self.custom_colormap_ani_watcher)
                 self.nodes_highlight_by_ani_watcher = self.nodes_highlight_by_ani.param.watch(
                     self.fill_feature_groups_ani, 'value', onlychanged=True)
+                self._watchers.append(self.nodes_highlight_by_ani_watcher)
 
             # No metadata
             else:
@@ -4233,28 +4720,30 @@ class StrainVisApp:
 
             # Create the network plot using the selected parameters
             self.network_plot_hv_ani = pn.bind(ps.cretae_network_plot, network=self.network_ani,
-                                               is_metadata=self.use_metadata_network_ani,
-                                               nodes_feature=self.nodes_color_by_ani.value,
-                                               is_continuous=self.is_continuous_network_ani.value,
-                                               cmap=self.nodes_colormap_ani.value,
-                                               custom_cmap=self.custom_colormap_input_ani.value,
-                                               node_color=self.network_node_color_ani,
-                                               edge_color=self.network_edge_color_ani,
-                                               is_highlight_group=self.highlight_nodes_by_feature_ani,
-                                               highlight_feature=self.nodes_highlight_by_ani.value,
-                                               highlight_group=self.nodes_highlight_group_select_ani,
-                                               is_edge_colorby=self.color_edges_by_feature_ani,
-                                               edges_feature=self.edges_color_by_ani,
-                                               within_edge_color=self.network_within_color_ani,
-                                               between_edge_color=self.network_between_color_ani,
-                                               iterations=self.network_iterations_ani, pos_dict=self.pos_dict_ani,
-                                               show_labels=self.show_labels_chkbox_ani,
-                                               all_or_highlighted=self.all_or_highlighted_select_ani,
-                                               is_highlight_samples=self.highlight_sample_chkbox_ani,
-                                               samples_to_highlight=self.highlight_sample_input_ani.value,
-                                               metadata_dict=self.metadata_dict)
+                                                     is_metadata=self.use_metadata_network_ani,
+                                                     nodes_feature=self.nodes_color_by_ani.value,
+                                                     is_continuous=self.is_continuous_network_ani.value,
+                                                     cmap=self.nodes_colormap_ani.value,
+                                                     custom_cmap=self.custom_colormap_input_ani.value,
+                                                     node_color=self.network_node_color_ani,
+                                                     edge_color=self.network_edge_color_ani,
+                                                     is_highlight_group=self.highlight_nodes_by_feature_ani,
+                                                     highlight_feature=self.nodes_highlight_by_ani.value,
+                                                     highlight_group=self.nodes_highlight_group_select_ani,
+                                                     is_edge_colorby=self.color_edges_by_feature_ani,
+                                                     edges_feature=self.edges_color_by_ani,
+                                                     within_edge_color=self.network_within_color_ani,
+                                                     between_edge_color=self.network_between_color_ani,
+                                                     iterations=self.network_iterations_ani, pos_dict=self.pos_dict_ani,
+                                                     show_labels=self.show_labels_chkbox_ani,
+                                                     all_or_highlighted=self.all_or_highlighted_select_ani,
+                                                     is_highlight_samples=self.highlight_sample_chkbox_ani,
+                                                     samples_to_highlight=self.highlight_sample_input_ani.value,
+                                                     metadata_dict=self.metadata_dict)
+            self._bounded_functions.append(self.network_plot_hv_ani)
             self.network_pane_ani = pn.pane.HoloViews(self.network_plot_hv_ani, height=600, width=700,
                                                       sizing_mode="fixed")
+            self._bounded_panes.append(self.network_pane_ani)
 
             network_row = pn.Row(controls_col, pn.Spacer(width=15), self.network_pane_ani, styles={'padding': "15px"})
             self.network_card_ani.append(network_row)
@@ -4302,26 +4791,27 @@ class StrainVisApp:
 
         # Get the updated matplotlib plot
         self.network_plot_matplotlib_ani = pn.bind(ps.cretae_network_plot_matplotlib, network=self.network_ani,
-                                                   is_metadata=self.use_metadata_network_ani,
-                                                   nodes_feature=self.nodes_color_by_ani.value,
-                                                   is_continuous=self.is_continuous_network_ani.value,
-                                                   cmap=self.nodes_colormap_ani.value_name,
-                                                   custom_cmap=self.custom_colormap_input_ani.value,
-                                                   node_color=self.network_node_color_ani,
-                                                   edge_color=self.network_edge_color_ani,
-                                                   is_highlight_group=self.highlight_nodes_by_feature_ani,
-                                                   highlight_feature=self.nodes_highlight_by_ani.value,
-                                                   highlight_group=self.nodes_highlight_group_select_ani,
-                                                   is_edge_colorby=self.color_edges_by_feature_ani,
-                                                   edges_feature=self.edges_color_by_ani,
-                                                   within_edge_color=self.network_within_color_ani,
-                                                   between_edge_color=self.network_between_color_ani,
-                                                   iterations=self.network_iterations_ani, pos_dict=self.pos_dict_ani,
-                                                   show_labels=self.show_labels_chkbox_ani,
-                                                   all_or_highlighted=self.all_or_highlighted_select_ani,
-                                                   is_highlight_samples=self.highlight_sample_chkbox_ani,
-                                                   samples_to_highlight=self.highlight_sample_input_ani.value,
-                                                   metadata_dict=self.metadata_dict)
+                                                         is_metadata=self.use_metadata_network_ani,
+                                                         nodes_feature=self.nodes_color_by_ani.value,
+                                                         is_continuous=self.is_continuous_network_ani.value,
+                                                         cmap=self.nodes_colormap_ani.value_name,
+                                                         custom_cmap=self.custom_colormap_input_ani.value,
+                                                         node_color=self.network_node_color_ani,
+                                                         edge_color=self.network_edge_color_ani,
+                                                         is_highlight_group=self.highlight_nodes_by_feature_ani,
+                                                         highlight_feature=self.nodes_highlight_by_ani.value,
+                                                         highlight_group=self.nodes_highlight_group_select_ani,
+                                                         is_edge_colorby=self.color_edges_by_feature_ani,
+                                                         edges_feature=self.edges_color_by_ani,
+                                                         within_edge_color=self.network_within_color_ani,
+                                                         between_edge_color=self.network_between_color_ani,
+                                                         iterations=self.network_iterations_ani, pos_dict=self.pos_dict_ani,
+                                                         show_labels=self.show_labels_chkbox_ani,
+                                                         all_or_highlighted=self.all_or_highlighted_select_ani,
+                                                         is_highlight_samples=self.highlight_sample_chkbox_ani,
+                                                         samples_to_highlight=self.highlight_sample_input_ani.value,
+                                                         metadata_dict=self.metadata_dict)
+        self._bounded_functions.append(self.network_plot_matplotlib_ani)
 
         # Save the network plot in the requested format using matplotlib
         self.network_plot_matplotlib_ani().savefig(network_file_path, format=fformat, dpi=300.0, bbox_inches='tight')
@@ -4489,26 +4979,26 @@ class StrainVisApp:
     def update_network_plot_ani(self):
         #print("\nIn update_network_plot")
         self.network_plot_hv_ani = pn.bind(ps.cretae_network_plot, network=self.network_ani,
-                                           is_metadata=self.use_metadata_network_ani,
-                                           nodes_feature=self.nodes_color_by_ani.value,
-                                           is_continuous=self.is_continuous_network_ani.value,
-                                           cmap=self.nodes_colormap_ani.value,
-                                           custom_cmap=self.custom_colormap_input_ani.value,
-                                           node_color=self.network_node_color_ani,
-                                           edge_color=self.network_edge_color_ani,
-                                           is_highlight_group=self.highlight_nodes_by_feature_ani,
-                                           highlight_feature=self.nodes_highlight_by_ani.value,
-                                           highlight_group=self.nodes_highlight_group_select_ani,
-                                           is_edge_colorby=self.color_edges_by_feature_ani,
-                                           edges_feature=self.edges_color_by_ani,
-                                           within_edge_color=self.network_within_color_ani,
-                                           between_edge_color=self.network_between_color_ani,
-                                           iterations=self.network_iterations_ani, pos_dict=self.pos_dict_ani,
-                                           show_labels=self.show_labels_chkbox_ani,
-                                           all_or_highlighted=self.all_or_highlighted_select_ani,
-                                           is_highlight_samples=self.highlight_sample_chkbox_ani,
-                                           samples_to_highlight=self.highlight_sample_input_ani.value,
-                                           metadata_dict=self.metadata_dict)
+                                                 is_metadata=self.use_metadata_network_ani,
+                                                 nodes_feature=self.nodes_color_by_ani.value,
+                                                 is_continuous=self.is_continuous_network_ani.value,
+                                                 cmap=self.nodes_colormap_ani.value,
+                                                 custom_cmap=self.custom_colormap_input_ani.value,
+                                                 node_color=self.network_node_color_ani,
+                                                 edge_color=self.network_edge_color_ani,
+                                                 is_highlight_group=self.highlight_nodes_by_feature_ani,
+                                                 highlight_feature=self.nodes_highlight_by_ani.value,
+                                                 highlight_group=self.nodes_highlight_group_select_ani,
+                                                 is_edge_colorby=self.color_edges_by_feature_ani,
+                                                 edges_feature=self.edges_color_by_ani,
+                                                 within_edge_color=self.network_within_color_ani,
+                                                 between_edge_color=self.network_between_color_ani,
+                                                 iterations=self.network_iterations_ani, pos_dict=self.pos_dict_ani,
+                                                 show_labels=self.show_labels_chkbox_ani,
+                                                 all_or_highlighted=self.all_or_highlighted_select_ani,
+                                                 is_highlight_samples=self.highlight_sample_chkbox_ani,
+                                                 samples_to_highlight=self.highlight_sample_input_ani.value,
+                                                 metadata_dict=self.metadata_dict)
 
         self.network_pane_ani.object = self.network_plot_hv_ani
 
@@ -4561,7 +5051,8 @@ class StrainVisApp:
 
             save_file_title = "Plot download options:"
             download_button = pn.widgets.Button(name='Download high-resolution image', button_type='primary')
-            download_button.on_click(self.download_combined_scatter)
+            db = download_button.on_click(self.download_combined_scatter)
+            self._button_callbacks.append((download_button, db))
 
             combined_scatter_file = "ANI_vs_APSS_plot_" + self.ref_genome + "_" + self.sampling_size + "_regions"
             self.save_combined_scatter_file_path.placeholder = combined_scatter_file
@@ -4586,21 +5077,24 @@ class StrainVisApp:
 
             # Create the scatter plot
             self.combined_scatter_plot = pn.bind(self.create_combined_scatter_plot,
-                                                 combined_df=APSS_ANI_selected_genome_df,
-                                                 color=self.combined_scatter_color,
-                                                 use_metadata=self.use_metadata_combined_scatter,
-                                                 feature=self.combined_scatter_feature_select,
-                                                 same_color=self.combined_scatter_same_color,
-                                                 different_color=self.combined_scatter_different_color)
+                                                      combined_df=APSS_ANI_selected_genome_df,
+                                                      color=self.combined_scatter_color,
+                                                      use_metadata=self.use_metadata_combined_scatter,
+                                                      feature=self.combined_scatter_feature_select,
+                                                      same_color=self.combined_scatter_same_color,
+                                                      different_color=self.combined_scatter_different_color)
+            self._bounded_functions.append(self.combined_scatter_plot)
 
             combined_scatter_pane = pn.pane.Matplotlib(self.combined_scatter_plot, height=550, dpi=300, tight=True,
                                                        format='png')
+            self._bounded_panes.append(combined_scatter_pane)
 
             combined_scatter_table_file = "Data_for_ANI_vs_APSS_plot_" + self.ref_genome + "_" + self.sampling_size + \
                                           "_regions"
             self.save_combined_scatter_table_path.placeholder = combined_scatter_table_file
             download_table_button = pn.widgets.Button(name='Download data table in tsv format', button_type='primary')
-            download_table_button.on_click(self.download_combined_scatter_table)
+            dtb = download_table_button.on_click(self.download_combined_scatter_table)
+            self._button_callbacks.append((download_table_button, dtb))
 
             self.download_combined_scatter_table_column = pn.Column(self.save_combined_scatter_table_path,
                                                                     download_table_button,
@@ -4813,10 +5307,12 @@ class StrainVisApp:
 
         reset_range_button = pn.widgets.Button(name='Reset range', button_type='primary',
                                                styles={'margin-top': "22px"})
-        reset_range_button.on_click(self.reset_range)
+        rrb = reset_range_button.on_click(self.reset_range)
+        self._button_callbacks.append((reset_range_button, rrb))
         change_range_button = pn.widgets.Button(name='Set new range', button_type='primary',
                                                 styles={'margin-top': "22px"})
-        change_range_button.on_click(self.change_range)
+        crb = change_range_button.on_click(self.change_range)
+        self._button_callbacks.append((change_range_button, crb))
 
         pos_range_cust_row = pn.Row(pn.pane.Markdown("Set contig length range:",
                                                      styles={'font-size': "14px", 'margin': "10px 5px 5px 5px"}),
@@ -4862,6 +5358,7 @@ class StrainVisApp:
             # Define a watcher for the feature-selection change
             self.synteny_per_pos_feature_select_watcher = self.synteny_per_pos_feature_select.param.watch(
                 self.fill_groups_for_multiselect, 'value', onlychanged=True)
+            self._watchers.append(self.synteny_per_pos_feature_select_watcher)
 
             buttons_row = pn.Row(self.filter_synteny_per_pos_button, pn.Spacer(width=10),
                                  self.reset_filter_synteny_per_pos_button)
@@ -4932,27 +5429,38 @@ class StrainVisApp:
         # Define watchers for visual widgets
         self.avg_plot_chkbox_watcher = self.avg_plot_chkbox.param.watch(self.show_hide_avg_plot, 'value',
                                                                         onlychanged=True)
+        self._watchers.append(self.avg_plot_chkbox_watcher)
         self.avg_plot_color_watcher = self.avg_plot_color.param.watch(self.change_avg_plot_color, 'value',
                                                                       onlychanged=True)
+        self._watchers.append(self.avg_plot_color_watcher)
         self.coverage_plot_chkbox_watcher = self.coverage_plot_chkbox.param.watch(self.show_hide_coverage_plot, 'value',
                                                                                   onlychanged=True)
+        self._watchers.append(self.coverage_plot_chkbox_watcher)
         self.coverage_plot_color_watcher = self.coverage_plot_color.param.watch(self.change_coverage_plot_color,
                                                                                 'value', onlychanged=True)
+        self._watchers.append(self.coverage_plot_color_watcher)
         self.hypervar_chkbox_watcher = self.hypervar_chkbox.param.watch(self.show_hide_hypervar_plot, 'value',
                                                                         onlychanged=True)
+        self._watchers.append(self.hypervar_chkbox_watcher)
         self.hypervar_color_watcher = self.hypervar_color.param.watch(self.change_hypervar_color, 'value',
                                                                       onlychanged=True)
+        self._watchers.append(self.hypervar_color_watcher)
         self.hypercons_chkbox_watcher = self.hypercons_chkbox.param.watch(self.show_hide_hypercons_plot,
                                                                           'value', onlychanged=True)
+        self._watchers.append(self.hypercons_chkbox_watcher)
         self.hypercons_color_watcher = self.hypercons_color.param.watch(self.change_hypercons_color,
                                                                         'value', onlychanged=True)
+        self._watchers.append(self.hypercons_color_watcher)
         self.alpha_slider_watcher = self.alpha_slider.param.watch(self.change_alpha, 'value', onlychanged=True)
+        self._watchers.append(self.alpha_slider_watcher)
         self.show_annotations_watcher = self.show_annotations_chkbox.param.watch(self.show_hide_annotations_plot,
                                                                                  'value', onlychanged=True)
+        self._watchers.append(self.show_annotations_watcher)
 
         save_file_title = "Plot download options:"
         download_button = pn.widgets.Button(name='Download high-resolution image', button_type='primary')
-        download_button.on_click(self.download_synteny_per_pos_plot)
+        db = download_button.on_click(self.download_synteny_per_pos_plot)
+        self._button_callbacks.append((download_button, db))
 
         synteny_per_pos_file = "Synteny_per_position_plot_" + self.ref_genome + "_" + self.contig_name
         self.save_synteny_per_pos_plot_path.placeholder = synteny_per_pos_file
@@ -4966,7 +5474,8 @@ class StrainVisApp:
         self.save_synteny_per_pos_table_path.placeholder = synteny_per_pos_table
 
         download_table_button = pn.widgets.Button(name='Download underlying data in tsv format', button_type='primary')
-        download_table_button.on_click(self.download_synteny_per_pos_table)
+        dtb = download_table_button.on_click(self.download_synteny_per_pos_table)
+        self._button_callbacks.append((download_table_button, dtb))
 
         self.download_synteny_per_pos_table_column = pn.Column(self.save_synteny_per_pos_table_path,
                                                                pn.Spacer(height=10),
@@ -5750,31 +6259,41 @@ class StrainVisApp:
 
             # Create the number of pairs vs. subsampled regions bar plot
             pairs_vs_sampling_size_bar_plot = pn.bind(pm.plot_pairs_vs_sampling_size_bar,
-                                                      df=self.pairs_num_per_sampling_size_multi_genomes_df,
-                                                      sampling_size=self.sample_sizes_slider_multi,
-                                                      is_all_regions=is_all_regions)
+                                                               df=self.pairs_num_per_sampling_size_multi_genomes_df,
+                                                               sampling_size=self.sample_sizes_slider_multi,
+                                                               is_all_regions=is_all_regions)
+            self._bounded_functions.append(pairs_vs_sampling_size_bar_plot)
             pairs_bar_plot_pane = pn.pane.HoloViews(pairs_vs_sampling_size_bar_plot, width=530, sizing_mode="fixed")
+            self._bounded_panes.append(pairs_bar_plot_pane)
 
             # Create a markdown for the pairs lost percent (binded to the slider)
-            binded_text = pn.bind(widgets.create_pairs_lost_text, self.pairs_num_per_sampling_size_multi_genomes_df,
-                                  self.sample_sizes_slider_multi)
+            binded_text = pn.bind(widgets.create_pairs_lost_text,
+                                       self.pairs_num_per_sampling_size_multi_genomes_df,
+                                       self.sample_sizes_slider_multi)
+            self._bounded_functions.append(binded_text)
 
-            pairs_plot_column = pn.Column(pn.pane.Markdown(refs=binded_text, align='center'), pairs_bar_plot_pane,
-                                          styles={'background-color': "white"})
+            md_pane = pn.pane.Markdown(refs=binded_text, align='center')
+            pairs_plot_column = pn.Column(md_pane, pairs_bar_plot_pane, styles={'background-color': "white"})
+            self._bounded_panes.append(md_pane)
 
             # Create the number of species vs. subsampled regions bar plot
             species_vs_sampling_size_bar_plot = pn.bind(pm.plot_species_vs_sampling_size_bar,
-                                                        df=self.pairs_num_per_sampling_size_multi_genomes_df,
-                                                        sampling_size=self.sample_sizes_slider_multi,
-                                                        is_all_regions=is_all_regions)
+                                                                 df=self.pairs_num_per_sampling_size_multi_genomes_df,
+                                                                 sampling_size=self.sample_sizes_slider_multi,
+                                                                 is_all_regions=is_all_regions)
+            self._bounded_functions.append(species_vs_sampling_size_bar_plot)
             species_bar_plot_pane = pn.pane.HoloViews(species_vs_sampling_size_bar_plot, width=530, sizing_mode="fixed")
+            self._bounded_panes.append(species_bar_plot_pane)
 
             # Create a markdown for the pairs lost percent (binded to the slider)
-            binded_text = pn.bind(widgets.create_species_num_text, self.pairs_num_per_sampling_size_multi_genomes_df,
-                                  self.sample_sizes_slider_multi)
+            binded_text2 = pn.bind(widgets.create_species_num_text,
+                                        self.pairs_num_per_sampling_size_multi_genomes_df,
+                                        self.sample_sizes_slider_multi)
+            self._bounded_functions.append(binded_text2)
 
-            species_plot_column = pn.Column(pn.pane.Markdown(refs=binded_text, align='center'), species_bar_plot_pane,
-                                            styles={'background-color': "white"})
+            markdown_pane = pn.pane.Markdown(refs=binded_text2, align='center')
+            species_plot_column = pn.Column(markdown_pane, species_bar_plot_pane, styles={'background-color': "white"})
+            self._bounded_panes.append(markdown_pane)
 
             plots_row = pn.Row(pairs_plot_column, pn.Spacer(width=20), species_plot_column)
             slider_row = pn.Row(self.sample_sizes_slider_multi, align='center')
@@ -5924,7 +6443,8 @@ class StrainVisApp:
 
         save_file_title = "Plot download options:"
         download_button = pn.widgets.Button(name='Download high-resolution image', button_type='primary')
-        download_button.on_click(self.download_box_plot)
+        db = download_button.on_click(self.download_box_plot)
+        self._button_callbacks.append((download_button, db))
 
         if self.species_num_at_sampling_size == self.number_of_genomes:
             box_plot_file = "Boxplot_all_species_" + self.sampling_size_multi
@@ -5950,7 +6470,8 @@ class StrainVisApp:
                                                   download_button, pn.pane.Markdown())
 
         download_table_button = pn.widgets.Button(name='Download data table in tsv format', button_type='primary')
-        download_table_button.on_click(self.download_boxplot_table)
+        dtb = download_table_button.on_click(self.download_boxplot_table)
+        self._button_callbacks.append((download_table_button, dtb))
 
         self.download_boxplot_table_column = pn.Column(self.save_boxplot_table_path, download_table_button,
                                                        pn.pane.Markdown())
@@ -5972,6 +6493,7 @@ class StrainVisApp:
             # Set watcher for the feature-select widget
             self.feature_select_watcher = self.box_plot_feature_select.param.watch(self.update_feature_in_boxplot,
                                                                                    'value', onlychanged=True)
+            self._watchers.append(self.feature_select_watcher)
 
             # Add the p-values download column
             self.download_multi_col.append(self.download_pvalues_table_column)
@@ -5981,12 +6503,14 @@ class StrainVisApp:
             self.use_metadata_box_plot.disabled = True
 
         self.box_plot = pn.bind(pm.create_box_plot, avg_df=self.genomes_subset_selected_size_APSS_df,
-                                sorted_genomes_list=self.sorted_selected_genomes_subset,
-                                pvalues_df=self.boxplot_p_values_df, color=self.box_plot_color,
-                                use_metadata=self.use_metadata_box_plot, feature=self.box_plot_feature_select.value,
-                                same_color=self.box_plot_same_color, different_color=self.box_plot_different_color)
+                                     sorted_genomes_list=self.sorted_selected_genomes_subset,
+                                     pvalues_df=self.boxplot_p_values_df, color=self.box_plot_color,
+                                     use_metadata=self.use_metadata_box_plot, feature=self.box_plot_feature_select.value,
+                                     same_color=self.box_plot_same_color, different_color=self.box_plot_different_color)
+        self._bounded_functions.append(self.box_plot)
 
         self.box_plot_pane = pn.pane.Matplotlib(self.box_plot, width=720, dpi=300, tight=True, format='png')
+        self._bounded_panes.append(self.box_plot_pane)
 
         box_plot_row = pn.Row(self.download_multi_col, pn.Spacer(width=30), self.box_plot_pane,
                               styles={'padding': "15px"})
@@ -6098,10 +6622,10 @@ class StrainVisApp:
         self.calculate_metadata_for_box_plot()
 
         self.box_plot = pn.bind(pm.create_box_plot, avg_df=self.genomes_subset_selected_size_APSS_df,
-                                sorted_genomes_list=self.sorted_selected_genomes_subset,
-                                pvalues_df=self.boxplot_p_values_df, color=self.box_plot_color,
-                                use_metadata=self.use_metadata_box_plot, feature=self.box_plot_feature_select.value,
-                                same_color=self.box_plot_same_color, different_color=self.box_plot_different_color)
+                                     sorted_genomes_list=self.sorted_selected_genomes_subset,
+                                     pvalues_df=self.boxplot_p_values_df, color=self.box_plot_color,
+                                     use_metadata=self.use_metadata_box_plot, feature=self.box_plot_feature_select.value,
+                                     same_color=self.box_plot_same_color, different_color=self.box_plot_different_color)
         self.box_plot_pane.object = self.box_plot
 
     def download_box_plot(self, event):
@@ -6198,7 +6722,8 @@ class StrainVisApp:
 
         save_file_title = "Plot download options:"
         download_button = pn.widgets.Button(name='Download high-resolution image', button_type='primary')
-        download_button.on_click(self.download_box_plot_ani)
+        db = download_button.on_click(self.download_box_plot_ani)
+        self._button_callbacks.append((download_button, db))
 
         if self.species_num_in_subset_ani == self.number_of_genomes:
             num = "all"
@@ -6221,7 +6746,8 @@ class StrainVisApp:
                                                       download_button, pn.pane.Markdown())
 
         download_table_button = pn.widgets.Button(name='Download data table in tsv format', button_type='primary')
-        download_table_button.on_click(self.download_boxplot_table_ani)
+        dtb = download_table_button.on_click(self.download_boxplot_table_ani)
+        self._button_callbacks.append((download_table_button, dtb))
 
         self.download_boxplot_table_column_ani = pn.Column(self.save_boxplot_table_path_ani, download_table_button,
                                                            pn.pane.Markdown())
@@ -6244,6 +6770,7 @@ class StrainVisApp:
             # Set watcher for the feature-select widget
             self.feature_select_ani_watcher = self.box_plot_feature_select_ani.param.watch(
                 self.update_feature_in_boxplot_ani, 'value', onlychanged=True)
+            self._watchers.append(self.feature_select_ani_watcher)
 
             # Add the p-values download column
             self.download_multi_col_ani.append(self.download_pvalues_table_column_ani)
@@ -6253,14 +6780,16 @@ class StrainVisApp:
             self.use_metadata_box_plot_ani.disabled = True
 
         self.box_plot_ani = pn.bind(pm.create_box_plot_ani, ani_df=self.ani_scores_genomes_subset_df,
-                                    sorted_genomes_list=self.sorted_selected_genomes_subset_ani,
-                                    pvalues_df=self.boxplot_p_values_df_ani, color=self.box_plot_color_ani,
-                                    use_metadata=self.use_metadata_box_plot_ani,
-                                    feature=self.box_plot_feature_select_ani.value,
-                                    same_color=self.box_plot_same_color_ani,
-                                    different_color=self.box_plot_different_color_ani)
+                                         sorted_genomes_list=self.sorted_selected_genomes_subset_ani,
+                                         pvalues_df=self.boxplot_p_values_df_ani, color=self.box_plot_color_ani,
+                                         use_metadata=self.use_metadata_box_plot_ani,
+                                         feature=self.box_plot_feature_select_ani.value,
+                                         same_color=self.box_plot_same_color_ani,
+                                         different_color=self.box_plot_different_color_ani)
+        self._bounded_functions.append(self.box_plot_ani)
 
         self.box_plot_pane_ani = pn.pane.Matplotlib(self.box_plot_ani, width=720, dpi=300, tight=True, format='png')
+        self._bounded_panes.append(self.box_plot_pane_ani)
 
         box_plot_row = pn.Row(self.download_multi_col_ani, pn.Spacer(width=30), self.box_plot_pane_ani,
                               styles={'padding': "15px"})
@@ -6374,12 +6903,12 @@ class StrainVisApp:
         self.calculate_metadata_for_box_plot_ani()
 
         self.box_plot_ani = pn.bind(pm.create_box_plot_ani, ani_df=self.ani_scores_genomes_subset_df,
-                                    sorted_genomes_list=self.sorted_selected_genomes_subset_ani,
-                                    pvalues_df=self.boxplot_p_values_df_ani, color=self.box_plot_color_ani,
-                                    use_metadata=self.use_metadata_box_plot_ani,
-                                    feature=self.box_plot_feature_select_ani.value,
-                                    same_color=self.box_plot_same_color_ani,
-                                    different_color=self.box_plot_different_color_ani)
+                                         sorted_genomes_list=self.sorted_selected_genomes_subset_ani,
+                                         pvalues_df=self.boxplot_p_values_df_ani, color=self.box_plot_color_ani,
+                                         use_metadata=self.use_metadata_box_plot_ani,
+                                         feature=self.box_plot_feature_select_ani.value,
+                                         same_color=self.box_plot_same_color_ani,
+                                         different_color=self.box_plot_different_color_ani)
         self.box_plot_pane_ani.object = self.box_plot_ani
 
     def download_box_plot_ani(self, event):

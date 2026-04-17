@@ -1,38 +1,69 @@
 import panel as pn
+import os
+import psutil
 from StrainVis_app.strain_vis_app import StrainVisApp
 
-MAX_SIZE_MB = 500
+MAX_MB = 2 * 1024  # 2 Gb
+
+# --- Module-level flag to ensure single registration ---
+_restart_monitor_registered = False
 
 
-def destroyed(session_context):
-    print("\n\n\nThe session is closed from strain_vis.py...")
+def get_memory_mb():
+    proc = psutil.Process(os.getpid())
+    try:
+        mem = proc.memory_full_info().uss / 1024 / 1024  # MB
+    except AttributeError:
+        mem = proc.memory_info().rss / 1024 / 1024  # fallback MB
+    return mem
 
 
-def get_user_page():
+def maybe_restart():
+    mem_mb = get_memory_mb()
+
+    # Count active sessions safely
+    active_sessions = 0
+    for s in pn.state.session_info.values():
+        if isinstance(s, dict):
+            if s.get("started") and not s.get("ended"):
+                active_sessions += 1
+        else:
+            # fallback: assume it's an active session
+            active_sessions += 1
+
+    #print(f"[Monitor] Memory: {mem_mb: .1f} MB | Active sessions: {active_sessions}")
+
+    if mem_mb > MAX_MB and active_sessions <= 1:
+        print("\n\nRestarting panel server due to memory limit...")
+        os._exit(0)  # supervisor will restart
+
+
+def register_monitor():
+    """Register the memory monitor once per server."""
+    global _restart_monitor_registered
+    if not _restart_monitor_registered:
+        #print("\nRegistering maybe_restart periodic callback on server")
+        pn.state.add_periodic_callback(maybe_restart, period=60000)  # every 60 sec
+        _restart_monitor_registered = True
+
+
+def create_app():
+    print("\n\nCreating new session, ID:", pn.state.curdoc.session_context.id)
+
     app = StrainVisApp()
-    template = app.template
-    pn.state.on_session_destroyed(destroyed)
-    return template
+
+    # Build the UI
+    app._build_template()
+
+    # bind cleanup explicitly
+    pn.state.on_session_destroyed(app._cleanup)
+
+    # Register monitor once per server process
+    register_monitor()
+
+    return app.template
 
 
-def serve_user_page():
-    pn.serve(
-        get_user_page(),
-        port=5006,
-        show=True,
-        # Increase the maximum websocket message size allowed by Bokeh
-        websocket_max_message_size=MAX_SIZE_MB*1024*1024,
-        # Increase the maximum buffer size allowed by Tornado
-        http_server_kwargs={'max_buffer_size': MAX_SIZE_MB*1024*1024, 'max_body_size': MAX_SIZE_MB*1024*1024}
-    )
-
-
-# Running script with 'python main.py' - use pn.serve
-if __name__ == '__main__':
-    serve_user_page()
-
-# Running script with 'panel serve'
-else:
-    get_user_page()
-
+# Create the app for one session
+create_app().servable("strain_vis")
 

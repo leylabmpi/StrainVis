@@ -33,7 +33,7 @@
 <body>
   <main>
   <h1 id="strainvis-a-python-based-web-application-for-interactive-visual-analysis-of-strain-tracking-methods">StrainVis: a Python-based web application for interactive visual analysis of strain-tracking methods</h1>
-<h4 id="version-1.1.6">Version 1.1.6</h4>
+<h4 id="version-1.2.0">Version 1.2.0</h4>
 <ul>
 <li><a href="#overview">Overview</a></li>
     <li><a href="#citation">Citation</a></li>
@@ -99,29 +99,39 @@ A metadata file (matches to the samples that were previously compared by SynTrac
 <p>Extract the tar.gz file into the desired working-directory.</p>
 <p>Create a new conda environment using the ‘StrainVis.yml’ file (located in the root directory of SynTrakcerVis) using the following command:<br />
 <code>conda env create -f StrainVis.yml</code></p>
-<p>Activate the newly created environment: <code>conda activate StrainVis</code></p>
+<p>Activate the newly created environment: <code>conda activate StrainVis_1_2</code></p>
 <h2 id="open-strainvis-web-application">Open StrainVis web-application</h2>
 <p>StrainVis is built using <a href="https://panel.holoviz.org/index.html" target="_blank">Panel - a powerful data exploration &amp; web app framework for Python</a>. The web-application is served using the Bokeh server. To launch the server from the command-line and open the application in the browser, type the following command (from within the activated conda strain_vis environment):</p>
-<p><code>panel serve strain_vis.py --port 5005 --websocket-max-message-size 524288000 &amp;</code></p>
+<p><code>python run_strainvis.py --port 5005 &amp;</code></p>
 <p>The application should be opened in the browser under the URL: http://localhost:5005/strain_vis.<br />
 As long as the Bokeh server is running, StrainVis application can be accessed using the above URL.<br />
-Please note that several instances of StrainVis can be opened simultaneously in different browser windows/tabs.<br />
-It is also possible to launch several server processes simultaneously using different ports.</p>
-<p><strong>Stop the server</strong>: In order to stop the Bokeh server, its running process should be killed.</p>
+</p>
+<p><strong>Stop the Bokeh server and StrainVis application</strong>: The two python running processes, created by the ‘python run_strainvis.py‘ command should be killed.</p>
 <h3 id="open-several-strainvis-sessions">Open several StrainVis sessions</h3>
 <ul>
-<li><strong>Several user-sessions using the same web-server instance:</strong> It is possible to open as many user sessions as needed under the same server instance that was started using the ‘panel serve…’ command. All sessions will be accessible under the same URL (for example: http://localhost:5005/strain_vis). Each session works separately and can process a different dataset, but since all of them are executed by the same process, if one session is busy processing a heavy-duty task, it will affect all the other user sessions.</li>
-<li><strong>Several web-server instances:</strong> In order to process different datasets at the same time using separated computational resources, it is needed to start several web-server instances listening to different ports. It simply means to run the ‘panel serve…’ command using a different port number for each StrainVis instance. Each web-server instance will be accessible under: http://localhost:[port_number]/strain_vis.</li>
+<li>
+    <strong>Open several StrainVis browser-sessions using the same server process:</strong>
+    Once StrainVis aplication was strated from the command-line, it is possible to open as many user sessions as needed
+    in different browser windows/tabs, using the same URL (for example: http://localhost:5005/strain_vis).
+    Each session works separately and can process a different dataset, but since all of them are executed by the same process,
+    if one session is busy processing a heavy-duty task, it will affect all the other user sessions.
+</li>
+<li>
+    <strong>Run several server processes using different ports:</strong>
+    it is needed to start several web-server instances listening to different ports.
+    It simply means to run the <code>python run_strainvis.py --port [port]</code> command using a different port number for each StrainVis instance.
+    Each web-server instance will be accessible under: http://localhost:[port_number]/strain_vis .
+</li>
 </ul>
 <h2 id="run-strainvis-on-a-remote-server-and-open-it-in-a-local-browser">Run StrainVis on a remote server and open it in a local browser</h2>
 <p>It is possible to run StrainVis on a remote server or cloud service in cases of large datasets, in order to improve the performance. This can be done according to the following steps:</p>
 <ol type="1">
-<li><p><strong>Installing StrainVis:</strong> StrainVis shoul be installed on the remote server as explained above.</p></li>
+<li><p><strong>Installing StrainVis:</strong> StrainVis should be installed on the remote server as explained above.</p></li>
 <li><p><strong>Open SSH-tunnel:</strong> Create an SSH tunnel from your local machine to the remote server:<br />
 <code>ssh -L 5006:localhost:5006 user@remote-server</code></p></li>
 <li><p><strong>Start the Bokeh server on the remote server:</strong><br />
 From within the activated conda strain_vis environment, run the following command:<br />
-<code>panel serve strain_vis.py --port 5006 --websocket-max-message-size 524288000 &amp;</code><br />
+<code>python run_strainvis.py --port 5006 &</code><br />
 Note that it is important not to use the –show option when SynTracker runs on a remote machine.</p></li>
 <li><p><strong>Open the application in the local browser:</strong> StrainVis should be accessible under: http://localhost:5006/strain_vis .</p></li>
 </ol>
