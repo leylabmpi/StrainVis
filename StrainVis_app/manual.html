@@ -118,6 +118,7 @@ As long as the Bokeh server is running, StrainVis application can be accessed us
 </li>
 <li>
     <strong>Run several server processes using different ports:</strong>
+    In order to process different datasets at the same time using separated computational resources,
     it is needed to start several web-server instances listening to different ports.
     It simply means to run the <code>python run_strainvis.py --port [port]</code> command using a different port number for each StrainVis instance.
     Each web-server instance will be accessible under: http://localhost:[port_number]/strain_vis .
@@ -131,8 +132,8 @@ As long as the Bokeh server is running, StrainVis application can be accessed us
 <code>ssh -L 5006:localhost:5006 user@remote-server</code></p></li>
 <li><p><strong>Start the Bokeh server on the remote server:</strong><br />
 From within the activated conda strain_vis environment, run the following command:<br />
-<code>python run_strainvis.py --port 5006 &</code><br />
-Note that it is important not to use the –show option when SynTracker runs on a remote machine.</p></li>
+<code>python run_strainvis.py --port 5006 &</code>
+</p></li>
 <li><p><strong>Open the application in the local browser:</strong> StrainVis should be accessible under: http://localhost:5006/strain_vis .</p></li>
 </ol>
 <h2 id="input">Input</h2>

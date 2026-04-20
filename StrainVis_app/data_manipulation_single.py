@@ -94,8 +94,14 @@ def create_pairs_num_per_sampling_size(score_per_region_df):
     pairs_num_per_sampling_size_df = regions_num_per_pair_df[['All', '40', '60', '80', '100',
                                                               '125', '150', '175', '200', '250', '300', '350',
                                                               '400']].sum().reset_index()
-    pairs_num_per_sampling_size_df.columns.values[0] = "Subsampled_regions"
-    pairs_num_per_sampling_size_df.columns.values[1] = "Number_of_pairs"
+
+    # pairs_num_per_sampling_size_df.columns.values[0] = "Subsampled_regions"
+    # pairs_num_per_sampling_size_df.columns.values[1] = "Number_of_pairs"
+
+    pairs_num_per_sampling_size_df = pairs_num_per_sampling_size_df.rename(
+        columns={pairs_num_per_sampling_size_df.columns[0]: "Subsampled_regions",
+                 pairs_num_per_sampling_size_df.columns[1]: "Number_of_pairs"}
+    )
     pairs_num_per_sampling_size_df['Pairs_lost_percent'] = (1 - pairs_num_per_sampling_size_df['Number_of_pairs'] / \
                                                             pairs_num_per_sampling_size_df.at[0, 'Number_of_pairs']) * \
                                                             100

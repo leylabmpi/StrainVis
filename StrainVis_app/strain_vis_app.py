@@ -2273,7 +2273,7 @@ class StrainVisApp:
             self.color_edges_by_feature.value = False
             if self.input_mode == "both":
                 self.synteny_ani_single_tabs.active = 0
-                #self.synteny_ani_multi_tabs.active = 0
+                self.visited_ANI_tab = 0
 
         del self.score_per_pos_contig
         del self.score_per_pos_contig_filtered
@@ -3367,7 +3367,9 @@ class StrainVisApp:
         # Transform the data into a scoring matrix
         pivoted_df = selected_genome_and_size_avg_df.pivot(columns='Sample1', index='Sample2', values='APSS')
         self.scores_matrix = pivoted_df.combine_first(pivoted_df.T)
-        np.fill_diagonal(self.scores_matrix.values, 1.0)
+        arr = self.scores_matrix.to_numpy(copy=True)
+        np.fill_diagonal(arr, 1.0)
+        self.scores_matrix[:] = arr
         #print("\nScores matrix:")
         #print(self.scores_matrix)
 
@@ -3605,7 +3607,10 @@ class StrainVisApp:
         # Transform the data into a scoring matrix
         pivoted_df = selected_genome_ani_df.pivot(columns='Sample1', index='Sample2', values='ANI')
         self.scores_matrix_ani = pivoted_df.combine_first(pivoted_df.T)
-        np.fill_diagonal(self.scores_matrix_ani.values, 1.0)
+        arr = self.scores_matrix_ani.to_numpy(copy=True)
+        np.fill_diagonal(arr, 1.0)
+        self.scores_matrix_ani[:] = arr
+
         #print("\nScores matrix:")
         #print(self.scores_matrix_ani)
 

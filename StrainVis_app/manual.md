@@ -103,7 +103,6 @@ This can be done according to the following steps:
 3. **Start the Bokeh server on the remote server:**  
 From within the activated conda strain_vis environment, run the following command:   
 `python run_strainvis.py --port 5006 &`  
-Note that it is important not to use the --show option when SynTracker runs on a remote machine.
 
 4. **Open the application in the local browser:** StrainVis should be accessible under: http://localhost:5006/strain_vis .
 
