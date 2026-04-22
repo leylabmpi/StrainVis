@@ -106,7 +106,8 @@ A metadata file (matches to the samples that were previously compared by SynTrac
 <p>The application should be opened in the browser under the URL: http://localhost:5005/strain_vis.<br />
 As long as the Bokeh server is running, StrainVis application can be accessed using the above URL.<br />
 </p>
-<p><strong>Stop the Bokeh server and StrainVis application</strong>: The two python running processes, created by the ‘python run_strainvis.py‘ command should be killed.</p>
+<p><strong>Stop the Bokeh server and StrainVis application</strong>: The two python running processes,
+    created by the <code>python run_strainvis.py</code> command should be killed.</p>
 <h3 id="open-several-strainvis-sessions">Open several StrainVis sessions</h3>
 <ul>
 <li>
@@ -120,7 +121,7 @@ As long as the Bokeh server is running, StrainVis application can be accessed us
     <strong>Run several server processes using different ports:</strong>
     In order to process different datasets at the same time using separated computational resources,
     it is needed to start several web-server instances listening to different ports.
-    It simply means to run the <code>python run_strainvis.py --port [port]</code> command using a different port number for each StrainVis instance.
+    It simply means to run the  <code>python run_strainvis.py --port [port]</code> command using a different port number for each StrainVis instance.
     Each web-server instance will be accessible under: http://localhost:[port_number]/strain_vis .
 </li>
 </ul>
