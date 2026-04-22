@@ -95,9 +95,6 @@ def create_pairs_num_per_sampling_size(score_per_region_df):
                                                               '125', '150', '175', '200', '250', '300', '350',
                                                               '400']].sum().reset_index()
 
-    # pairs_num_per_sampling_size_df.columns.values[0] = "Subsampled_regions"
-    # pairs_num_per_sampling_size_df.columns.values[1] = "Number_of_pairs"
-
     pairs_num_per_sampling_size_df = pairs_num_per_sampling_size_df.rename(
         columns={pairs_num_per_sampling_size_df.columns[0]: "Subsampled_regions",
                  pairs_num_per_sampling_size_df.columns[1]: "Number_of_pairs"}

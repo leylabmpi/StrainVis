@@ -162,8 +162,8 @@ def create_pairs_num_per_sampling_size(score_per_region_selected_genomes_df):
     summary_df = pairs_num_per_sampling_size_df[['All', '40', '60', '80', '100', '125', '150', '175', '200',
                                                  '250', '300', '350', '400']].sum().reset_index()
 
-    summary_df.columns.values[0] = "Subsampled_regions"
-    summary_df.columns.values[1] = "Number_of_pairs"
+    summary_df = summary_df.rename(columns={summary_df.columns[0]: "Subsampled_regions",
+                                            summary_df.columns[1]: "Number_of_pairs"})
 
     summary_df['Pairs_lost_percent'] = (1 - summary_df['Number_of_pairs'] / summary_df.at[0, 'Number_of_pairs']) * 100
     summary_df['Pairs_lost_percent'] = summary_df['Pairs_lost_percent'].apply(lambda x: round(x, 2))
