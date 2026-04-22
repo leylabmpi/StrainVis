@@ -2247,19 +2247,31 @@ class StrainVisApp:
             if self.visited_synteny_per_pos_tab and self.finished_initial_synteny_per_pos_plot and \
                     len(self.contigs_list_by_name) > 1:
                 # print("\nUnwatching contig_select and sorting_select widgets")
-                self.contig_select.param.unwatch(self.contig_select_watcher)
-                self.sorting_select.param.unwatch(self.sorting_select_watcher)
-                self.avg_plot_chkbox.param.unwatch(self.avg_plot_chkbox_watcher)
-                self.avg_plot_color.param.unwatch(self.avg_plot_color_watcher)
-                self.coverage_plot_chkbox.param.unwatch(self.coverage_plot_chkbox_watcher)
-                self.coverage_plot_color.param.unwatch(self.coverage_plot_color_watcher)
-                self.hypervar_chkbox.param.unwatch(self.hypervar_chkbox_watcher)
-                self.hypervar_color.param.unwatch(self.hypervar_color_watcher)
-                self.hypercons_chkbox.param.unwatch(self.hypercons_chkbox_watcher)
-                self.hypercons_color.param.unwatch(self.hypercons_color_watcher)
-                self.alpha_slider.param.unwatch(self.alpha_slider_watcher)
-                self.show_annotations_chkbox.param.unwatch(self.show_annotations_watcher)
-                if self.is_metadata:
+                if self.contig_select_watcher in self._watchers:
+                    self.contig_select.param.unwatch(self.contig_select_watcher)
+                if self.sorting_select_watcher in self._watchers:
+                    self.sorting_select.param.unwatch(self.sorting_select_watcher)
+                if self.avg_plot_chkbox_watcher in self._watchers:
+                    self.avg_plot_chkbox.param.unwatch(self.avg_plot_chkbox_watcher)
+                if self.avg_plot_color_watcher in self._watchers:
+                    self.avg_plot_color.param.unwatch(self.avg_plot_color_watcher)
+                if self.coverage_plot_chkbox_watcher in self._watchers:
+                    self.coverage_plot_chkbox.param.unwatch(self.coverage_plot_chkbox_watcher)
+                if self.coverage_plot_color_watcher in self._watchers:
+                    self.coverage_plot_color.param.unwatch(self.coverage_plot_color_watcher)
+                if self.hypervar_chkbox_watcher in self._watchers:
+                    self.hypervar_chkbox.param.unwatch(self.hypervar_chkbox_watcher)
+                if self.hypervar_color_watcher in self._watchers:
+                    self.hypervar_color.param.unwatch(self.hypervar_color_watcher)
+                if self.hypercons_chkbox_watcher in self._watchers:
+                    self.hypercons_chkbox.param.unwatch(self.hypercons_chkbox_watcher)
+                if self.hypercons_color_watcher in self._watchers:
+                    self.hypercons_color.param.unwatch(self.hypercons_color_watcher)
+                if self.alpha_slider_watcher in self._watchers:
+                    self.alpha_slider.param.unwatch(self.alpha_slider_watcher)
+                if self.show_annotations_watcher in self._watchers:
+                    self.show_annotations_chkbox.param.unwatch(self.show_annotations_watcher)
+                if self.is_metadata and self.synteny_per_pos_feature_select_watcher in self._watchers:
                     self.synteny_per_pos_feature_select.param.unwatch(self.synteny_per_pos_feature_select_watcher)
 
             # Initialize variables
@@ -2480,34 +2492,34 @@ class StrainVisApp:
         # Unwatch ANI plots related watchers (if it's not the first time that this function is called
         # and only for watchers that have been defined before)
         if self.visited_ANI_tab:
-            if not isinstance(self.threshold_select_ani_watcher, str):
+            if self.threshold_select_ani_watcher in self._watchers:
                 self.network_threshold_select_ani.param.unwatch(self.threshold_select_ani_watcher)
-            if not isinstance(self.threshold_input_ani_watcher, str):
+            if self.threshold_input_ani_watcher in self._watchers:
                 self.network_threshold_input_ani.param.unwatch(self.threshold_input_ani_watcher)
-            if not isinstance(self.highlight_sample_ani_watcher, str):
+            if self.highlight_sample_ani_watcher in self._watchers:
                 self.highlight_sample_input_ani.param.unwatch(self.highlight_sample_ani_watcher)
             self.network_threshold_input_ani.value = config.ANI_connections_threshold_default
             
             if self.is_metadata:
-                if not isinstance(self.feature_colormap_ani_watcher, str):
+                if self.feature_colormap_ani_watcher in self._watchers:
                     self.feature_colormap_ani.param.unwatch(self.feature_colormap_ani_watcher)
-                if not isinstance(self.custom_colormap_clustermap_ani_watcher, str):
+                if self.custom_colormap_clustermap_ani_watcher in self._watchers:
                     self.custom_colormap_input_clustermap_ani.param.unwatch(self.custom_colormap_clustermap_ani_watcher)
-                if not isinstance(self.color_by_feature_clustermap_ani_watcher, str):
+                if self.color_by_feature_clustermap_ani_watcher in self._watchers:
                     self.color_by_feature_ani.param.unwatch(self.color_by_feature_clustermap_ani_watcher)
-                if not isinstance(self.continuous_clustermap_ani_watcher, str):
+                if self.continuous_clustermap_ani_watcher in self._watchers:
                     self.is_continuous_clustermap_ani.param.unwatch(self.continuous_clustermap_ani_watcher)
-                if not isinstance(self.jitter_feature_ani_watcher, str):
+                if self.jitter_feature_ani_watcher in self._watchers:
                     self.jitter_feature_select_ani.param.unwatch(self.jitter_feature_ani_watcher)
-                if not isinstance(self.continuous_network_ani_watcher, str):
+                if self.continuous_network_ani_watcher in self._watchers:
                     self.is_continuous_network_ani.param.unwatch(self.continuous_network_ani_watcher)
-                if not isinstance(self.colormap_ani_watcher, str):
+                if self.colormap_ani_watcher in self._watchers:
                     self.nodes_colormap_ani.param.unwatch(self.colormap_ani_watcher)
-                if not isinstance(self.custom_colormap_ani_watcher, str):
+                if self.custom_colormap_ani_watcher in self._watchers:
                     self.custom_colormap_input_ani.param.unwatch(self.custom_colormap_ani_watcher)
-                if not isinstance(self.nodes_colorby_ani_watcher, str):
+                if self.nodes_colorby_ani_watcher in self._watchers:
                     self.nodes_color_by_ani.param.unwatch(self.nodes_colorby_ani_watcher)
-                if not isinstance(self.nodes_highlight_by_ani_watcher, str):
+                if self.nodes_highlight_by_ani_watcher in self._watchers:
                     self.nodes_highlight_by_ani.param.unwatch(self.nodes_highlight_by_ani_watcher)
 
         self.is_continuous_clustermap_ani.value = False
@@ -2723,33 +2735,33 @@ class StrainVisApp:
 
         # Unwatch watchers (if it's not the first time that this function is called)
         if self.clicked_button_display_APSS:
-            if not isinstance(self.threshold_select_watcher, str):
+            if self.threshold_select_watcher in self._watchers:
                 self.network_threshold_select.param.unwatch(self.threshold_select_watcher)
-            if not isinstance(self.threshold_input_watcher, str):
+            if self.threshold_input_watcher in self._watchers:
                 self.network_threshold_input.param.unwatch(self.threshold_input_watcher)
-            if not isinstance(self.highlight_sample_watcher, str):
+            if self.highlight_sample_watcher in self._watchers:
                 self.highlight_sample_input.param.unwatch(self.highlight_sample_watcher)
             self.network_threshold_input.value = config.APSS_connections_threshold_default
             if self.is_metadata:
-                if not isinstance(self.continuous_network_watcher, str):
+                if self.continuous_network_watcher in self._watchers:
                     self.is_continuous_network.param.unwatch(self.continuous_network_watcher)
-                if not isinstance(self.colormap_watcher, str):
+                if self.colormap_watcher in self._watchers:
                     self.nodes_colormap.param.unwatch(self.colormap_watcher)
-                if not isinstance(self.custom_colormap_watcher, str):
+                if self.custom_colormap_watcher in self._watchers:
                     self.custom_colormap_input.param.unwatch(self.custom_colormap_watcher)
-                if not isinstance(self.nodes_colorby_watcher, str):
+                if self.nodes_colorby_watcher in self._watchers:
                     self.nodes_color_by.param.unwatch(self.nodes_colorby_watcher)
-                if not isinstance(self.nodes_highlight_by_watcher, str):
+                if self.nodes_highlight_by_watcher in self._watchers:
                     self.nodes_highlight_by.param.unwatch(self.nodes_highlight_by_watcher)
-                if not isinstance(self.feature_colormap_watcher, str):
+                if self.feature_colormap_watcher in self._watchers:
                     self.feature_colormap.param.unwatch(self.feature_colormap_watcher)
-                if not isinstance(self.custom_colormap_clustermap_watcher, str):
+                if self.custom_colormap_clustermap_watcher in self._watchers:
                     self.custom_colormap_input_clustermap.param.unwatch(self.custom_colormap_clustermap_watcher)
-                if not isinstance(self.color_by_feature_clustermap_watcher, str):
+                if self.color_by_feature_clustermap_watcher in self._watchers:
                     self.color_by_feature.param.unwatch(self.color_by_feature_clustermap_watcher)
-                if not isinstance(self.continuous_clustermap_watcher, str):
+                if self.continuous_clustermap_watcher in self._watchers:
                     self.is_continuous_clustermap.param.unwatch(self.continuous_clustermap_watcher)
-                if not isinstance(self.jitter_feature_watcher, str):
+                if self.jitter_feature_watcher in self._watchers:
                     self.jitter_feature_select.param.unwatch(self.jitter_feature_watcher)
         self.clicked_button_display_APSS = 1
 
@@ -5248,17 +5260,27 @@ class StrainVisApp:
         # Unwatch all contig-specific widgets (if it's not the first time that the contig has changed)
         if self.visited_synteny_per_pos_tab:
             print("changed_contig: remove contig-related watchers")
-            self.avg_plot_chkbox.param.unwatch(self.avg_plot_chkbox_watcher)
-            self.avg_plot_color.param.unwatch(self.avg_plot_color_watcher)
-            self.coverage_plot_chkbox.param.unwatch(self.coverage_plot_chkbox_watcher)
-            self.coverage_plot_color.param.unwatch(self.coverage_plot_color_watcher)
-            self.hypervar_chkbox.param.unwatch(self.hypervar_chkbox_watcher)
-            self.hypervar_color.param.unwatch(self.hypervar_color_watcher)
-            self.hypercons_chkbox.param.unwatch(self.hypercons_chkbox_watcher)
-            self.hypercons_color.param.unwatch(self.hypercons_color_watcher)
-            self.alpha_slider.param.unwatch(self.alpha_slider_watcher)
-            self.show_annotations_chkbox.param.unwatch(self.show_annotations_watcher)
-            if self.is_metadata:
+            if self.avg_plot_chkbox_watcher in self._watchers:
+                self.avg_plot_chkbox.param.unwatch(self.avg_plot_chkbox_watcher)
+            if self.avg_plot_color_watcher in self._watchers:
+                self.avg_plot_color.param.unwatch(self.avg_plot_color_watcher)
+            if self.coverage_plot_chkbox_watcher in self._watchers:
+                self.coverage_plot_chkbox.param.unwatch(self.coverage_plot_chkbox_watcher)
+            if self.coverage_plot_color_watcher in self._watchers:
+                self.coverage_plot_color.param.unwatch(self.coverage_plot_color_watcher)
+            if self.hypervar_chkbox_watcher in self._watchers:
+                self.hypervar_chkbox.param.unwatch(self.hypervar_chkbox_watcher)
+            if self.hypervar_color_watcher in self._watchers:
+                self.hypervar_color.param.unwatch(self.hypervar_color_watcher)
+            if self.hypercons_chkbox_watcher in self._watchers:
+                self.hypercons_chkbox.param.unwatch(self.hypercons_chkbox_watcher)
+            if self.hypercons_color_watcher in self._watchers:
+                self.hypercons_color.param.unwatch(self.hypercons_color_watcher)
+            if self.alpha_slider_watcher in self._watchers:
+                self.alpha_slider.param.unwatch(self.alpha_slider_watcher)
+            if self.show_annotations_watcher in self._watchers:
+                self.show_annotations_chkbox.param.unwatch(self.show_annotations_watcher)
+            if self.is_metadata and self.synteny_per_pos_feature_select_watcher in self._watchers:
                 self.synteny_per_pos_feature_select.param.unwatch(self.synteny_per_pos_feature_select_watcher)
 
         self.coverage_plot = ""
@@ -6317,7 +6339,8 @@ class StrainVisApp:
     def create_multi_genomes_plots_by_APSS(self, event):
 
         # Unwatch watchers (if it's not the first time that this function is called)
-        if self.clicked_button_display_APSS_multi and self.is_metadata:
+        if self.clicked_button_display_APSS_multi and self.is_metadata and \
+                self.feature_select_watcher in self._watchers:
             self.box_plot_feature_select.param.unwatch(self.feature_select_watcher)
         self.clicked_button_display_APSS_multi = 1
 
@@ -6393,7 +6416,7 @@ class StrainVisApp:
         print("\n\nStart create_multi_genomes_column_ANI_mode in another thread.")
 
         # Unwatch watchers (if it's not the first time that this function is called)
-        if self.visited_ANI_tab_multi and self.is_metadata:
+        if self.visited_ANI_tab_multi and self.is_metadata and self.feature_select_ani_watcher in self._watchers:
             self.box_plot_feature_select_ani.param.unwatch(self.feature_select_ani_watcher)
         self.visited_ANI_tab_multi = 1
 
