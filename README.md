@@ -1,6 +1,6 @@
 # StrainVis: a Python-based web application for interactive visual analysis of strain-tracking methods
 
-### Version 1.2.0
+### Version 1.3.0
 
 ## Overview
 
@@ -29,7 +29,7 @@ using the following command:
       `conda env create -f strainvis.yml`
 
 Activate the newly created environment: 
-      `conda activate StrainVis_1_2`
+      `conda activate StrainVis_1_3`
 
 ## Open StrainVis web-application
 

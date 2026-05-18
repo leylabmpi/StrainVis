@@ -3378,12 +3378,14 @@ class StrainVisApp:
 
         # Transform the data into a scoring matrix
         pivoted_df = selected_genome_and_size_avg_df.pivot(columns='Sample1', index='Sample2', values='APSS')
-        self.scores_matrix = pivoted_df.combine_first(pivoted_df.T)
-        arr = self.scores_matrix.to_numpy(copy=True)
-        np.fill_diagonal(arr, 1.0)
-        self.scores_matrix[:] = arr
-        #print("\nScores matrix:")
-        #print(self.scores_matrix)
+        scores_matrix = pivoted_df.combine_first(pivoted_df.T)
+
+        # FORCE fully writable contiguous float matrix
+        self.scores_matrix = pd.DataFrame(
+            np.array(scores_matrix, dtype=np.float64, copy=True),
+            index=scores_matrix.index,
+            columns=scores_matrix.columns
+        )
 
         # Check the number of columns in the matrix
         col_num = len(self.scores_matrix.columns)
@@ -3618,10 +3620,14 @@ class StrainVisApp:
 
         # Transform the data into a scoring matrix
         pivoted_df = selected_genome_ani_df.pivot(columns='Sample1', index='Sample2', values='ANI')
-        self.scores_matrix_ani = pivoted_df.combine_first(pivoted_df.T)
-        arr = self.scores_matrix_ani.to_numpy(copy=True)
-        np.fill_diagonal(arr, 1.0)
-        self.scores_matrix_ani[:] = arr
+        scores_matrix = pivoted_df.combine_first(pivoted_df.T)
+
+        # FORCE fully writable contiguous float matrix
+        self.scores_matrix_ani = pd.DataFrame(
+            np.array(scores_matrix, dtype=np.float64, copy=True),
+            index=scores_matrix.index,
+            columns=scores_matrix.columns
+        )
 
         #print("\nScores matrix:")
         #print(self.scores_matrix_ani)

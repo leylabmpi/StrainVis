@@ -12,6 +12,8 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from matplotlib.colors import Normalize
 import seaborn as sns
+import scipy.cluster.hierarchy as hc
+import scipy.spatial.distance as dist
 from bokeh.plotting import figure
 from bokeh.transform import jitter
 from bokeh.models import HoverTool
@@ -92,8 +94,23 @@ def create_clustermap(matrix, type, cmap, method, is_metadata, feature, is_conti
     # The number of columns doesn't exceed the defined maximum - continue creating the clustermap plot
     col_num = len(matrix.columns)
 
-    # Create a masking matrix to display the NA values in grey color
-    mask_array = np.isnan(matrix)
+    # Create writable numpy copy
+    arr = matrix.to_numpy(copy=True)
+
+    # Fill diagonal with self-similarity
+    np.fill_diagonal(arr, 1.0)
+
+    # Rebuild DataFrame explicitly
+    matrix = pd.DataFrame(
+        arr,
+        index=matrix.index,
+        columns=matrix.columns
+    )
+    print("\ncreate_clustermap, matrix before filling NAs:")
+    print(matrix)
+
+    # Mask remaining NAs
+    mask_array = matrix.isna()
 
     # Fill the NA cells with the mean score
     matrix = matrix.fillna(matrix.mean().mean())
@@ -224,9 +241,13 @@ def create_clustermap(matrix, type, cmap, method, is_metadata, feature, is_conti
 
     # No metadata
     else:
-        clustermap = sns.clustermap(matrix, metric=method, cmap=colmap, linewidths=.5,
-                                    cbar_pos=(0.02, 0.92, 0.02, 0.15), xticklabels=1, yticklabels=1,
-                                    dendrogram_ratio=0.1, mask=mask_array)
+        clustermap = sns.clustermap(matrix,  # Pure numpy prevents Pandas index tracking errors
+                                    metric=method, cmap=colmap, linewidths=.5,
+                                    cbar_pos=(0.02, 0.92, 0.02, 0.15),
+                                    xticklabels=matrix.columns.tolist(),
+                                    yticklabels=matrix.index.tolist(),
+                                    dendrogram_ratio=0.1,
+                                    mask=mask_array)
 
     if col_num <= 10:
         font_size = 14
