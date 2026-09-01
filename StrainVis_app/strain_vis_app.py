@@ -97,13 +97,6 @@ def change_disabled_state_custom_colormap(value):
         return True
 
 
-def enable_submit(syn_file_input, syn_text_input, ani_file_input, ani_text_input):
-    if syn_file_input is not None or syn_text_input != "" or ani_file_input is not None or ani_text_input != "":
-        return False
-    else:
-        return True
-
-
 def generate_rand_pos():
     rand = random.random() * 2 - 1
     return rand
@@ -238,79 +231,6 @@ def load_genes_from_gff(gff_text):
     return contigs_dict
 
 
-def ensure_bottom_margin_for_texts(fig, ax_list, pad_pixels=6, min_bottom=0.05, max_bottom=0.30):
-    """
-    Increase figure bottom margin so that texts living below the lowest axis in ax_list
-    are not clipped.
-
-    Parameters
-    ----------
-    fig : matplotlib.figure.Figure
-    ax_list : sequence of matplotlib.axes.Axes
-        Axes to inspect for text artists (we check .texts, xticklabels, xlabel)
-    pad_pixels : int
-        Extra padding in pixels between lowest text bbox and the axes area.
-    min_bottom : float
-        Minimum fraction of figure height to use as bottom margin (safety).
-    max_bottom : float
-        Maximum allowed bottom fraction.
-    """
-    # Force a draw so text positions are updated
-    fig.canvas.draw()
-    renderer = fig.canvas.get_renderer()
-    fig_h = fig.bbox.height  # pixels
-
-    # Collect bottom-most pixel coordinate among relevant texts
-    y_bottoms = []
-
-    for ax in ax_list:
-        # axis texts (DFV labels)
-        for txt in ax.texts:
-            if not txt.get_visible():
-                continue
-            try:
-                bbox = txt.get_window_extent(renderer)
-            except Exception:
-                continue
-            # bbox.y0 is the lower pixel coordinate of the text (origin at bottom-left)
-            y_bottoms.append(bbox.y0)
-
-        # xtick labels on this axis
-        for lbl in ax.get_xticklabels():
-            if not lbl.get_visible():
-                continue
-            bbox = lbl.get_window_extent(renderer)
-            y_bottoms.append(bbox.y0)
-
-        # x-axis label (xlabel)
-        lbl = ax.xaxis.get_label()
-        if lbl.get_visible():
-            bbox = lbl.get_window_extent(renderer)
-            y_bottoms.append(bbox.y0)
-
-    if not y_bottoms:
-        return  # nothing to do
-
-    lowest_px = min(y_bottoms)  # smallest y (closest to bottom)
-    # convert to fraction of figure height
-    lowest_frac = lowest_px / fig_h
-
-    # We need the subplot bottom to be *above* the lowest_frac by pad_pixels
-    pad_frac = pad_pixels / fig_h
-    required_bottom = lowest_frac + pad_frac
-
-    # clamp to reasonable range
-    required_bottom = max(required_bottom, min_bottom)
-    required_bottom = min(required_bottom, max_bottom)
-
-    # current bottom
-    left, bottom, right, top = fig.subplotpars.left, fig.subplotpars.bottom, fig.subplotpars.right, fig.subplotpars.top
-
-    # If required_bottom is larger than current bottom, increase it
-    if required_bottom > bottom:
-        plt.subplots_adjust(bottom=required_bottom)
-
-
 class StrainVisApp:
 
     def __init__(self):
@@ -371,6 +291,8 @@ class StrainVisApp:
         self.genomes_sort_select_multi_watcher = None
         self.threshold_select_watcher = None
         self.threshold_input_watcher = None
+        self.iterations_slider_watcher = None
+        self.iterations_slider_ani_watcher = None
         self.highlight_sample_watcher = None
         self.threshold_select_ani_watcher = None
         self.threshold_input_ani_watcher = None
@@ -416,6 +338,7 @@ class StrainVisApp:
         self.input_type_radio_group = None
         self.SynTracker_text_input = None
         self.SynTracker_input_file = None
+        self.SynTracker_input_file_spinner = None
         self.ANI_text_input = None
         self.ANI_input_file = None
         self.metadata_file = None
@@ -425,6 +348,7 @@ class StrainVisApp:
         self.genomes_sort_select = None
         self.sample_sizes_slider = None
         self.show_single_plots_button = None
+        self.clear_single_plots_button = None
         self.all_or_subset_radio = None
         self.genomes_subset_select = None
         self.genomes_sort_select_multi = None
@@ -498,7 +422,7 @@ class StrainVisApp:
         self.highlight_sample_input = None
         self.network_threshold_select = None
         self.network_threshold_input = None
-        self.network_iterations = None
+        self.network_iterations_slider = None
         self.network_image_format = None
         self.save_network_plot_path = None
         self.save_network_table_path = None
@@ -522,7 +446,7 @@ class StrainVisApp:
         self.highlight_sample_input_ani = None
         self.network_threshold_select_ani = None
         self.network_threshold_input_ani = None
-        self.network_iterations_ani = None
+        self.network_iterations_slider_ani = None
         self.network_image_format_ani = None
         self.save_network_plot_path_ani = None
         self.save_network_table_path_ani = None
@@ -586,6 +510,7 @@ class StrainVisApp:
         self.synteny_ani_multi_tabs = None
         self.main_single_column = None
         self.main_multi_column = None
+        self.update_species_row = None
         self.ref_genome_column = None
         self.synteny_single_initial_plots_column = None
         self.ani_single_plots_column = None
@@ -727,8 +652,10 @@ class StrainVisApp:
         self.visited_ANI_tab_multi = 0
         self.network = ""
         self.APSS_connections_threshold = config.APSS_connections_threshold_default
+        self.network_iterations = config.network_iterations_options[0]
         self.network_ani = ""
         self.ani_connections_threshold = config.ANI_connections_threshold_default
+        self.network_iterations_ani = config.network_iterations_options[0]
         self.visited_synteny_per_pos_tab = 0
         self.finished_initial_synteny_per_pos_plot = 0
         self.ax_annotations = ""
@@ -744,12 +671,8 @@ class StrainVisApp:
             site_url="strain_vis",
         )
 
-        ###################################################################
-        # Build the template only after the session is loaded
-        #pn.state.onload(self._build_template)
-
     def _build_template(self):
-        #print("\n\nBuilding the template")
+        print("\n\nBuilding the template")
 
         # Apply custom CSS to adjust button font size in the header
         button_css = '''
@@ -785,7 +708,6 @@ class StrainVisApp:
         with open(manual_file_path, 'r') as manual:
             manual_content = manual.read()
         self.help_area = pn.Column(styles=config.main_area_style)
-        #self.help_area.append(pn.pane.Markdown(manual_content, styles={'font-size': "16px"}))
         self.help_area.append(pn.pane.HTML(manual_content, styles={'font-size': "16px"}))
 
         self.main_container.append(self.main_area)
@@ -815,14 +737,27 @@ class StrainVisApp:
         self._watchers.append(input_type_watcher)
         self.SynTracker_text_input = pn.widgets.TextInput(name='', placeholder='Enter SynTracker file path here...')
         self.SynTracker_input_file = pn.widgets.FileInput(accept='.csv, .tab, .txt')
+        self.SynTracker_input_file_spinner = pn.indicators.LoadingSpinner(value=True, size=30, visible=False,
+                                                                          color='info', label='Loading file...')
+
+        # FRONTEND: Turn on the spinner via JS when file selection begins
+        self.SynTracker_input_file.jscallback(
+            args={'spinner': self.SynTracker_input_file_spinner},
+            value="""
+            if (cb_obj.filename) {
+                spinner.visible = true;
+            }
+            """
+        )
+
         self.ANI_text_input = pn.widgets.TextInput(name='', placeholder='Enter ANI file path here...')
         self.ANI_input_file = pn.widgets.FileInput(accept='.tsv, .tab, .txt')
         self.metadata_file = pn.widgets.FileInput(accept='.csv, .tsv, .tab, .txt')
 
         self.submit_button = pn.widgets.Button(name='Submit', button_type='primary',
-                                               disabled=pn.bind(enable_submit,
+                                               disabled=pn.bind(self.enable_submit,
                                                                 syn_file_input=self.SynTracker_input_file,
-                                                                syn_text_input=self.SynTracker_text_input,
+                                                                syn_text_input=self.SynTracker_text_input.param.value_input,
                                                                 ani_file_input=self.ANI_input_file,
                                                                 ani_text_input=self.ANI_text_input,
                                                                 watch=True))
@@ -838,11 +773,20 @@ class StrainVisApp:
         self.genomes_sort_select = pn.widgets.Select(name='Sort by:', value=config.genomes_sorting_options[0],
                                                      options=config.genomes_sorting_options, styles={'margin': "0"})
         self.sample_sizes_slider = pn.widgets.DiscreteSlider(name='Subsampled regions', options=config.sampling_sizes,
-                                                             bar_color='white')
+                                                             bar_color='white',
+                                                             styles={'font-size': "16px", 'width': "400px",
+                                                                     'text-align': "center"})
         self.show_single_plots_button = pn.widgets.Button(name='Display plots using the selected number of regions',
-                                                          button_type='primary', margin=(25, 0))
+                                                          button_type='primary', margin=(25, 0),
+                                                          styles={'font-size': "16px"})
         sdpb = self.show_single_plots_button.on_click(self.create_single_genome_plots_by_APSS)
         self._button_callbacks.append((self.show_single_plots_button, sdpb))
+
+        self.clear_single_plots_button = pn.widgets.Button(name='Clear plots and select new number of regions',
+                                                           button_type='primary', margin=(25, 5),
+                                                           styles={'font-size': "16px"})
+        sdpb = self.clear_single_plots_button.on_click(self.clear_single_genome_plots_by_APSS_area)
+        self._button_callbacks.append((self.clear_single_plots_button, sdpb))
 
         self.all_or_subset_radio = pn.widgets.RadioBoxGroup(name='all_or_subset',
                                                             options=['All species', 'Select a subset of species'],
@@ -932,6 +876,7 @@ class StrainVisApp:
         self.ani_multi_plots_column = pn.Column(styles=config.ani_or_multi_style)
         self.plots_by_size_multi_column = pn.Column()
         self.selected_contig_column = pn.Column(styles={'padding': "10px 0 0 0"})
+        self.update_species_row = pn.Row()
 
         # Plots cards
         self.clustermap_card = pn.Card(title='Clustered heatmap plot', styles=config.plot_card_style,
@@ -1210,9 +1155,9 @@ class StrainVisApp:
                                                              start=0.5, end=1.0, width=100,
                                                              disabled=True
                                                              )
-        self.network_iterations = pn.widgets.DiscreteSlider(name='Number of iterations',
-                                                            options=config.network_iterations_options,
-                                                            bar_color='white')
+        self.network_iterations_slider = pn.widgets.DiscreteSlider(name='Number of iterations',
+                                                                   options=config.network_iterations_options,
+                                                                   bar_color='white')
         self.network_image_format = pn.widgets.Select(value=config.matplotlib_file_formats[0],
                                                       options=config.matplotlib_file_formats,
                                                       name="Select image format:")
@@ -1304,9 +1249,9 @@ class StrainVisApp:
                                                                  step=0.001, start=0.800, end=0.999, width=100,
                                                                  disabled=True
                                                                  )
-        self.network_iterations_ani = pn.widgets.DiscreteSlider(name='Number of iterations',
-                                                                options=config.network_iterations_options,
-                                                                bar_color='white')
+        self.network_iterations_slider_ani = pn.widgets.DiscreteSlider(name='Number of iterations',
+                                                                        options=config.network_iterations_options,
+                                                                        bar_color='white')
         self.network_image_format_ani = pn.widgets.Select(value=config.matplotlib_file_formats[0],
                                                           options=config.matplotlib_file_formats,
                                                           name="Select image format:")
@@ -1497,7 +1442,8 @@ class StrainVisApp:
         self.mandatory_input_card.append(pn.pane.Markdown(file_input_title, styles={'font-size': "16px",
                                                                                     'margin-bottom': "0",
                                                                                     'margin-top': "0"}))
-        self.mandatory_input_card.append(self.SynTracker_input_file)
+        SynTracker_input_file_row = pn.Row(self.SynTracker_input_file, self.SynTracker_input_file_spinner)
+        self.mandatory_input_card.append(SynTracker_input_file_row)
         self.mandatory_input_card.append(pn.pane.Markdown(text_input_title, styles={'font-size': "16px",
                                                                                     'margin-bottom': "0",
                                                                                     'margin-top': "0"}))
@@ -1531,7 +1477,6 @@ class StrainVisApp:
 
     def _cleanup(self, session_context):
         print("\n\nCleaning session: ", session_context.id)
-        #print("\n\nCleaning session:", id(self))
 
         # Stop param watchers
         for w in getattr(self, "_watchers", []):
@@ -1615,8 +1560,6 @@ class StrainVisApp:
 
         gc.collect()
 
-        #print("\nStrainVisApp instances:", len([o for o in gc.get_objects() if isinstance(o, StrainVisApp)]))
-
     def show_metadata_help_float_panel(self, event):
         metadata_note = "The metadata file may contain an unlimited number of columns (features).  " \
                         "\nThe first column must contain the sample IDs (identical to the sample IDs that appear in " \
@@ -1648,6 +1591,14 @@ class StrainVisApp:
             self.main_container.clear()
             self.main_container.append(self.main_area)
 
+    def enable_submit(self, syn_file_input, syn_text_input, ani_file_input, ani_text_input):
+        if syn_file_input is not None or syn_text_input != "" or ani_file_input is not None or ani_text_input != "":
+            self.SynTracker_input_file_spinner.value = False
+            self.SynTracker_input_file_spinner.label = "Done!"
+            return False
+        else:
+            return True
+
     def update_input_card(self, event):
         syn_file_input_title = "Upload SynTracker's output table 'synteny_scores_per_region.csv' for one or multiple " \
                                "species:"
@@ -1661,6 +1612,8 @@ class StrainVisApp:
         self.mandatory_input_card.clear()
         self.ani_upload_row.clear()
         self.SynTracker_input_file.value = None
+        self.SynTracker_input_file_spinner.value = True
+        self.SynTracker_input_file_spinner.label = "Loading file..."
         self.SynTracker_text_input.value = ""
         self.ANI_input_file.value = None
         self.ANI_text_input.value = ""
@@ -1670,7 +1623,8 @@ class StrainVisApp:
             self.mandatory_input_card.append(pn.pane.Markdown(syn_file_input_title, styles={'font-size': "16px",
                                                                                             'margin-bottom': "0",
                                                                                             'margin-top': "0"}))
-            self.mandatory_input_card.append(self.SynTracker_input_file)
+            SynTracker_input_file_row = pn.Row(self.SynTracker_input_file, self.SynTracker_input_file_spinner)
+            self.mandatory_input_card.append(SynTracker_input_file_row)
             self.mandatory_input_card.append(pn.pane.Markdown(text_input_title, styles={'font-size': "16px",
                                                                                         'margin-bottom': "0",
                                                                                         'margin-top': "0"}))
@@ -1702,7 +1656,8 @@ class StrainVisApp:
             self.mandatory_input_card.append(pn.pane.Markdown(syn_file_input_title, styles={'font-size': "16px",
                                                                                             'margin-bottom': "0",
                                                                                             'margin-top': "0"}))
-            self.mandatory_input_card.append(self.SynTracker_input_file)
+            SynTracker_input_file_row = pn.Row(self.SynTracker_input_file, self.SynTracker_input_file_spinner)
+            self.mandatory_input_card.append(SynTracker_input_file_row)
             self.mandatory_input_card.append(pn.pane.Markdown(text_input_title, styles={'font-size': "16px",
                                                                                         'margin-bottom': "0",
                                                                                         'margin-top': "0"}))
@@ -1712,8 +1667,8 @@ class StrainVisApp:
             self.mandatory_input_card.append(pn.layout.Divider())
 
             self.ani_upload_row.append(pn.pane.Markdown(ani_file_input_title, styles={'font-size': "16px",
-                                                                                        'margin-bottom': "0",
-                                                                                        'margin-top': "0"}))
+                                                                                      'margin-bottom': "0",
+                                                                                      'margin-top': "0"}))
             self.ani_upload_row.append(ani_help_button)
             self.mandatory_input_card.append(self.ani_upload_row)
             self.mandatory_input_card.append(self.ANI_input_file)
@@ -1781,12 +1736,6 @@ class StrainVisApp:
         # Clear any global or cached objects
         pn.state.cache.clear()
 
-        #gc.collect()
-
-    def create_new_session(self, event):
-        print("\n\nIn create_new_session")
-        pn.state.location.reload = True
-
     def submit_new_file_button(self):
         button_column = pn.Column(pn.Spacer(height=30), self.new_file_button)
         return button_column
@@ -1806,7 +1755,6 @@ class StrainVisApp:
                     print("\n\nSynTracker input file path: " + self.SynTracker_text_input.value)
                     self.syntracker_filename = os.path.basename(self.SynTracker_text_input.value)
                     print("SynTracker input file name: " + self.syntracker_filename)
-                    #self.display_results_page()
                     self.syntracker_loaded = 1
 
                 else:
@@ -1849,7 +1797,6 @@ class StrainVisApp:
                     print("\n\nANI input file path: " + self.ANI_text_input.value)
                     self.ani_filename = os.path.basename(self.ANI_text_input.value)
                     print("ANI input file name: " + self.ani_filename)
-                    #self.display_results_page()
                     self.ani_loaded = 1
 
                 else:
@@ -1878,7 +1825,6 @@ class StrainVisApp:
 
                     # File has content
                     else:
-                        #self.display_results_page()
                         self.ani_loaded = 1
 
         ## Verify that all necessary files were loaded according to the input mode
@@ -1929,13 +1875,23 @@ class StrainVisApp:
         self.main_area.clear()
 
         if self.input_mode == "SynTracker":
-            title = "Loading input file: " + self.syntracker_filename
+            title = "Loading input file: "
+            file = self.syntracker_filename
         elif self.input_mode == "ANI":
-            title = "Loading input file: " + self.ani_filename
+            title = "Loading input file: "
+            file = self.ani_filename
         else:
-            title = "Loading input files:\n" + self.syntracker_filename + "\n" + self.ani_filename
+            title = "Loading input files: "
+            file = self.syntracker_filename + "\n" + self.ani_filename
 
-        self.main_area.append(pn.pane.Markdown(title, styles={'font-size': "20px"}, hard_line_break=True))
+        loading_spinner = pn.indicators.LoadingSpinner(value=True, size=60, visible=True, color='info')
+        title_md = pn.pane.Markdown(title, styles={'font-size': "22px", 'margin-bottom': "0",
+                                                   'color': config.title_purple_color})
+        files_md = pn.pane.Markdown(file, styles={'font-size': "20px", 'margin-top': "0"}, hard_line_break=True)
+
+        title_row = pn.Row(title_md, loading_spinner)
+        self.main_area.append(title_row)
+        self.main_area.append(files_md)
 
     def start_process(self):
         self.ref_genomes_list = []
@@ -2130,7 +2086,6 @@ class StrainVisApp:
             else:
                 self.ref_genome = self.ref_genomes_list_by_pairs_num[0]
                 print("\nReference genome = " + self.ref_genome)
-                #pn.state.location.sync(self.genomes_select, {'value': 'ref_genome'})
                 self.genomes_select.options = self.ref_genomes_list_by_pairs_num
                 self.genomes_select.value = self.ref_genome
 
@@ -2235,6 +2190,7 @@ class StrainVisApp:
         self.plots_by_size_single_column.clear()
         self.ani_single_plots_column.clear()
         self.combined_single_plots_column.clear()
+        self.sample_sizes_slider.disabled = False
         self.sample_sizes_slider.value = config.sampling_sizes[0]
         self.selected_contig_column.clear()
         self.APSS_analyses_single_column.clear()
@@ -2319,21 +2275,35 @@ class StrainVisApp:
 
     def create_single_genome_column(self):
         ref_genome_title = "Species: " + self.ref_genome
-
-        self.ref_genome_column.append(pn.pane.Markdown(ref_genome_title,
-                                                       styles={'font-size': "22px", 'color': config.title_purple_color,
-                                                               'margin': "0"}))
+        ref_genome_title_md = pn.pane.Markdown(ref_genome_title,
+                                               styles={'font-size': "22px", 'color': config.title_purple_color,
+                                                       'margin': "0"})
+        loading_spinner = pn.indicators.LoadingSpinner(value=True, size=50, visible=True, color='info')
+        title_row = pn.Row(ref_genome_title_md, loading_spinner, styles={'margin-top': "7px"})
+        self.ref_genome_column.append(title_row)
 
         if self.input_mode == "SynTracker":
             self.create_single_genome_column_syntracker_mode()
+
+            # Remove the LoadingSpinner widget
+            title_row.pop(1)
+
             self.ref_genome_column.append(self.synteny_single_initial_plots_column)
 
         elif self.input_mode == "ANI":
             self.create_single_genome_column_ANI_mode()
+
+            # Remove the LoadingSpinner widget
+            title_row.pop(1)
+
             self.ref_genome_column.append(self.ani_single_plots_column)
 
         else:
             self.create_single_genome_column_both_mode()
+
+            # Remove the LoadingSpinner widget
+            title_row.pop(1)
+
             self.ref_genome_column.append(self.synteny_ani_single_tabs)
 
     def create_single_genome_column_both_mode(self):
@@ -2366,9 +2336,11 @@ class StrainVisApp:
             before = time.time()
 
             synteny_per_pos_message = "Preparing the plot - please wait..."
-            self.synteny_per_pos_plot_column.append(pn.pane.Markdown(synteny_per_pos_message,
-                                                                     styles={'font-size': "20px",
-                                                                             'margin': "0"}))
+            synteny_per_pos_md = pn.pane.Markdown(synteny_per_pos_message, styles={'font-size': "20px",
+                                                                                   'margin': "0"})
+            loading_spinner = pn.indicators.LoadingSpinner(value=True, size=50, visible=True, color='info')
+            loading_message_row = pn.Row(synteny_per_pos_md, loading_spinner, styles={'margin': "0, 3px, 7px, 3px"})
+            self.synteny_per_pos_plot_column.append(loading_message_row)
 
             # Get the score-per-region table for the selected genome only
             self.score_per_region_selected_genome_df = ds.return_selected_genome_table(self.score_per_region_all_genomes_df,
@@ -2378,7 +2350,7 @@ class StrainVisApp:
             thread_synteny_per_pos = threading.Thread(target=self.create_initial_synteny_per_pos_plot_tab)
             thread_synteny_per_pos.start()  # Start the thread
 
-            # Initialize the dictionary that holds the calculated sampleing sizes
+            # Initialize the dictionary that holds the calculated sampling sizes
             for size in config.sampling_sizes:
                 self.APSS_by_genome_all_sizes_dict[size] = pd.DataFrame()
                 self.calculated_APSS_genome_size_dict[size] = 0
@@ -2439,13 +2411,13 @@ class StrainVisApp:
 
             plots_row = pn.Row(pairs_plot_column, pn.Spacer(width=20), samples_plot_column)
             slider_row = pn.Row(self.sample_sizes_slider, align='center')
-            button_row = pn.Row(self.show_single_plots_button, align='center')
+            buttons_row = pn.Row(self.show_single_plots_button, align='center')
 
             initial_plots_column = pn.Column(
                 plots_row,
                 pn.Spacer(height=20),
                 slider_row,
-                button_row,
+                buttons_row,
                 self.plots_by_size_single_column,
             )
             self.APSS_analyses_single_column.append(initial_plots_column)
@@ -2481,7 +2453,8 @@ class StrainVisApp:
         self.network_card_ani.clear()
         self.metadata_colorby_card_ani.clear()
         self.layout_parameters_card_ani.clear()
-        self.network_iterations_ani.value = config.network_iterations_options[0]
+        self.network_iterations_slider_ani.value = config.network_iterations_options[0]
+        self.network_iterations_ani = config.network_iterations_options[0]
         self.highlight_sample_chkbox_ani.value = False
         self.highlight_nodes_by_feature_ani.value = False
         self.color_edges_by_feature_ani.value = False
@@ -2489,38 +2462,38 @@ class StrainVisApp:
         before = time.time()
         print("\n\nStart create_single_genome_column_ANI_mode in another thread.")
 
-        # Unwatch ANI plots related watchers (if it's not the first time that this function is called
-        # and only for watchers that have been defined before)
-        if self.visited_ANI_tab:
-            if self.threshold_select_ani_watcher in self._watchers:
-                self.network_threshold_select_ani.param.unwatch(self.threshold_select_ani_watcher)
-            if self.threshold_input_ani_watcher in self._watchers:
-                self.network_threshold_input_ani.param.unwatch(self.threshold_input_ani_watcher)
-            if self.highlight_sample_ani_watcher in self._watchers:
-                self.highlight_sample_input_ani.param.unwatch(self.highlight_sample_ani_watcher)
-            self.network_threshold_input_ani.value = config.ANI_connections_threshold_default
+        # Unwatch ANI plots related watchers
+        if self.threshold_select_ani_watcher in self._watchers:
+            self.network_threshold_select_ani.param.unwatch(self.threshold_select_ani_watcher)
+        if self.threshold_input_ani_watcher in self._watchers:
+            self.network_threshold_input_ani.param.unwatch(self.threshold_input_ani_watcher)
+        if self.iterations_slider_ani_watcher in self._watchers:
+            self.network_iterations_slider_ani.param.unwatch(self.iterations_slider_ani_watcher)
+        if self.highlight_sample_ani_watcher in self._watchers:
+            self.highlight_sample_input_ani.param.unwatch(self.highlight_sample_ani_watcher)
+        self.network_threshold_input_ani.value = config.ANI_connections_threshold_default
             
-            if self.is_metadata:
-                if self.feature_colormap_ani_watcher in self._watchers:
-                    self.feature_colormap_ani.param.unwatch(self.feature_colormap_ani_watcher)
-                if self.custom_colormap_clustermap_ani_watcher in self._watchers:
-                    self.custom_colormap_input_clustermap_ani.param.unwatch(self.custom_colormap_clustermap_ani_watcher)
-                if self.color_by_feature_clustermap_ani_watcher in self._watchers:
-                    self.color_by_feature_ani.param.unwatch(self.color_by_feature_clustermap_ani_watcher)
-                if self.continuous_clustermap_ani_watcher in self._watchers:
-                    self.is_continuous_clustermap_ani.param.unwatch(self.continuous_clustermap_ani_watcher)
-                if self.jitter_feature_ani_watcher in self._watchers:
-                    self.jitter_feature_select_ani.param.unwatch(self.jitter_feature_ani_watcher)
-                if self.continuous_network_ani_watcher in self._watchers:
-                    self.is_continuous_network_ani.param.unwatch(self.continuous_network_ani_watcher)
-                if self.colormap_ani_watcher in self._watchers:
-                    self.nodes_colormap_ani.param.unwatch(self.colormap_ani_watcher)
-                if self.custom_colormap_ani_watcher in self._watchers:
-                    self.custom_colormap_input_ani.param.unwatch(self.custom_colormap_ani_watcher)
-                if self.nodes_colorby_ani_watcher in self._watchers:
-                    self.nodes_color_by_ani.param.unwatch(self.nodes_colorby_ani_watcher)
-                if self.nodes_highlight_by_ani_watcher in self._watchers:
-                    self.nodes_highlight_by_ani.param.unwatch(self.nodes_highlight_by_ani_watcher)
+        if self.is_metadata:
+            if self.feature_colormap_ani_watcher in self._watchers:
+                self.feature_colormap_ani.param.unwatch(self.feature_colormap_ani_watcher)
+            if self.custom_colormap_clustermap_ani_watcher in self._watchers:
+                self.custom_colormap_input_clustermap_ani.param.unwatch(self.custom_colormap_clustermap_ani_watcher)
+            if self.color_by_feature_clustermap_ani_watcher in self._watchers:
+                self.color_by_feature_ani.param.unwatch(self.color_by_feature_clustermap_ani_watcher)
+            if self.continuous_clustermap_ani_watcher in self._watchers:
+                self.is_continuous_clustermap_ani.param.unwatch(self.continuous_clustermap_ani_watcher)
+            if self.jitter_feature_ani_watcher in self._watchers:
+                self.jitter_feature_select_ani.param.unwatch(self.jitter_feature_ani_watcher)
+            if self.continuous_network_ani_watcher in self._watchers:
+                self.is_continuous_network_ani.param.unwatch(self.continuous_network_ani_watcher)
+            if self.colormap_ani_watcher in self._watchers:
+                self.nodes_colormap_ani.param.unwatch(self.colormap_ani_watcher)
+            if self.custom_colormap_ani_watcher in self._watchers:
+                self.custom_colormap_input_ani.param.unwatch(self.custom_colormap_ani_watcher)
+            if self.nodes_colorby_ani_watcher in self._watchers:
+                self.nodes_color_by_ani.param.unwatch(self.nodes_colorby_ani_watcher)
+            if self.nodes_highlight_by_ani_watcher in self._watchers:
+                self.nodes_highlight_by_ani.param.unwatch(self.nodes_highlight_by_ani_watcher)
 
         self.is_continuous_clustermap_ani.value = False
         self.feature_colormap_ani.options = config.categorical_colormap_dict
@@ -2715,7 +2688,13 @@ class StrainVisApp:
 
             self.visited_synteny_per_pos_tab = 1
 
+    def clear_single_genome_plots_by_APSS_area(self, event):
+        self.plots_by_size_single_column.clear()
+        self.sample_sizes_slider.disabled = False
+
     def create_single_genome_plots_by_APSS(self, event):
+
+        before = time.time()
 
         self.sampling_size = self.sample_sizes_slider.value
         print("\nSingle species visualization. Selected subsampling size = " + self.sampling_size)
@@ -2728,10 +2707,12 @@ class StrainVisApp:
         self.layout_parameters_card.clear()
         self.metadata_colorby_card.clear()
         self.metadata_jitter_card.clear()
-        self.network_iterations.value = config.network_iterations_options[0]
+        self.network_iterations_slider.value = config.network_iterations_options[0]
+        self.network_iterations = config.network_iterations_options[0]
         self.highlight_sample_chkbox.value = False
         self.highlight_nodes_by_feature.value = False
         self.color_edges_by_feature.value = False
+        self.sample_sizes_slider.disabled = True
 
         # Unwatch watchers (if it's not the first time that this function is called)
         if self.clicked_button_display_APSS:
@@ -2739,6 +2720,8 @@ class StrainVisApp:
                 self.network_threshold_select.param.unwatch(self.threshold_select_watcher)
             if self.threshold_input_watcher in self._watchers:
                 self.network_threshold_input.param.unwatch(self.threshold_input_watcher)
+            if self.iterations_slider_watcher in self._watchers:
+                self.network_iterations_slider.param.unwatch(self.iterations_slider_watcher)
             if self.highlight_sample_watcher in self._watchers:
                 self.highlight_sample_input.param.unwatch(self.highlight_sample_watcher)
             self.network_threshold_input.value = config.APSS_connections_threshold_default
@@ -2772,6 +2755,20 @@ class StrainVisApp:
         self.feature_colormap.options = config.categorical_colormap_dict
         self.feature_colormap.value = config.categorical_colormap_dict['cet_glasbey']
 
+        # Display title before starting calculation
+        title_str = "Creating"
+        if self.sampling_size == 'All':
+            size_title = title_str + " plots using APSS from all available regions:"
+        else:
+            size_title = title_str + " plots using APSS from " + self.sampling_size + " subsampled regions:"
+        size_title_md = pn.pane.Markdown(size_title, styles={'font-size': "20px",
+                                                             'color': config.title_purple_color,
+                                                             'margin': "0",
+                                                             'padding': "0"})
+        loading_spinner = pn.indicators.LoadingSpinner(value=True, size=50, visible=True, color='info')
+        title_row = pn.Row(size_title_md, loading_spinner, styles={'margin': "0, 3px, 7px, 3px"})
+        self.plots_by_size_single_column.append(title_row)
+
         # Check if the requested genome and size have already been calculated. If so, fetch the specific dataframe
         if self.calculated_APSS_genome_size_dict[self.sampling_size]:
             print("\nThe selected size (" + self.sampling_size + ") has already been calculated - retrieve it.")
@@ -2797,16 +2794,6 @@ class StrainVisApp:
 
         # Enough data -> creating plots
         else:
-            if self.sampling_size == 'All':
-                size_title = "Presenting plots using APSS from all available regions:"
-            else:
-                size_title = "Presenting plots using APSS from " + self.sampling_size + " subsampled regions:"
-
-            self.plots_by_size_single_column.append(pn.pane.Markdown(size_title, styles={'font-size': "20px",
-                                                                                         'color': config.title_purple_color,
-                                                                                         'margin': "0 0 10px 0",
-                                                                                         'padding': "0"}))
-
             # Add the plots to the layout
             self.create_jitter_pane(selected_genome_and_size_avg_df)
             self.create_clustermap_pane(selected_genome_and_size_avg_df)
@@ -2831,7 +2818,27 @@ class StrainVisApp:
 
             plots_column = pn.Column(self.jitter_card, pn.Spacer(height=20), self.clustermap_card, pn.Spacer(height=20),
                                      self.network_card)
+
+            # Remove the LoadingSpinner widget
+            title_row.pop(1)
+
+            # Display the ready plots
             self.plots_by_size_single_column.append(plots_column)
+
+            # Updating the title
+            title_str = "Presenting"
+            if self.sampling_size == 'All':
+                size_title = title_str + " plots using APSS from all available regions:"
+            else:
+                size_title = title_str + " plots using APSS from " + self.sampling_size + " subsampled regions:"
+            size_title_md.object = size_title
+
+            title_row.append(pn.layout.HSpacer())
+            title_row.append(self.clear_single_plots_button)
+
+            after = time.time()
+            duration = after - before
+            print("\ncreate_single_genome_plots_by_APSS took " + str(duration) + " seconds.\n")
 
     def create_jitter_pane(self, selected_genome_and_size_avg_df):
         styling_title = "Plot styling options:"
@@ -3909,7 +3916,7 @@ class StrainVisApp:
         self.metadata_colorby_card.append(metadata_coloring_col)
         network_threshold_row = pn.Row(self.network_threshold_select, self.network_threshold_input)
         params_col = pn.Column(network_threshold_row,
-                               self.network_iterations,
+                               self.network_iterations_slider,
                                init_button_row)
         self.layout_parameters_card.append(params_col)
         highlight_sample_row = pn.Row(self.highlight_sample_chkbox, self.highlight_sample_input)
@@ -3968,7 +3975,7 @@ class StrainVisApp:
         print("Mean APSS: " + str(mean_APSS))
         print("Standard deviation APSS: " + str(std_APSS) + "\n")
 
-        if mean_APSS <= 0.99:
+        if mean_APSS < 0.99:
             self.APSS_connections_threshold = mean_APSS
         else:
             self.APSS_connections_threshold = 0.99
@@ -4012,7 +4019,7 @@ class StrainVisApp:
 
         # Update the placeholder of the filenames for download with the default threshold.
         network_file = "Network_plot_" + self.ref_genome + "_" + self.sampling_size + "_regions_" + \
-                       self.network_iterations.value + "_iterations_threshold_" + str(self.APSS_connections_threshold)
+                       str(self.network_iterations) + "_iterations_threshold_" + str(self.APSS_connections_threshold)
         self.save_network_plot_path.placeholder = network_file
         table_file = "Network_" + self.ref_genome + "_" + self.sampling_size + "_regions_threshold_" + \
                      str(self.APSS_connections_threshold)
@@ -4052,7 +4059,7 @@ class StrainVisApp:
             self.network_threshold_input.disabled = True
             self.network_threshold_select.options = []
 
-            if mean_APSS > 0.99:
+            if mean_APSS >= 0.99:
                 mean_APSS = 0.99
                 mean_only = 1
 
@@ -4071,7 +4078,7 @@ class StrainVisApp:
             # Set the mean as the default threshold
             self.network_threshold_select.value = self.network_threshold_select.options[0]
 
-            # Set watchers for the threshold widgets
+            # Set watchers for some network widgets
             self.threshold_select_watcher = self.network_threshold_select.param.watch(partial(
                 self.changed_threshold_select, mean_APSS, mean_std, mean_only), 'value',
                 onlychanged=True)
@@ -4079,6 +4086,10 @@ class StrainVisApp:
             self.threshold_input_watcher = self.network_threshold_input.param.watch(self.changed_threshold_input,
                                                                                     'value', onlychanged=True)
             self._watchers.append(self.threshold_input_watcher)
+            self.iterations_slider_watcher = self.network_iterations_slider.param.watch(self.changed_iterations_num,
+                                                                                        'value_throttled',
+                                                                                        onlychanged=True)
+            self._watchers.append(self.iterations_slider_watcher)
             self.highlight_sample_watcher = self.highlight_sample_input.param.watch(self.change_highlighted_sample,
                                                                                     'value', onlychanged=True)
             self._watchers.append(self.highlight_sample_watcher)
@@ -4137,26 +4148,27 @@ class StrainVisApp:
 
             # Create the network plot using the selected parameters
             self.network_plot_hv = pn.bind(ps.cretae_network_plot, network=self.network,
-                                                 is_metadata=self.use_metadata_network,
-                                                 nodes_feature=self.nodes_color_by.value,
-                                                 is_continuous=self.is_continuous_network.value,
-                                                 cmap=self.nodes_colormap.value,
-                                                 custom_cmap=self.custom_colormap_input.value,
-                                                 node_color=self.network_node_color,
-                                                 edge_color=self.network_edge_color,
-                                                 is_highlight_group=self.highlight_nodes_by_feature,
-                                                 highlight_feature=self.nodes_highlight_by.value,
-                                                 highlight_group=self.nodes_highlight_group_select,
-                                                 is_edge_colorby=self.color_edges_by_feature,
-                                                 edges_feature=self.edges_color_by,
-                                                 within_edge_color=self.network_within_color,
-                                                 between_edge_color=self.network_between_color,
-                                                 iterations=self.network_iterations, pos_dict=self.pos_dict,
-                                                 show_labels=self.show_labels_chkbox,
-                                                 all_or_highlighted=self.all_or_highlighted_select,
-                                                 is_highlight_samples=self.highlight_sample_chkbox,
-                                                 samples_to_highlight=self.highlight_sample_input.value,
-                                                 metadata_dict=self.metadata_dict)
+                                           is_metadata=self.use_metadata_network,
+                                           nodes_feature=self.nodes_color_by.value,
+                                           is_continuous=self.is_continuous_network.value,
+                                           cmap=self.nodes_colormap.value,
+                                           custom_cmap=self.custom_colormap_input.value,
+                                           node_color=self.network_node_color,
+                                           edge_color=self.network_edge_color,
+                                           is_highlight_group=self.highlight_nodes_by_feature,
+                                           highlight_feature=self.nodes_highlight_by.value,
+                                           highlight_group=self.nodes_highlight_group_select,
+                                           is_edge_colorby=self.color_edges_by_feature,
+                                           edges_feature=self.edges_color_by,
+                                           within_edge_color=self.network_within_color,
+                                           between_edge_color=self.network_between_color,
+                                           iterations=self.network_iterations,
+                                           pos_dict=self.pos_dict,
+                                           show_labels=self.show_labels_chkbox,
+                                           all_or_highlighted=self.all_or_highlighted_select,
+                                           is_highlight_samples=self.highlight_sample_chkbox,
+                                           samples_to_highlight=self.highlight_sample_input.value,
+                                           metadata_dict=self.metadata_dict)
             self._bounded_functions.append(self.network_plot_hv)
             self.network_pane = pn.pane.HoloViews(self.network_plot_hv, height=600, width=700, sizing_mode="fixed")
             self._bounded_panes.append(self.network_pane)
@@ -4171,17 +4183,17 @@ class StrainVisApp:
         if self.use_metadata_network.value:
             if self.nodes_colormap.value_name == 'Define custom colormap':
                 network_file = "Network_plot_" + self.ref_genome + "_" + self.sampling_size + "_regions_" + \
-                               self.network_iterations.value + "_iterations_threshold_" + \
+                               str(self.network_iterations) + "_iterations_threshold_" + \
                                str(self.APSS_connections_threshold) + "_colorby_" + self.nodes_color_by.value + \
                                "_custom_colormap"
             else:
                 network_file = "Network_plot_" + self.ref_genome + "_" + self.sampling_size + "_regions_" + \
-                               self.network_iterations.value + "_iterations_threshold_" + \
+                               str(self.network_iterations) + "_iterations_threshold_" + \
                                str(self.APSS_connections_threshold) + "_colorby_" + self.nodes_color_by.value + "_" + \
                                self.nodes_colormap.value_name
         else:
             network_file = "Network_plot_" + self.ref_genome + "_" + self.sampling_size + "_regions_" + \
-                           self.network_iterations.value + "_iterations_threshold_" + \
+                           str(self.network_iterations) + "_iterations_threshold_" + \
                            str(self.APSS_connections_threshold)
         if self.show_labels_chkbox.value:
             network_file += "_with_labels"
@@ -4222,7 +4234,8 @@ class StrainVisApp:
                                                edges_feature=self.edges_color_by,
                                                within_edge_color=self.network_within_color,
                                                between_edge_color=self.network_between_color,
-                                               iterations=self.network_iterations, pos_dict=self.pos_dict,
+                                               iterations=self.network_iterations,
+                                               pos_dict=self.pos_dict,
                                                show_labels=self.show_labels_chkbox,
                                                all_or_highlighted=self.all_or_highlighted_select,
                                                is_highlight_samples=self.highlight_sample_chkbox,
@@ -4310,6 +4323,11 @@ class StrainVisApp:
         self.APSS_connections_threshold = self.network_threshold_input.value
         self.change_weight_attribute()
 
+    def changed_iterations_num(self, event):
+        self.network_iterations = self.network_iterations_slider.value_throttled
+        self.update_network_plot()
+        #print("\nIn changed_iterations_num: iterations number = " + str(self.network_iterations))
+
     def change_weight_attribute(self):
 
         self.APSS_connections_threshold = round(self.APSS_connections_threshold, 2)
@@ -4318,7 +4336,7 @@ class StrainVisApp:
 
         # Update the threshold in the deafult filenames for download
         network_file = "Network_plot_" + self.ref_genome + "_" + self.sampling_size + "_regions_" + \
-                       self.network_iterations.value + "_iterations_threshold_" + str(self.APSS_connections_threshold)
+                       str(self.network_iterations) + "_iterations_threshold_" + str(self.APSS_connections_threshold)
         self.save_network_plot_path.placeholder = network_file
         table_file = "Network_" + self.ref_genome + "_" + self.sampling_size + "_regions_threshold_" + \
                      str(self.APSS_connections_threshold)
@@ -4385,38 +4403,40 @@ class StrainVisApp:
         self.update_network_plot()
         after = time.time()
         duration = after - before
-        print("Updating the network plot took " + str(duration) + " seconds.\n")
+        #print("Updating the network plot took " + str(duration) + " seconds.\n")
 
     def change_highlighted_sample(self, event):
-        print("\nIn change_highlighted_sample")
-        print("Samples to highlight: " + self.highlight_sample_input.value)
+        #print("\nIn change_highlighted_sample")
+        #print("Samples to highlight: " + self.highlight_sample_input.value)
         self.update_network_plot()
 
     # Update the network plot using the selected parameters and the new positions dict
     def update_network_plot(self):
         #print("\nIn update_network_plot")
         self.network_plot_hv = pn.bind(ps.cretae_network_plot, network=self.network,
-                                             is_metadata=self.use_metadata_network,
-                                             nodes_feature=self.nodes_color_by.value,
-                                             is_continuous=self.is_continuous_network.value,
-                                             cmap=self.nodes_colormap.value,
-                                             custom_cmap=self.custom_colormap_input.value,
-                                             node_color=self.network_node_color, edge_color=self.network_edge_color,
-                                             is_highlight_group=self.highlight_nodes_by_feature,
-                                             highlight_feature=self.nodes_highlight_by.value,
-                                             highlight_group=self.nodes_highlight_group_select,
-                                             is_edge_colorby=self.color_edges_by_feature,
-                                             edges_feature=self.edges_color_by,
-                                             within_edge_color=self.network_within_color,
-                                             between_edge_color=self.network_between_color,
-                                             iterations=self.network_iterations, pos_dict=self.pos_dict,
-                                             show_labels=self.show_labels_chkbox,
-                                             all_or_highlighted=self.all_or_highlighted_select,
-                                             is_highlight_samples=self.highlight_sample_chkbox,
-                                             samples_to_highlight=self.highlight_sample_input.value,
-                                             metadata_dict=self.metadata_dict)
+                                       is_metadata=self.use_metadata_network,
+                                       nodes_feature=self.nodes_color_by.value,
+                                       is_continuous=self.is_continuous_network.value,
+                                       cmap=self.nodes_colormap.value,
+                                       custom_cmap=self.custom_colormap_input.value,
+                                       node_color=self.network_node_color, edge_color=self.network_edge_color,
+                                       is_highlight_group=self.highlight_nodes_by_feature,
+                                       highlight_feature=self.nodes_highlight_by.value,
+                                       highlight_group=self.nodes_highlight_group_select,
+                                       is_edge_colorby=self.color_edges_by_feature,
+                                       edges_feature=self.edges_color_by,
+                                       within_edge_color=self.network_within_color,
+                                       between_edge_color=self.network_between_color,
+                                       iterations=self.network_iterations,
+                                       pos_dict=self.pos_dict,
+                                       show_labels=self.show_labels_chkbox,
+                                       all_or_highlighted=self.all_or_highlighted_select,
+                                       is_highlight_samples=self.highlight_sample_chkbox,
+                                       samples_to_highlight=self.highlight_sample_input.value,
+                                       metadata_dict=self.metadata_dict)
 
         self.network_pane.object = self.network_plot_hv
+
     def change_continuous_state_network_ani(self, event):
         # Continuous feature
         if self.is_continuous_network_ani.value:
@@ -4508,7 +4528,7 @@ class StrainVisApp:
         self.metadata_colorby_card_ani.append(metadata_coloring_col)
         network_threshold_row = pn.Row(self.network_threshold_select_ani, self.network_threshold_input_ani)
         params_col = pn.Column(network_threshold_row,
-                               self.network_iterations_ani,
+                               self.network_iterations_slider_ani,
                                init_button_row)
         self.layout_parameters_card_ani.append(params_col)
         highlight_sample_row = pn.Row(self.highlight_sample_chkbox_ani, self.highlight_sample_input_ani)
@@ -4564,7 +4584,7 @@ class StrainVisApp:
         std_ANI = self.df_for_network_ani.loc[:, 'ANI'].std().round(3)
 
         # Set the default connections threshold
-        if mean_ANI <= 0.999:
+        if mean_ANI < 0.999:
             self.ani_connections_threshold = mean_ANI
         else:
             self.ani_connections_threshold = 0.999
@@ -4610,7 +4630,7 @@ class StrainVisApp:
         print("Standard deviation ANI: " + str(std_ANI) + "\n")
 
         # Update the placeholder of the filenames for download with the default threshold.
-        network_file = "Network_plot_ANI_" + self.ref_genome + "_" + self.network_iterations_ani.value + \
+        network_file = "Network_plot_ANI_" + self.ref_genome + "_" + str(self.network_iterations_ani) + \
                        "_iterations_threshold_" + str(self.ani_connections_threshold)
         self.save_network_plot_path_ani.placeholder = network_file
         table_file = "Network_" + self.ref_genome + "_threshold_" + str(self.ani_connections_threshold)
@@ -4674,16 +4694,19 @@ class StrainVisApp:
             # Set the mean as the default threshold
             self.network_threshold_select_ani.value = self.network_threshold_select_ani.options[0]
 
-            # Set watchers for the threshold widgets
+            # Set watchers for the network widgets
             self.threshold_select_ani_watcher = self.network_threshold_select_ani.param.watch(partial(
                 self.changed_threshold_select_ani, mean_ANI, mean_std, mean_only), 'value',
                 onlychanged=True)
             self._watchers.append(self.threshold_select_ani_watcher)
-            self.is_defined_threshold_select_ani_watcher = 1
             self.threshold_input_ani_watcher = \
                 self.network_threshold_input_ani.param.watch(self.changed_threshold_input_ani,
                                                              'value', onlychanged=True)
             self._watchers.append(self.threshold_input_ani_watcher)
+            self.iterations_slider_ani_watcher = \
+                self.network_iterations_slider_ani.param.watch(self.changed_iterations_num_ani,
+                                                               'value_throttled', onlychanged=True)
+            self._watchers.append(self.iterations_slider_ani_watcher)
             self.highlight_sample_ani_watcher = \
                 self.highlight_sample_input_ani.param.watch(self.change_highlighted_sample_ani,
                                                             'value', onlychanged=True)
@@ -4743,26 +4766,27 @@ class StrainVisApp:
 
             # Create the network plot using the selected parameters
             self.network_plot_hv_ani = pn.bind(ps.cretae_network_plot, network=self.network_ani,
-                                                     is_metadata=self.use_metadata_network_ani,
-                                                     nodes_feature=self.nodes_color_by_ani.value,
-                                                     is_continuous=self.is_continuous_network_ani.value,
-                                                     cmap=self.nodes_colormap_ani.value,
-                                                     custom_cmap=self.custom_colormap_input_ani.value,
-                                                     node_color=self.network_node_color_ani,
-                                                     edge_color=self.network_edge_color_ani,
-                                                     is_highlight_group=self.highlight_nodes_by_feature_ani,
-                                                     highlight_feature=self.nodes_highlight_by_ani.value,
-                                                     highlight_group=self.nodes_highlight_group_select_ani,
-                                                     is_edge_colorby=self.color_edges_by_feature_ani,
-                                                     edges_feature=self.edges_color_by_ani,
-                                                     within_edge_color=self.network_within_color_ani,
-                                                     between_edge_color=self.network_between_color_ani,
-                                                     iterations=self.network_iterations_ani, pos_dict=self.pos_dict_ani,
-                                                     show_labels=self.show_labels_chkbox_ani,
-                                                     all_or_highlighted=self.all_or_highlighted_select_ani,
-                                                     is_highlight_samples=self.highlight_sample_chkbox_ani,
-                                                     samples_to_highlight=self.highlight_sample_input_ani.value,
-                                                     metadata_dict=self.metadata_dict)
+                                               is_metadata=self.use_metadata_network_ani,
+                                               nodes_feature=self.nodes_color_by_ani.value,
+                                               is_continuous=self.is_continuous_network_ani.value,
+                                               cmap=self.nodes_colormap_ani.value,
+                                               custom_cmap=self.custom_colormap_input_ani.value,
+                                               node_color=self.network_node_color_ani,
+                                               edge_color=self.network_edge_color_ani,
+                                               is_highlight_group=self.highlight_nodes_by_feature_ani,
+                                               highlight_feature=self.nodes_highlight_by_ani.value,
+                                               highlight_group=self.nodes_highlight_group_select_ani,
+                                               is_edge_colorby=self.color_edges_by_feature_ani,
+                                               edges_feature=self.edges_color_by_ani,
+                                               within_edge_color=self.network_within_color_ani,
+                                               between_edge_color=self.network_between_color_ani,
+                                               iterations=self.network_iterations_ani,
+                                               pos_dict=self.pos_dict_ani,
+                                               show_labels=self.show_labels_chkbox_ani,
+                                               all_or_highlighted=self.all_or_highlighted_select_ani,
+                                               is_highlight_samples=self.highlight_sample_chkbox_ani,
+                                               samples_to_highlight=self.highlight_sample_input_ani.value,
+                                               metadata_dict=self.metadata_dict)
             self._bounded_functions.append(self.network_plot_hv_ani)
             self.network_pane_ani = pn.pane.HoloViews(self.network_plot_hv_ani, height=600, width=700,
                                                       sizing_mode="fixed")
@@ -4778,17 +4802,16 @@ class StrainVisApp:
         if self.use_metadata_network_ani.value:
             if self.nodes_colormap_ani.value_name == 'Define custom colormap':
                 network_file = "Network_plot_ANI_" + self.ref_genome + "_" + \
-                               self.network_iterations_ani.value + "_iterations_threshold_" + \
+                               str(self.network_iterations_ani) + "_iterations_threshold_" + \
                                str(self.ani_connections_threshold) + "_colorby_" + self.nodes_color_by_ani.value + \
                                "_custom_colormap"
             else:
-                network_file = "Network_plot_ANI_" + self.ref_genome + "_" + \
-                               self.network_iterations.value + "_iterations_threshold_" + \
-                               str(self.ani_connections_threshold) + "_colorby_" + self.nodes_color_by_ani.value + "_" + \
-                               self.nodes_colormap_ani.value_name
+                network_file = "Network_plot_ANI_" + self.ref_genome + "_" + str(self.network_iterations_ani) + \
+                               "_iterations_threshold_" + str(self.ani_connections_threshold) + "_colorby_" + \
+                               self.nodes_color_by_ani.value + "_" + self.nodes_colormap_ani.value_name
         else:
             network_file = "Network_plot_ANI_" + self.ref_genome + "_" + \
-                           self.network_iterations_ani.value + "_iterations_threshold_" + \
+                           str(self.network_iterations_ani) + "_iterations_threshold_" + \
                            str(self.ani_connections_threshold)
         if self.show_labels_chkbox_ani.value:
             network_file += "_with_labels"
@@ -4814,26 +4837,27 @@ class StrainVisApp:
 
         # Get the updated matplotlib plot
         self.network_plot_matplotlib_ani = pn.bind(ps.cretae_network_plot_matplotlib, network=self.network_ani,
-                                                         is_metadata=self.use_metadata_network_ani,
-                                                         nodes_feature=self.nodes_color_by_ani.value,
-                                                         is_continuous=self.is_continuous_network_ani.value,
-                                                         cmap=self.nodes_colormap_ani.value_name,
-                                                         custom_cmap=self.custom_colormap_input_ani.value,
-                                                         node_color=self.network_node_color_ani,
-                                                         edge_color=self.network_edge_color_ani,
-                                                         is_highlight_group=self.highlight_nodes_by_feature_ani,
-                                                         highlight_feature=self.nodes_highlight_by_ani.value,
-                                                         highlight_group=self.nodes_highlight_group_select_ani,
-                                                         is_edge_colorby=self.color_edges_by_feature_ani,
-                                                         edges_feature=self.edges_color_by_ani,
-                                                         within_edge_color=self.network_within_color_ani,
-                                                         between_edge_color=self.network_between_color_ani,
-                                                         iterations=self.network_iterations_ani, pos_dict=self.pos_dict_ani,
-                                                         show_labels=self.show_labels_chkbox_ani,
-                                                         all_or_highlighted=self.all_or_highlighted_select_ani,
-                                                         is_highlight_samples=self.highlight_sample_chkbox_ani,
-                                                         samples_to_highlight=self.highlight_sample_input_ani.value,
-                                                         metadata_dict=self.metadata_dict)
+                                                   is_metadata=self.use_metadata_network_ani,
+                                                   nodes_feature=self.nodes_color_by_ani.value,
+                                                   is_continuous=self.is_continuous_network_ani.value,
+                                                   cmap=self.nodes_colormap_ani.value_name,
+                                                   custom_cmap=self.custom_colormap_input_ani.value,
+                                                   node_color=self.network_node_color_ani,
+                                                   edge_color=self.network_edge_color_ani,
+                                                   is_highlight_group=self.highlight_nodes_by_feature_ani,
+                                                   highlight_feature=self.nodes_highlight_by_ani.value,
+                                                   highlight_group=self.nodes_highlight_group_select_ani,
+                                                   is_edge_colorby=self.color_edges_by_feature_ani,
+                                                   edges_feature=self.edges_color_by_ani,
+                                                   within_edge_color=self.network_within_color_ani,
+                                                   between_edge_color=self.network_between_color_ani,
+                                                   iterations=self.network_iterations_ani,
+                                                   pos_dict=self.pos_dict_ani,
+                                                   show_labels=self.show_labels_chkbox_ani,
+                                                   all_or_highlighted=self.all_or_highlighted_select_ani,
+                                                   is_highlight_samples=self.highlight_sample_chkbox_ani,
+                                                   samples_to_highlight=self.highlight_sample_input_ani.value,
+                                                   metadata_dict=self.metadata_dict)
         self._bounded_functions.append(self.network_plot_matplotlib_ani)
 
         # Save the network plot in the requested format using matplotlib
@@ -4914,6 +4938,11 @@ class StrainVisApp:
         self.ani_connections_threshold = self.network_threshold_input_ani.value
         self.change_weight_attribute_ani()
 
+    def changed_iterations_num_ani(self, event):
+        self.network_iterations_ani = self.network_iterations_slider_ani.value_throttled
+        self.update_network_plot_ani()
+        #print("\nIn changed_iterations_num_ani: iterations number = " + str(self.network_iterations_ani))
+
     def change_weight_attribute_ani(self):
 
         self.ani_connections_threshold = round(self.ani_connections_threshold, 3)
@@ -4922,7 +4951,7 @@ class StrainVisApp:
 
         # Update the threshold in the default filenames for download
         network_file = "Network_plot_ANI_" + self.ref_genome + "_" + \
-                       self.network_iterations_ani.value + "_iterations_threshold_" + str(self.ani_connections_threshold)
+                       str(self.network_iterations_ani) + "_iterations_threshold_" + str(self.ani_connections_threshold)
         self.save_network_plot_path_ani.placeholder = network_file
         table_file = "Network_" + self.ref_genome + "_threshold_" + str(self.ani_connections_threshold)
         self.save_network_table_path_ani.placeholder = table_file
@@ -4991,37 +5020,38 @@ class StrainVisApp:
         self.update_network_plot_ani()
         after = time.time()
         duration = after - before
-        print("Updating the network plot took " + str(duration) + " seconds.\n")
+        #print("Updating the network plot took " + str(duration) + " seconds.\n")
 
     def change_highlighted_sample_ani(self, event):
-        print("\nIn change_highlighted_sample_ani")
-        print("Samples to highlight: " + self.highlight_sample_input_ani.value)
+        #print("\nIn change_highlighted_sample_ani")
+        #print("Samples to highlight: " + self.highlight_sample_input_ani.value)
         self.update_network_plot_ani()
 
     # Update the network plot using the selected parameters and the new positions dict
     def update_network_plot_ani(self):
         #print("\nIn update_network_plot")
         self.network_plot_hv_ani = pn.bind(ps.cretae_network_plot, network=self.network_ani,
-                                                 is_metadata=self.use_metadata_network_ani,
-                                                 nodes_feature=self.nodes_color_by_ani.value,
-                                                 is_continuous=self.is_continuous_network_ani.value,
-                                                 cmap=self.nodes_colormap_ani.value,
-                                                 custom_cmap=self.custom_colormap_input_ani.value,
-                                                 node_color=self.network_node_color_ani,
-                                                 edge_color=self.network_edge_color_ani,
-                                                 is_highlight_group=self.highlight_nodes_by_feature_ani,
-                                                 highlight_feature=self.nodes_highlight_by_ani.value,
-                                                 highlight_group=self.nodes_highlight_group_select_ani,
-                                                 is_edge_colorby=self.color_edges_by_feature_ani,
-                                                 edges_feature=self.edges_color_by_ani,
-                                                 within_edge_color=self.network_within_color_ani,
-                                                 between_edge_color=self.network_between_color_ani,
-                                                 iterations=self.network_iterations_ani, pos_dict=self.pos_dict_ani,
-                                                 show_labels=self.show_labels_chkbox_ani,
-                                                 all_or_highlighted=self.all_or_highlighted_select_ani,
-                                                 is_highlight_samples=self.highlight_sample_chkbox_ani,
-                                                 samples_to_highlight=self.highlight_sample_input_ani.value,
-                                                 metadata_dict=self.metadata_dict)
+                                           is_metadata=self.use_metadata_network_ani,
+                                           nodes_feature=self.nodes_color_by_ani.value,
+                                           is_continuous=self.is_continuous_network_ani.value,
+                                           cmap=self.nodes_colormap_ani.value,
+                                           custom_cmap=self.custom_colormap_input_ani.value,
+                                           node_color=self.network_node_color_ani,
+                                           edge_color=self.network_edge_color_ani,
+                                           is_highlight_group=self.highlight_nodes_by_feature_ani,
+                                           highlight_feature=self.nodes_highlight_by_ani.value,
+                                           highlight_group=self.nodes_highlight_group_select_ani,
+                                           is_edge_colorby=self.color_edges_by_feature_ani,
+                                           edges_feature=self.edges_color_by_ani,
+                                           within_edge_color=self.network_within_color_ani,
+                                           between_edge_color=self.network_between_color_ani,
+                                           iterations=self.network_iterations_ani,
+                                           pos_dict=self.pos_dict_ani,
+                                           show_labels=self.show_labels_chkbox_ani,
+                                           all_or_highlighted=self.all_or_highlighted_select_ani,
+                                           is_highlight_samples=self.highlight_sample_chkbox_ani,
+                                           samples_to_highlight=self.highlight_sample_input_ani.value,
+                                           metadata_dict=self.metadata_dict)
 
         self.network_pane_ani.object = self.network_plot_hv_ani
 
@@ -5319,11 +5349,15 @@ class StrainVisApp:
         self.score_per_pos_contig['Position'] = self.score_per_pos_contig['Position'].astype(int)
         self.score_per_pos_contig = self.score_per_pos_contig.sort_values('Position')
         print("\nLast position: " + str(self.score_per_pos_contig.iloc[-1]['Position']))
+
         self.contig_length = self.score_per_pos_contig.iloc[-1]['Position'] + config.region_length
         contig_length_title = "Contig length: " + str(self.contig_length) + " bp"
-        self.selected_contig_column.append(pn.pane.Markdown(contig_length_title,
-                                                            styles={'font-size': "16px", 'margin': "0px 3px 3px 5px",
-                                                                    'padding-top': "0px"}))
+        contig_length_md = pn.pane.Markdown(contig_length_title, styles={'font-size': "16px",
+                                                                         'margin': "0px 3px 3px 5px",
+                                                                         'padding-top': "0px"})
+        loading_spinner = pn.indicators.LoadingSpinner(value=True, size=45, visible=True, color='info')
+        contig_length_title_row = pn.Row(contig_length_md, pn.Spacer(width=10), loading_spinner)
+        self.selected_contig_column.append(contig_length_title_row)
 
         ###################################
         # Create the customization column
@@ -5559,12 +5593,10 @@ class StrainVisApp:
         self.synteny_per_pos_plot = self.create_synteny_per_pos_plot()
 
         self.synteny_per_pos_pane = pn.pane.Matplotlib(self.synteny_per_pos_plot, dpi=300, tight=True, format='png',
-                                                       width=1105)
+                                                       width=1110, align='center')
 
-        synteny_per_pos_plot_row = pn.Row(styles={'padding': "0", 'margin': "0"})
-        synteny_per_pos_plot_row.append(self.synteny_per_pos_pane)
-
-        self.selected_contig_column.append(synteny_per_pos_plot_row)
+        contig_length_title_row.pop(2)
+        self.selected_contig_column.append(self.synteny_per_pos_pane)
         self.selected_contig_column.append(pn.Spacer(width=20))
         self.selected_contig_column.append(styling_col)
         self.selected_contig_column.append(download_synteny_per_pos_column)
@@ -6172,19 +6204,25 @@ class StrainVisApp:
 
         all_or_subset_row = pn.Row(self.all_or_subset_radio, pn.Spacer(width=15), self.genomes_sort_select_multi)
 
+        self.update_species_row.append(self.update_genomes_selection_button)
+
         # Create the species selection part (which is common to all input modes)
         species_select_col = pn.Column(
             all_or_subset_row,
             self.genomes_select_card,
-            self.update_genomes_selection_button,
+            self.update_species_row,
+            #self.update_genomes_selection_button,
             styles={'margin': "0 0 10px 0", 'padding': "0"}
         )
         self.main_multi_column.clear()
-        calc_title = "Calculating, please wait..."
 
-        self.main_multi_column.append(pn.pane.Markdown(calc_title,
-                                                       styles={'font-size': "20px", 'color': config.title_purple_color,
-                                                               'margin': "0"}))
+        calc_title = "Calculating, please wait..."
+        calc_title_md = pn.pane.Markdown(calc_title, styles={'font-size': "20px", 'color': config.title_purple_color,
+                                                             'margin': "0"})
+
+        loading_spinner = pn.indicators.LoadingSpinner(value=True, size=50, visible=True, color='info')
+        calc_title_row = pn.Row(calc_title_md, loading_spinner)
+        self.main_multi_column.append(calc_title_row)
 
         if self.input_mode == "SynTracker":
             self.create_multi_genomes_column_syntracker_mode()
@@ -6227,6 +6265,10 @@ class StrainVisApp:
         print("\ncreate_multi_genomes_column_both_mode took " + str(duration) + " seconds.\n")
 
     def update_genomes_selection(self, event):
+        # Display a loading spinner as long as the plots are updated
+        loading_spinner = pn.indicators.LoadingSpinner(value=True, size=50, visible=True, color='info')
+        self.update_species_row.append(loading_spinner)
+
         # Build the two bar-plots for subsampled regions based on the selected list of genomes
         if self.all_or_subset_radio.value == 'All species':
             self.selected_genomes_subset = self.genomes_subset_select.options
@@ -6251,6 +6293,9 @@ class StrainVisApp:
         else:
             self.create_multi_genomes_column_syntracker_mode()
             self.create_multi_genomes_column_ANI_mode()
+
+        # Remove the loading spinner
+        self.update_species_row.pop(1)
 
     def create_multi_genomes_column_syntracker_mode(self):
         self.synteny_multi_initial_plots_column.clear()
@@ -6344,6 +6389,8 @@ class StrainVisApp:
 
     def create_multi_genomes_plots_by_APSS(self, event):
 
+        before = time.time()
+
         # Unwatch watchers (if it's not the first time that this function is called)
         if self.clicked_button_display_APSS_multi and self.is_metadata and \
                 self.feature_select_watcher in self._watchers:
@@ -6365,24 +6412,27 @@ class StrainVisApp:
 
         # Np species at the selected sampling size
         if self.species_num_at_sampling_size == 0:
-            text = "The data obtained using " + self.sampling_size + " subsampled regions is not sufficient for " \
-                                                                     "further processing"
+            text = "The data obtained using " + self.sampling_size_multi + \
+                   " subsampled regions is not sufficient for further processing"
             self.plots_by_size_multi_column.append(pn.pane.Markdown(text, styles={'font-size': "18px",
                                                                                   'color': config.title_red_color,
                                                                                   'margin': "0"}))
 
         # Enough data to present the plot
         else:
+            # Display title before starting calculation
+            title_str = "Creating"
             if self.sampling_size_multi == 'All':
-                size_title = "Presenting plots using APSS from all available regions:"
+                size_title = title_str + " plots using APSS from all available regions:"
             else:
-                size_title = "Presenting plots using APSS from " + self.sampling_size_multi + \
-                             " subsampled regions:"
-
-            self.plots_by_size_multi_column.append(pn.pane.Markdown(size_title, styles={'font-size': "20px",
-                                                                                        'color': config.title_purple_color,
-                                                                                        'margin': "0 0 10px 0",
-                                                                                        'padding': "0"}))
+                size_title = title_str + " plots using APSS from " + self.sampling_size_multi + " subsampled regions:"
+            size_title_md = pn.pane.Markdown(size_title, styles={'font-size': "20px",
+                                                                 'color': config.title_purple_color,
+                                                                 'margin': "0",
+                                                                 'padding': "0"})
+            loading_spinner = pn.indicators.LoadingSpinner(value=True, size=50, visible=True, color='info')
+            title_row = pn.Row(size_title_md, loading_spinner, styles={'margin-bottom': "10px"})
+            self.plots_by_size_multi_column.append(title_row)
 
             # Check if the requested genome and size have already been calculated. If so, fetch the specific dataframe
             if self.calculated_APSS_all_genomes_size_dict[self.sampling_size_multi]:
@@ -6397,7 +6447,7 @@ class StrainVisApp:
                     self.score_per_region_all_genomes_df, self.sampling_size_multi)
                 after = time.time()
                 duration = after - before
-                print("Calculating APSS with " + str(self.sampling_size_multi ) + " regions for " +
+                print("Calculating APSS with " + str(self.sampling_size_multi) + " regions for " +
                       str(self.number_of_genomes) + " species took " + str(duration) + " seconds.\n")
                 # Save the dataframe in the main dictionary
                 self.APSS_all_genomes_all_sizes_dict[self.sampling_size_multi] = all_genomes_selected_size_APSS_df
@@ -6413,9 +6463,24 @@ class StrainVisApp:
                 if genome in presented_genomes_list:
                     self.sorted_selected_genomes_subset.append(genome)
 
+            # Update the title to 'Presenting plots...'
+            title_str = "Presenting"
+            if self.sampling_size_multi == 'All':
+                size_title = title_str + " plots using APSS from all available regions:"
+            else:
+                size_title = title_str + " plots using APSS from " + self.sampling_size_multi + " subsampled regions:"
+            size_title_md.object = size_title
+
+            # Remove the LoadingSpinner widget
+            title_row.pop(1)
+
             # Add the plots to the layout
             self.create_box_plot_multi_pane()
             self.plots_by_size_multi_column.append(self.box_plot_card)
+
+            after = time.time()
+            duration = after - before
+            print("\ncreate_multi_genomes_plots_by_APSS took " + str(duration) + " seconds.\n")
 
     def create_multi_genomes_column_ANI_mode(self):
         before = time.time()

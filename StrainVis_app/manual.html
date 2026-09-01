@@ -33,16 +33,19 @@
 <body>
   <main>
   <h1 id="strainvis-a-python-based-web-application-for-interactive-visual-analysis-of-strain-tracking-methods">StrainVis: a Python-based web application for interactive visual analysis of strain-tracking methods</h1>
-<h4 id="version-1.3.0">Version 1.3.0</h4>
+<h4 id="version-1.4.0">Version 1.4.0</h4>
 <ul>
 <li><a href="#overview">Overview</a></li>
     <li><a href="#citation">Citation</a></li>
 <li><a href="#installation">Installation</a></li>
-<li><a href="#open-strainvis-web-application">Open StrainVis web-application</a></li>
+<li><a href="#start-the-server-and-open-strainvis-web-application">Start the server and open StrainVis web-application</a></li>
   <ul>
-    <li><a href="#open-several-strainvis-sessions">Open several StrainVis sessions</a></li>
+    <li><a href="#execute-from-the-command-line">Option 1: Execute from the command-line (terminal)</a></li>
+    <li><a href="#use-an-execution-file">Option 2: Use an execution file</a></li>
+    <li><a href="#open-several-browser-sessions">Open several StrainVis browser-sessions simultaneously</a></li>
+    <li><a href="#open-several-web-server-instances">Open several web-server instances using different ports</a></li>
+    <li><a href="#run-strainvis-on-a-remote-server">Run StrainVis on a remote server and open it in a local browser</a></li>
   </ul>
-<li><a href="#run-strainvis-on-a-remote-server-and-open-it-in-a-local-browser">Run StrainVis on a remote server and open it in a local browser</a></li>
 <li><a href="#input">Input</a></li>
 <li><a href="#visual-analyses">Visual analyses</a></li>
   <ul>
@@ -95,47 +98,85 @@ A metadata file (matches to the samples that were previously compared by SynTrac
           bioRxiv (2026). DOI: <a href="https://doi.org/10.64898/2026.03.11.711087" target="_blank">https://doi.org/10.64898/2026.03.11.711087</a>
       </p>
 <h2 id="installation">Installation</h2>
-<p>Download the latest release of StrainVis from: <a href="https://github.com/leylabmpi/StrainVis/releases" target="_blank">https://github.com/leylabmpi/StrainVis/releases</a>.</p>
-<p>Extract the tar.gz file into the desired working-directory.</p>
-<p>Create a new conda environment using the ‘StrainVis.yml’ file (located in the root directory of SynTrakcerVis) using the following command:<br />
-<code>conda env create -f StrainVis.yml</code></p>
-<p>Activate the newly created environment: <code>conda activate StrainVis_1_2</code></p>
-<h2 id="open-strainvis-web-application">Open StrainVis web-application</h2>
-<p>StrainVis is built using <a href="https://panel.holoviz.org/index.html" target="_blank">Panel - a powerful data exploration &amp; web app framework for Python</a>. The web-application is served using the Bokeh server. To launch the server from the command-line and open the application in the browser, type the following command (from within the activated conda strain_vis environment):</p>
-<p><code>python run_strainvis.py --port 5005 &amp;</code></p>
-<p>The application should be opened in the browser under the URL: http://localhost:5005/strain_vis.<br />
-As long as the Bokeh server is running, StrainVis application can be accessed using the above URL.<br />
+<ol>
+    <li>Download the latest release of StrainVis from: <a href="https://github.com/leylabmpi/StrainVis/releases" target="_blank">https://github.com/leylabmpi/StrainVis/releases</a>.</li>
+    <li>Extract the tar.gz file into the desired working-directory.</li>
+    <li>
+        Create a new conda environment for StrainVis by one of the following two methods:
+        <ul>
+            <li><strong>Option 1:</strong> From the command-line, using the ‘StrainVis.yml’ file: <code>conda env create -f StrainVis.yml</code></li>
+            <li><strong>Option 2:</strong> Double-click the setup execution file (<code>setup_conda_env.command</code> for MacOS/Linux or <code>setup_conda_env_windows.bat</code> for Windows).
+                Please note that creating the conda environment should be done once after StrainVis installation. It can later be activated and used for StrainVis execution.</li>
+        </ul>
+    </li>
+</ol>
+<h2 id="start-the-server-and-open-strainvis-web-application">Start the server and open StrainVis web-application</h2>
+<p>
+    StrainVis web-application is built using <a href="https://panel.holoviz.org/index.html" target="_blank">Panel - a powerful data exploration & web app framework for Python</a> and served in the browser using the Bokeh server.<br>
+    Once the server has been started, StrainVis application is accessible in the browser under the URL: http://localhost:5005/strain_vis (the port number can be set when starting the server).<br>
+    As long as the Bokeh server is running, the application can be accessed using the above URL.
 </p>
-<p><strong>Stop the Bokeh server and StrainVis application</strong>: The two python running processes,
-    created by the <code>python run_strainvis.py</code> command should be killed.</p>
-<h3 id="open-several-strainvis-sessions">Open several StrainVis sessions</h3>
-<ul>
-<li>
-    <strong>Open several StrainVis browser-sessions using the same server process:</strong>
-    Once StrainVis aplication was strated from the command-line, it is possible to open as many user sessions as needed
+<p>
+    Please note that after a few hours without interacting with the application (or if your computer goes to sleep),
+    it will automatically disconnect to free up memory. If a 'connection lost' message is displayed or the page stops responding,
+    simply refresh your browser and re-upload your dataset to start a new session.
+</p>
+<p>There are two available methods to launch the bokeh server and start StrainVis application:</p>
+<h3 id="execute-from-the-command-line">Option 1: Execute from the command-line (terminal)</h3>
+<ol>
+    <li>Activate StrainVis environment: <code>conda activate StrainVis_1_4</code></li>
+    <li>From the activated environment type: <code>python run_strainvis.py &</code><br>
+        <strong>Optional arguments:</strong><br>
+        <code>--port [PORT]:</code> Port to listen on (any port number that is not currently used, default is 5005)<br>
+        <code>--show:</code> Open the application in the browser automatically (default is False)<br>
+        StrainVis web-application should be accessible in the browser under the URL: http://localhost:PORT/strain_vis
+    </li>
+</ol>
+<p>
+    <div style="color: #002060">Stop the server:</div> When StrainVis is executed from the command-line, the two running python processes, created by the python run_strainvis.py command should be killed.
+</p>
+
+<h3 id="use-an-execution-file">Option 2: Use an execution file</h3>
+<p>
+    Use one of the following wrapper scripts, which activate the conda environment, start the server and open StrainVis application in the browser automatically:
+    <ul>
+        <li>In MacOS/Linux: double-click the <code>run_strainvis.command</code> execution file.</li>
+        <li>In Windows: double-click the <code>run_strainvis_windows.bat</code> execution file.</li>
+    </ul>
+    <div style="color: #002060">Stop the server:</div> Closing the terminal window, that was opened by the execution file will simply kill the process and terminate StrainVis application.
+</p>
+
+<h3 id="open-several-browser-sessions">Open several StrainVis browser-sessions simultaneously</h3>
+<p>
+    Once StrainVis application was started (from the command-line or by execution file), it is possible to open as many browser sessions as needed
     in different browser windows/tabs, using the same URL (for example: http://localhost:5005/strain_vis).
-    Each session works separately and can process a different dataset, but since all of them are executed by the same process,
-    if one session is busy processing a heavy-duty task, it will affect all the other user sessions.
-</li>
-<li>
-    <strong>Run several server processes using different ports:</strong>
+    Each session works separately and can process a different dataset. However, since all sessions are executed by the same process,
+    if one session is busy processing a heavy-duty task, it will affect the responsiveness of all the other sessions.
+</p>
+
+<h3 id="open-several-web-server-instances">Open several web-server instances using different ports</h3>
+<p>
     In order to process different datasets at the same time using separated computational resources,
-    it is needed to start several web-server instances listening to different ports.
-    It simply means to run the  <code>python run_strainvis.py --port [port]</code> command using a different port number for each StrainVis instance.
-    Each web-server instance will be accessible under: http://localhost:[port_number]/strain_vis .
-</li>
-</ul>
-<h2 id="run-strainvis-on-a-remote-server-and-open-it-in-a-local-browser">Run StrainVis on a remote server and open it in a local browser</h2>
-<p>It is possible to run StrainVis on a remote server or cloud service in cases of large datasets, in order to improve the performance. This can be done according to the following steps:</p>
+    it is recommended to start several web-server instances listening to different ports.
+    It simply means to start the server for each required instance (by one of the two methods detailed above) using a different port number.
+    Each StrainVis instance will be accessible under: http://localhost:PORT/strain_vis .
+    <div style="color: #002060">Stop each web-server instance:</div> Each StrainVis instance can be stopped by killing its two related running python processes.
+</p>
+
+<h3 id="run-strainvis-on-a-remote-server">Run StrainVis on a remote server and open it in a local browser</h3>
+<p>
+    It is possible to run StrainVis on a remote server or cloud service if your datasets are stored there.
+    The UI reactivity, however, is usually better in a local setup.
+    Running StrainVis on a remote server can be done by the following steps:
+</p>
 <ol type="1">
 <li><p><strong>Installing StrainVis:</strong> StrainVis should be installed on the remote server as explained above.</p></li>
 <li><p><strong>Open SSH-tunnel:</strong> Create an SSH tunnel from your local machine to the remote server:<br />
-<code>ssh -L 5006:localhost:5006 user@remote-server</code></p></li>
+<code>ssh -L PORT:localhost:PORT user@remote-server</code></p></li>
 <li><p><strong>Start the Bokeh server on the remote server:</strong><br />
-From within the activated conda strain_vis environment, run the following command:<br />
-<code>python run_strainvis.py --port 5006 &</code>
+    Start the server from the command-line, as explained in the above <a href="#execute-from-the-command-line">'Option 1'</a>.
 </p></li>
-<li><p><strong>Open the application in the local browser:</strong> StrainVis should be accessible under: http://localhost:5006/strain_vis .</p></li>
+<li><p><strong>Open the application in the local browser:</strong> StrainVis should be accessible under: http://localhost:PORT/strain_vis .</p></li>
 </ol>
 <h2 id="input">Input</h2>
 <h3 id="mandatory-input">Mandatory input:</h3>
@@ -197,6 +238,7 @@ The user may enter the name of the file (including full path), or use the defaul
 The numbers of sub-sampled regions available for selection are: 40, 60, 80, 100, 125, 150, 175, 200, 250, 300, 350, 400. In case the number of compared pairs, when selecting 40 regions, is lower than 100, the option ‘All regions’ is also available for selection.<br />
 Setting the desired subsampling number is done using the slider widget. That means that all the compared pairs from all the available regions are included in the downstream analyses.</p>
 <p>By clicking the ‘Display plots using the selected number of regions’ button, the following downstream analyses are being calculated and displayed.</p>
+<p>In order to set a different value of subsampled-regions using the slider, you should first clear the currently presented plots by clicking the 'Clear plots and select new number of regions' button.</p>
 <h4 id="apss-distribution-plot">APSS distribution plot</h4>
 <p>This plot shows the APSS distribution among all the compared sample-pairs.<br />
 The plot type can be changed between scatter (jitter) plot and boxplot, so as the plot color(s).</p>

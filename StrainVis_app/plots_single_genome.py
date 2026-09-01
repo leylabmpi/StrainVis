@@ -106,8 +106,8 @@ def create_clustermap(matrix, type, cmap, method, is_metadata, feature, is_conti
         index=matrix.index,
         columns=matrix.columns
     )
-    print("\ncreate_clustermap, matrix before filling NAs:")
-    print(matrix)
+    #print("\ncreate_clustermap, matrix before filling NAs:")
+    #print(matrix)
 
     # Mask remaining NAs
     mask_array = matrix.isna()
@@ -300,8 +300,13 @@ def cretae_network_plot(network, is_metadata, nodes_feature, is_continuous, cmap
                         is_highlight_group, highlight_feature, highlight_group,
                         is_edge_colorby, edges_feature, within_edge_color, between_edge_color, iterations, pos_dict,
                         show_labels, all_or_highlighted, is_highlight_samples, samples_to_highlight, metadata_dict):
-    iter_num = int(iterations)
-    #print("\nIn cretae_network_plot.\nIterations number = " + str(iter_num) + "\nFeature: " + nodes_feature)
+
+    if iterations is not None:
+        iter_num = int(iterations)
+    else:
+        iter_num = int(config.network_iterations_options[0])
+    #print("\nIn cretae_network_plot.\nIterations number = " + str(iter_num))
+    #print("\nFeature: " + nodes_feature)
 
     pos = nx.layout.fruchterman_reingold_layout(network, iterations=iter_num, pos=pos_dict, k=2)
 

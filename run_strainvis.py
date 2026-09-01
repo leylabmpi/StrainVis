@@ -8,6 +8,7 @@ retry_count = 0
 
 
 def run(panel_args):
+    retry_count = 0
     while True:
         print("\n\nStarting Panel server...")
 
@@ -21,7 +22,6 @@ def run(panel_args):
         # Optional: only restart on "intentional" exit
         if exit_code == 0:
             print("\nRestarting Panel server...")
-            retry_count = 0
             time.sleep(RESTART_DELAY)
         else:
             retry_count += 1
@@ -36,12 +36,15 @@ def run(panel_args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--port", type=int, default=5005)
+    parser.add_argument("--port", type=str, default="5005")
+    parser.add_argument("--show", action='store_true', default=False)
     args = parser.parse_args()
     app = "strain_vis.py"
 
-    run([
-        "panel", "serve", app,
-        "--port", str(args.port),
-        "--websocket-max-message-size", "524288000"
-        ])
+    running_args = ["panel", "serve", app, "--port", args.port, "--websocket-max-message-size", "524288000",
+                    "--unused-session-lifetime", "360000"]
+
+    if args.show:
+        running_args.append("--show")
+
+    run(running_args)
