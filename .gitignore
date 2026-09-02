@@ -1,1 +1,10 @@
+# IDE and System Files
+.idea/
+.DS_Store
+StrainVis_app/.DS_Store
+StrainVis_app/__pycache__
+
+# Data directories
+Downloads/
 Sample_data/
+Input_example/
