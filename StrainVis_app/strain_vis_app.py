@@ -24,6 +24,7 @@ import StrainVis_app.plots_multi_genomes as pm
 import StrainVis_app.widgets as widgets
 import matplotlib
 import textwrap
+import param
 matplotlib.use('agg')
 pn.extension(disconnect_notification='Connection lost, try reloading the page!')
 pn.extension('floatpanel')
@@ -661,6 +662,7 @@ class StrainVisApp:
         self.ax_annotations = ""
         self.contig_name = ""
         self.contig_length = ""
+        self.problem_contig_annotation = False
         self.filter_plot_by_metadata = 0
         self.gff_filename = ""
         self.show_annotations = False
@@ -5325,6 +5327,7 @@ class StrainVisApp:
         self.hypercons_bars = ""
         self.filter_plot_by_metadata = 0
         self.show_annotations = False
+        self.problem_contig_annotation = False
 
         self.create_selected_contig_column()
 
@@ -6012,9 +6015,24 @@ class StrainVisApp:
     def show_hide_annotations_plot(self, event):
         # Show annotations is checked
         if self.show_annotations_chkbox.value:
-            # Check the current contig length range. I f it's longer than 50000, uncheck the box and print a message
+
             length_range = int(self.end_pos_input.value) - int(self.start_pos_input.value)
-            if length_range > config.max_range_for_annotation:
+
+            # There is no annotation data for the current contig (maybe wrong file)
+            if self.contig_name not in self.annotation_per_ref_genome_dict[self.ref_genome]:
+                print("\nshow_hide_annotations_plot: current contig doesn't appear in annotation file")
+                message = "The selected contig doesn't appear in the uploaded annotation file (wrong file uploaded?)"
+                self.show_annotations_col[0] = pn.pane.Markdown(message,
+                                                                styles={'font-size': "14px",
+                                                                        'color': config.title_red_color,
+                                                                        'margin-bottom': "0",
+                                                                        'margin-top': "0",
+                                                                        'padding-bottom': "0"})
+                self.problem_contig_annotation = True
+                self.show_annotations_chkbox.value = False
+
+            # Check the current contig length range. If it's longer than 50000, uncheck the box and print a message
+            elif length_range > config.max_range_for_annotation:
                 print("\nshow_hide_annotations_plot: length range is too big")
                 message = "Cannot plot annotated genes - set contig length to max. 100,000 bp"
                 self.show_annotations_col[0] = pn.pane.Markdown(message,
@@ -6023,16 +6041,19 @@ class StrainVisApp:
                                                                         'margin-bottom': "0",
                                                                         'margin-top': "0",
                                                                         'padding-bottom': "0"})
-                #self.show_annotations_chkbox.value = False
                 self.show_annotations = False
+
+            # Show the annotations
             else:
                 self.show_annotations_col[0] = pn.Spacer(height=50)
                 self.show_annotations = True
                 self.update_synteny_per_pos_plot()
         else:
-            self.show_annotations_col[0] = pn.Spacer(height=50)
-            self.show_annotations = False
-            self.update_synteny_per_pos_plot()
+            # The user unchecked the chkbox manually (otherwise, the plot shouldn't be updated)
+            if not self.problem_contig_annotation:
+                self.show_annotations_col[0] = pn.Spacer(height=50)
+                self.show_annotations = False
+                self.update_synteny_per_pos_plot()
 
     def filter_synteny_per_pos_plot(self, event):
         #print("\nIn filter_synteny_per_pos_plot")
