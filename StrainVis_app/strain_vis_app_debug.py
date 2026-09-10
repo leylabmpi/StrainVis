@@ -6350,6 +6350,10 @@ class StrainVisApp:
                 self.sample_sizes_slider_multi.value = config.sampling_sizes[0]
                 is_all_regions = 1
 
+            total_pairs_num = self.pairs_num_per_sampling_size_multi_genomes_df['Number_of_pairs'].iloc[0]
+            print("\ncreate_multi_genomes_column_syntracker_mode: Total number of compared pairs in all species = "
+                  + str(total_pairs_num))
+
             # Create the number of pairs vs. subsampled regions bar plot
             pairs_vs_sampling_size_bar_plot = pn.bind(pm.plot_pairs_vs_sampling_size_bar,
                                                                df=self.pairs_num_per_sampling_size_multi_genomes_df,
