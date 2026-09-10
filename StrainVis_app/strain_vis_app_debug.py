@@ -10,6 +10,7 @@ import os
 import re
 import time
 import threading
+import psutil
 from functools import partial
 import networkx as nx
 import random
@@ -29,8 +30,28 @@ pn.extension(disconnect_notification='Connection lost, try reloading the page!')
 pn.extension('floatpanel')
 
 
+def get_memory_mb():
+    proc = psutil.Process(os.getpid())
+    mem = proc.memory_info().rss / 1024 / 1024
+
+    return mem
+
+
 def create_new_session(event):
+    print("\n\nIn create_new_session")
+    print("DF count before cleanup:", count_dataframes())
+    mem = get_memory_mb()
+    print(f"\nMemory before reloading: {mem} MB")
+
     pn.state.location.reload = True
+
+    mem = get_memory_mb()
+    print(f"\nMemory after reloading: {mem} MB")
+
+
+def count_dataframes():
+    return sum(1 for obj in gc.get_objects() if isinstance(obj, pd.DataFrame))
+
 
 def change_disabled_state_inverse(chkbox_state):
     if chkbox_state:
@@ -136,7 +157,7 @@ def set_features_in_range(features, x_min, x_max):
 
 
 def load_genes_from_gff(gff_text):
-    print("\nLoading genes from gff file...")
+    #print("\nload_genes_from_gff:")
     contigs_list = []
     contigs_dict = dict()
     for line in gff_text.splitlines():
@@ -148,6 +169,7 @@ def load_genes_from_gff(gff_text):
                     contig = m.group(1)
                     contigs_list.append(contig)
                     contigs_dict[contig] = []  # Initialize the new contig's features array
+                    #print("Found new contig: " + contig)
 
             # If found a FASTA section - stop reading the file
             elif re.search("^##FASTA", line):
@@ -202,7 +224,11 @@ def load_genes_from_gff(gff_text):
 
 class StrainVisApp:
 
-    def __init__(self):
+    def __init__(self, server_pid=None):
+
+        # Store the main server PID (fallback to os.getpid if not provided)
+        self.server_pid = server_pid or os.getpid()
+        self.process = psutil.Process(self.server_pid)
 
         # Dataframes
         self.score_per_region_all_genomes_df = pd.DataFrame()
@@ -634,6 +660,7 @@ class StrainVisApp:
         self.filter_plot_by_metadata = 0
         self.gff_filename = ""
         self.show_annotations = False
+        self.load_file_starting_time = 0
 
         # Bootstrap template
         self.template = pn.template.VanillaTemplate(
@@ -1530,6 +1557,24 @@ class StrainVisApp:
 
         gc.collect()
 
+    # Accurately calculates RSS for the main process + any worker children.
+    def get_memory_usage(self):
+        try:
+            total_mem = self.process.memory_info().rss
+
+            # Include memory from child processes (e.g. parallel worker pools)
+            for child in self.process.children(recursive=True):
+                try:
+                    total_mem += child.memory_info().rss
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    pass
+
+            mem_mb = total_mem / (1024 ** 2)
+            return mem_mb
+
+        except psutil.NoSuchProcess:
+            return 0.0
+
     def show_metadata_help_float_panel(self, event):
         metadata_note = "The metadata file may contain an unlimited number of columns (features).  " \
                         "\nThe first column must contain the sample IDs (identical to the sample IDs that appear in " \
@@ -1665,53 +1710,14 @@ class StrainVisApp:
         floatpanel = pn.layout.FloatPanel(markdown, name='ANI file help', margin=10, width=450)
         self.ani_upload_row.append(floatpanel)
 
-    def init_parameters(self):
-        # Delete the DFs
-        del self.score_per_region_all_genomes_df
-        del self.score_per_region_genomes_subset_df
-        del self.score_per_region_selected_genome_df
-        del self.ani_scores_all_genomes_df
-        del self.ani_scores_genomes_subset_df
-        del self.ani_scores_selected_genome_df
-        del self.score_per_pos_contig
-        del self.score_per_pos_contig_filtered
-        del self.genomes_subset_selected_size_APSS_df
-        del self.pairs_num_per_sampling_size_multi_genomes_df
-        del self.boxplot_p_values_df
-        del self.boxplot_p_values_df_ani
-        del self.df_for_jitter
-        del self.df_for_jitter_ani
-        del self.scores_matrix
-        del self.scores_matrix_ani
-        del self.df_for_network
-        del self.df_for_network_ani
-        del self.df_for_combined_scatter
-        del self.avg_score_per_pos_contig
-        del self.avg_score_per_pos_contig_filtered
-
-        # Delete the dictionaries
-        del self.metadata_dict
-        del self.groups_per_feature_dict
-        del self.APSS_by_genome_all_sizes_dict
-        del self.APSS_all_genomes_all_sizes_dict
-        del self.calculated_APSS_genome_size_dict
-        del self.calculated_APSS_all_genomes_size_dict
-
-        self.SynTracker_text_input.value = None
-        self.SynTracker_input_file.value = None
-        self.ANI_text_input.value = None
-        self.ANI_input_file.value = None
-        self.metadata_file.value = None
-
-        # Clear any global or cached objects
-        pn.state.cache.clear()
-
     def submit_new_file_button(self):
         button_column = pn.Column(pn.Spacer(height=30), self.new_file_button)
         return button_column
 
     def load_input_file(self, event):
-        print("\n\nLoading input-file. Input mode: " + self.input_mode)
+        self.load_file_starting_time = time.time()
+        print("\n\nRunning StrainVis in debug mode")
+        print("\nIn load_input_file. Input mode = " + self.input_mode)
 
         # Verify that a SynTracker file was loaded
         if self.input_mode == "SynTracker" or self.input_mode == "both":
@@ -1722,7 +1728,7 @@ class StrainVisApp:
 
                 # Verify that the input is an existing file path
                 if os.path.exists(self.SynTracker_text_input.value):
-                    print("\nSynTracker input file path: " + self.SynTracker_text_input.value)
+                    print("\n\nSynTracker input file path: " + self.SynTracker_text_input.value)
                     self.syntracker_filename = os.path.basename(self.SynTracker_text_input.value)
                     print("SynTracker input file name: " + self.syntracker_filename)
                     self.syntracker_loaded = 1
@@ -1735,13 +1741,15 @@ class StrainVisApp:
             else:
                 # Filename is None - usually because of server problems
                 if self.SynTracker_input_file.filename is None:
-                    title = "Cannot upload the requested file (probably server problems) - " \
-                            "please try again by entering the file's full path"
+                    print("SynTracker input file name: None")
+                    title = "Cannot upload the requested file (probably server problems) - please try again by entering " \
+                            "the file's full path"
                     self.display_error_page(title)
 
                 else:
                     self.syntracker_filename = self.SynTracker_input_file.filename
                     content_length = len(self.SynTracker_input_file.value) / 1000
+                    print("Content length of SynTracker file in Kb: " + str(content_length))
 
                     # There is filename but no content - usually happens when the file is too big
                     if content_length == 0:
@@ -1762,7 +1770,7 @@ class StrainVisApp:
 
                 # Verify that the input is an existing file path
                 if os.path.exists(self.ANI_text_input.value):
-                    print("\nANI input file path: " + self.ANI_text_input.value)
+                    print("\n\nANI input file path: " + self.ANI_text_input.value)
                     self.ani_filename = os.path.basename(self.ANI_text_input.value)
                     print("ANI input file name: " + self.ani_filename)
                     self.ani_loaded = 1
@@ -1775,6 +1783,7 @@ class StrainVisApp:
             else:
                 # Filename is None - usually because of server problems
                 if self.ANI_input_file.filename is None:
+                    print("ANI input file name: None")
                     title = "Cannot upload the requested file (probably server problems) - " \
                             "please try again by entering the file's full path"
                     self.display_error_page(title)
@@ -1782,6 +1791,7 @@ class StrainVisApp:
                 else:
                     self.ani_filename = self.ANI_input_file.filename
                     content_length = len(self.ANI_input_file.value) / 1000
+                    print("Content length of ANI file in Kb: " + str(content_length))
 
                     # There is filename but no content - usually happens when the file is too big
                     if content_length == 0:
@@ -1819,6 +1829,7 @@ class StrainVisApp:
         if self.metadata_file.filename is not None:
             content_length = len(self.metadata_file.value) / 1000
             print("\nUploaded metadata file: " + self.metadata_file.filename)
+            #print("Content length of metadata file in Kb: " + str(content_length))
 
             # There is filename but no content - usually happens when the file is too big
             if content_length == 0:
@@ -1894,6 +1905,7 @@ class StrainVisApp:
         if self.input_mode == "SynTracker" or self.input_mode == "both":
 
             # Read the file directly from the path
+            before = time.time()
             if self.is_syntracker_file_path == 1:
                 file = self.SynTracker_text_input.value
 
@@ -1902,6 +1914,11 @@ class StrainVisApp:
                 file = io.BytesIO(self.SynTracker_input_file.value)
 
             self.score_per_region_all_genomes_df = pd.read_csv(file, usecols=lambda c: c in set(config.col_set))
+            after = time.time()
+            duration = after - before
+            print("\nReading SynTracker input file took " + str(duration) + " seconds.")
+            mem = self.get_memory_usage()
+            print(f"Memory after reading SynTracker input file: {mem} MB")
 
             # Verify that the df is valid and contain the necessary columns
             if 'Sample1' not in self.score_per_region_all_genomes_df.columns or \
@@ -1922,6 +1939,7 @@ class StrainVisApp:
 
             # Get the genomes list, sorted by name
             self.ref_genomes_list_syntracker = list(self.score_per_region_all_genomes_df.groupby(['Ref_genome']).groups)
+            #print("\Species list in SynTracker file: " + str(self.ref_genomes_list_syntracker))
 
             # Calculate the number of pairs at 40 regions for all the genomes and create a sorted list of
             # genomes
@@ -1932,12 +1950,19 @@ class StrainVisApp:
         if self.input_mode == "ANI" or self.input_mode == "both":
 
             # Read the file directly from the path
+            before = time.time()
             if self.is_ani_file_path == 1:
                 ani_scores_all_genomes_df = pd.read_table(self.ANI_text_input.value)
 
             # Read the content of the uploaded file
             else:
                 ani_scores_all_genomes_df = pd.read_table(io.BytesIO(self.ANI_input_file.value))
+
+            after = time.time()
+            duration = after - before
+            print("\nReading ANI input file took " + str(duration) + " seconds.\n")
+            mem = self.get_memory_usage()
+            print(f"Memory after reading ANI input file: {mem} MB")
 
             # Verify that the file contains 4 columns
             if ani_scores_all_genomes_df.shape[1] != 4:
@@ -1960,6 +1985,7 @@ class StrainVisApp:
             # Get the number of genomes
             self.number_of_genomes_ani = len(self.ref_genomes_list_ani)
             print("\nNumber of species in ANI file: " + str(self.number_of_genomes_ani))
+            #print("\Species list in ANI file: " + str(self.ref_genomes_list_ani))
 
         # Set the genomes list according to the input mode
         if self.input_mode == "SynTracker":
@@ -1977,6 +2003,7 @@ class StrainVisApp:
                                                       self.ref_genomes_list_by_pairs_num_ani))
             self.number_of_genomes = len(self.ref_genomes_list)
             print("\nNumber of total species from both files: " + str(self.number_of_genomes))
+            #print("Total species list from both files: " + str(self.ref_genomes_list))
 
         # Initialize the annotation dict
         for ref in self.ref_genomes_list:
@@ -1984,21 +2011,33 @@ class StrainVisApp:
 
         # If a metadata file was uploaded - read the file into a DF
         if self.is_metadata:
+            before = time.time()
             metadata_df = pd.read_table(io.BytesIO(self.metadata_file.value))
+            after = time.time()
+            duration = after - before
+            print("\nReading metadata file took " + str(duration) + " seconds.\n")
+            #print("\nMetadata before validation:")
+            #print(metadata_df)
 
             # Check if the provided metadata is valid and match the sample-IDs.
             # If some samples are missing from the metadata - fill them with np.nan values
+            before = time.time()
             if self.input_mode == "SynTracker" or self.input_mode == "both":
                 scores_df = self.score_per_region_all_genomes_df
             elif self.input_mode == "ANI":
                 scores_df = self.ani_scores_all_genomes_df
             self.metadata_dict, self.groups_per_feature_dict, self.metadata_features_list, error = \
                 dm.complete_metadata(scores_df, metadata_df)
+            after = time.time()
+            duration = after - before
 
             # There is some problem with the metadata file - print error
             if error != "":
                 self.display_error_page(error)
                 self.valid_metadata = 0
+
+            else:
+                print("\nFilling missing metadata took " + str(duration) + " seconds.\n")
 
         if self.valid_metadata:
 
@@ -2014,7 +2053,7 @@ class StrainVisApp:
             # Input file contains only one ref-genome -> present only single genome visualization
             if self.number_of_genomes == 1:
                 self.ref_genome = self.ref_genomes_list[0]
-                print("\n\nSpecies: " + self.ref_genome)
+                print("\nReference genome = " + self.ref_genome)
 
                 # Create the single-genome visualization layout
                 self.create_single_genome_column()
@@ -2026,7 +2065,7 @@ class StrainVisApp:
             # Input file contains more than one ref-genome -> display two tabs, for single- and multi-genome views
             else:
                 self.ref_genome = self.ref_genomes_list_by_pairs_num[0]
-                print("\n\nCurrent species: " + self.ref_genome)
+                print("\nReference genome = " + self.ref_genome)
                 self.genomes_select.options = self.ref_genomes_list_by_pairs_num
                 self.genomes_select.value = self.ref_genome
 
@@ -2070,7 +2109,15 @@ class StrainVisApp:
 
         # Create the multiple-genome visualization layout when the user selects the multi-genome tab for the first time
         if self.single_multi_genome_tabs.active == 1 and self.visited_multi_genome_tab == 0:
+            before = time.time()
+            print("\nCalling create_multi_genome_column to create the multiple-species visualization")
             self.create_multi_genome_column()
+            after = time.time()
+            duration = after - before
+            print("\ncreate_multi_genome_column took " + str(duration) + " seconds.\n")
+            mem = self.get_memory_usage()
+            print(f"Memory after displaying initial multi-species results page: {mem} MB")
+
             self.visited_multi_genome_tab = 1
 
     def changed_genomes_sorting(self, event):
@@ -2137,6 +2184,7 @@ class StrainVisApp:
             # Stop watching the contig-related widgets
             if self.visited_synteny_per_pos_tab and self.finished_initial_synteny_per_pos_plot and \
                     len(self.contigs_list_by_name) > 1:
+                # print("\nUnwatching contig_select and sorting_select widgets")
                 if self.contig_select_watcher in self._watchers:
                     self.contig_select.param.unwatch(self.contig_select_watcher)
                 if self.sorting_select_watcher in self._watchers:
@@ -2240,7 +2288,15 @@ class StrainVisApp:
 
             self.ref_genome_column.append(self.synteny_ani_single_tabs)
 
+        after = time.time()
+        duration = after - self.load_file_starting_time
+        print("\nTime to display initial plots page: " + str(duration) + " seconds.")
+        mem = self.get_memory_usage()
+        print(f"Memory after displaying initial results page: {mem} MB")
+
     def create_single_genome_column_both_mode(self):
+        before = time.time()
+        print("\nStart create_single_genome_column_both_mode")
 
         self.synteny_single_initial_plots_column.styles = config.both_mode_SynTracker_single_style
         self.ani_single_plots_column.styles = config.both_mode_other_style
@@ -2257,10 +2313,15 @@ class StrainVisApp:
         self.synteny_ani_single_tabs.append(('ANI', self.ani_single_plots_column))
         self.synteny_ani_single_tabs.append(('Combined', self.combined_single_plots_column))
 
+        after = time.time()
+        duration = after - before
+        print("\ncreate_single_genome_column_both_mode took " + str(duration) + " seconds.\n")
+
     def create_single_genome_column_syntracker_mode(self):
 
         # Verify that the current ref-genome is found in the SynTracker input
         if self.ref_genome in self.ref_genomes_list_syntracker:
+            before = time.time()
 
             synteny_per_pos_message = "Preparing the plot - please wait..."
             synteny_per_pos_md = pn.pane.Markdown(synteny_per_pos_message, styles={'font-size': "20px",
@@ -2358,6 +2419,10 @@ class StrainVisApp:
             synteny_single_tabs_watcher = self.synteny_single_tabs.param.watch(self.changed_single_tabs, 'active')
             self._watchers.append(synteny_single_tabs_watcher)
 
+            after = time.time()
+            duration = after - before
+            print("\ncreate_single_genome_column_syntracker_mode took " + str(duration) + " seconds.\n")
+
         # The ref-genome is not found in the SynTracker file - display a message
         else:
             message = "Species " + self.ref_genome + " is not found in the SynTracker input file."
@@ -2381,6 +2446,9 @@ class StrainVisApp:
         self.highlight_sample_chkbox_ani.value = False
         self.highlight_nodes_by_feature_ani.value = False
         self.color_edges_by_feature_ani.value = False
+
+        before = time.time()
+        print("\n\nStart create_single_genome_column_ANI_mode in another thread.")
 
         # Unwatch ANI plots related watchers
         if self.threshold_select_ani_watcher in self._watchers:
@@ -2425,6 +2493,8 @@ class StrainVisApp:
             # Get the ANI scores table for the selected genome only
             self.ani_scores_selected_genome_df = ds.return_selected_genome_ani_table(self.ani_scores_all_genomes_df,
                                                                                      self.ref_genome)
+            #print("\nANI df selected genome:")
+            #print(self.ani_scores_selected_genome_df)
 
             # Display the number of samples and the number of compared pairs
             num_samples = pd.unique(self.ani_scores_selected_genome_df[["Sample1", "Sample2"]].values.ravel()).shape[0]
@@ -2460,7 +2530,13 @@ class StrainVisApp:
                                                                          'color': config.title_red_color,
                                                                          }))
 
+        after = time.time()
+        duration = after - before
+        print("\ncreate_single_genome_column_ANI_mode took " + str(duration) + " seconds.\n")
+
     def create_single_genome_column_combined_mode(self):
+
+        before = time.time()
 
         # Verify that the current ref-genome is found in the ANI input. If not, display an error message
         if self.ref_genome not in self.ref_genomes_list_ani:
@@ -2491,17 +2567,27 @@ class StrainVisApp:
                                                                                   'color': config.title_red_color
                                                                                   }))
 
+        after = time.time()
+        duration = after - before
+        print("\ncreate_single_genome_column_combined_mode took " + str(duration) + " seconds.\n")
+
     def create_initial_synteny_per_pos_plot_tab(self):
 
         # Get the sorted contigs lists
+        print("\n\nStart create_initial_synteny_per_pos_plot_tab in another thread.")
+        before = time.time()
         self.contigs_list_by_name, self.contigs_list_by_length = \
             ds.return_sorted_contigs_lists(self.score_per_region_selected_genome_df)
+        after = time.time()
+        duration = after - before
+        #print("return_sorted_contigs_lists took " + str(duration) + " seconds.\n")
+        #print(self.score_per_region_selected_genome_df)
 
         # Calculate the average score and std for the whole genome (all contigs)
         self.avg_score_genome = self.score_per_region_selected_genome_df['Synteny_score'].mean()
         self.std_score_genome = self.score_per_region_selected_genome_df['Synteny_score'].std()
         median = self.score_per_region_selected_genome_df['Synteny_score'].median()
-        print("\n\nAverage score for the genome = " + str(self.avg_score_genome))
+        print("\nAverage score for the genome = " + str(self.avg_score_genome))
         print("Std of score for the genome = " + str(self.std_score_genome))
         print("Median score for the genome = " + str(median))
 
@@ -2510,15 +2596,17 @@ class StrainVisApp:
             groupby(['Contig_name', 'Position']).\
             agg(Count=('Synteny_score', 'size'), Avg_synteny_score=('Synteny_score', 'mean')).\
             sort_values(['Count'], ascending=False).reset_index()
+        #print("\nAvg. score per region df for all the regions of all the contigs:")
+        #print(avg_score_per_region)
 
         self.median_counts = avg_score_per_region['Count'].median()
         self.bottom_percentile_counts = avg_score_per_region['Count'].quantile(0.1)
-        print("Median of pairs per region counts is: " + str(self.median_counts))
+        print("\nMedian of pairs per region counts is: " + str(self.median_counts))
         print("Percentile 10 of pairs per region counts is: " + str(self.bottom_percentile_counts))
 
         self.top_percentile = avg_score_per_region['Avg_synteny_score'].quantile(config.top_percentile)
         self.bottom_percentile = avg_score_per_region['Avg_synteny_score'].quantile(config.bottom_percentile)
-        print("Percentile " + str(config.top_percentile) + " score for the genome = " + str(self.top_percentile))
+        print("\nPercentile " + str(config.top_percentile) + " score for the genome = " + str(self.top_percentile))
         print("Percentile " + str(config.bottom_percentile) + " score for the genome = " + str(self.bottom_percentile))
 
         print("\nTotal number of pairs for the genome = " + str(self.total_pairs_genome))
@@ -2548,6 +2636,7 @@ class StrainVisApp:
             self.synteny_per_pos_plot_column.append(self.selected_contig_column)
 
         self.finished_initial_synteny_per_pos_plot = 1
+        print("\nFinished creating initial synteny_per_pos display")
 
     def changed_single_tabs(self, event):
 
@@ -2590,8 +2679,12 @@ class StrainVisApp:
     def clear_single_genome_plots_by_APSS_area(self, event):
         self.plots_by_size_single_column.clear()
         self.sample_sizes_slider.disabled = False
+        mem = self.get_memory_usage()
+        print(f"Memory after clearing APSS plots: {mem} MB")
 
     def create_single_genome_plots_by_APSS(self, event):
+
+        before = time.time()
 
         self.sampling_size = self.sample_sizes_slider.value
         print("\nSingle species visualization. Selected subsampling size = " + self.sampling_size)
@@ -2709,6 +2802,8 @@ class StrainVisApp:
                     on=['Sample1', 'Sample2'],
                     how='inner'  # Only keep rows where the sample pair exists in both DataFrames
                 )
+                #print("\nCombined APSS and ANI df:")
+                #print(APSS_ANI_selected_genome_df)
                 self.create_combined_scatter_pane(APSS_ANI_selected_genome_df)
 
             plots_column = pn.Column(self.jitter_card, pn.Spacer(height=20), self.clustermap_card, pn.Spacer(height=20),
@@ -2730,6 +2825,13 @@ class StrainVisApp:
 
             title_row.append(pn.layout.HSpacer())
             title_row.append(self.clear_single_plots_button)
+
+            after = time.time()
+            duration = after - before
+            print("\ncreate_single_genome_plots_by_APSS took " + str(duration) + " seconds.\n")
+            mem = self.get_memory_usage()
+            print(f"Memory after creating APSS plots: {mem} MB")
+            print(f"Server pid: {self.server_pid}")
 
     def create_jitter_pane(self, selected_genome_and_size_avg_df):
         styling_title = "Plot styling options:"
@@ -2959,8 +3061,13 @@ class StrainVisApp:
 
             # Sample size is enough for P-value calculation
             if len(same_array) >= 1 and len(diff_array) >= 1:
+                before = time.time()
                 u, p_val = return_p_value_mannwhitneyu(same_array, diff_array)
                 effect_size = abs(1 - (2 * u) / (len(same_array) * len(diff_array)))
+                after = time.time()
+                duration = after - before
+                print("\nP-value for " + feature + " comparison = " + str(p_val) + ", Effect size = " + str(effect_size))
+                #print("P-value calculation took " + str(duration) + " seconds.\n")
 
                 # Pvalue is valid and significant
                 if str(p_val) != "nan" and p_val <= 0.05:
@@ -2992,6 +3099,9 @@ class StrainVisApp:
         # Remove the x-axis label
         plot.set_axis_labels("", "APSS")  # Sets x-label to empty string
 
+        #print("\nDF for jitter plot:")
+        #print(self.df_for_jitter)
+
         plt.close(plot.figure)
 
         return plot.figure
@@ -3005,6 +3115,8 @@ class StrainVisApp:
             self.df_for_jitter_ani['Category'] = self.df_for_jitter_ani.apply(
                 lambda row: self.category_by_feature(row, feature),
                 axis=1)
+            print("\ndf_for_jitter_ani:")
+            print(self.df_for_jitter_ani)
 
             same_feature = 'Same ' + feature
             diff_feature = 'Different ' + feature
@@ -3047,9 +3159,13 @@ class StrainVisApp:
 
             # Sample size is enough for P-value calculation
             if len(same_array) >= 1 and len(diff_array) >= 1:
+                before = time.time()
                 u, p_val = return_p_value_mannwhitneyu(same_array, diff_array)
                 effect_size = abs(1 - (2 * u) / (len(same_array) * len(diff_array)))
                 after = time.time()
+                duration = after - before
+                print("\nP-value for " + feature + " comparison = " + str(p_val) + ", Effect size = " + str(effect_size))
+                #print("P-value calculation took " + str(duration) + " seconds.\n")
 
                 # P-value is valid and significant
                 if str(p_val) != "nan" and p_val <= 0.05:
@@ -3081,6 +3197,9 @@ class StrainVisApp:
 
         # Remove the x-axis label
         plot.set_axis_labels("", "ANI")  # Sets x-label to empty string
+
+        # print("\nDF for jitter plot:")
+        # print(self.df_for_jitter_ani)
 
         plt.close(plot.figure)
 
@@ -3270,6 +3389,7 @@ class StrainVisApp:
 
         # Check the number of columns in the matrix
         col_num = len(self.scores_matrix.columns)
+        #print("\ncreate_clustermap_pane: number of columns = " + str(col_num))
 
         # If the num of columns exceeds the defined maximum, do not create the clustermap plot
         # and display a message + a possibility to download the matrix
@@ -3341,6 +3461,7 @@ class StrainVisApp:
     def change_continuous_state_clustermap(self, event):
         # Continuous feature
         if self.is_continuous_clustermap.value:
+            #print("\nIn change_continuous_state. Continuous feature")
 
             # Verify that the feature is indeed continuous
             feature = self.color_by_feature.value
@@ -3353,6 +3474,7 @@ class StrainVisApp:
 
             # Feature is not really continuous, treat as categorical
             if str_type == 1:
+                #print("The feature is not really continuous - uncheck...")
                 self.is_continuous_clustermap.value = False
 
             # Feature is indeed really continuous
@@ -3362,15 +3484,18 @@ class StrainVisApp:
 
         # Categorical feature
         else:
+            #print("\nIn change_continuous_state. Categorical feature")
             self.feature_colormap.options = config.categorical_colormap_dict
             self.feature_colormap.value = config.categorical_colormap_dict['cet_glasbey']
 
     def set_not_continuous_clustermap(self, event):
+        #print("\nIn set_not_continuous")
         self.is_continuous_clustermap.value = False
         self.update_clustermap_plot()
 
     # Update the clustermap plot
     def update_clustermap_plot(self):
+        #print("\nIn update_clustermap_plot")
         self.clustermap_plot = pn.bind(ps.create_clustermap, matrix=self.scores_matrix, type="APSS",
                                        cmap=self.clustermap_cmap, method=self.clustermap_method,
                                        is_metadata=self.use_metadata_clustermap,
@@ -3504,8 +3629,12 @@ class StrainVisApp:
             columns=scores_matrix.columns
         )
 
+        #print("\nScores matrix:")
+        #print(self.scores_matrix_ani)
+
         # Check the number of columns in the matrix
         col_num = len(self.scores_matrix_ani.columns)
+        #print("\ncreate_clustermap_pane: number of columns = " + str(col_num))
 
         # If the num of columns exceeds the defined maximum, do not create the clustermap plot
         # and display a message + a possibility to download the matrix
@@ -3579,6 +3708,7 @@ class StrainVisApp:
     def change_continuous_state_clustermap_ani(self, event):
         # Continuous feature
         if self.is_continuous_clustermap_ani.value:
+            #print("\nIn change_continuous_state. Continuous feature")
 
             # Verify that the feature is indeed continuous
             feature = self.color_by_feature_ani.value
@@ -3591,6 +3721,7 @@ class StrainVisApp:
 
             # Feature is not really continuous, treat as categorical
             if str_type == 1:
+                #print("The feature is not really continuous - uncheck...")
                 self.is_continuous_clustermap_ani.value = False
 
             # Feature is indeed really continuous
@@ -3600,15 +3731,18 @@ class StrainVisApp:
 
         # Categorical feature
         else:
+            #print("\nIn change_continuous_state. Categorical feature")
             self.feature_colormap_ani.options = config.categorical_colormap_dict
             self.feature_colormap_ani.value = config.categorical_colormap_dict['cet_glasbey']
 
     def set_not_continuous_clustermap_ani(self, event):
+        #print("\nIn set_not_continuous")
         self.is_continuous_clustermap_ani.value = False
         self.update_clustermap_plot_ani()
 
     # Update the clustermap plot
     def update_clustermap_plot_ani(self):
+        print("\nIn update_clustermap_plot_ani")
         self.clustermap_plot_ani = pn.bind(ps.create_clustermap, matrix=self.scores_matrix_ani, type="ANI",
                                                  cmap=self.clustermap_cmap_ani, method=self.clustermap_method_ani,
                                                  is_metadata=self.use_metadata_clustermap_ani,
@@ -3687,6 +3821,7 @@ class StrainVisApp:
     def change_continuous_state_network(self, event):
         # Continuous feature
         if self.is_continuous_network.value:
+            #print("\nIn change_continuous_state. Continuous feature")
 
             # Verify that the feature is indeed continuous
             nodes_feature = self.nodes_color_by.value
@@ -3698,6 +3833,7 @@ class StrainVisApp:
 
             # Feature is not really continuous, treat as categorical
             if str_type == 1:
+                #print("The feature is not really continuous - uncheck...")
                 self.is_continuous_network.value = False
 
             # Feature is indeed really continuous
@@ -3707,23 +3843,28 @@ class StrainVisApp:
 
         # Categorical feature
         else:
+            #print("\nIn change_continuous_state. Categorical feature")
             self.nodes_colormap.options = config.categorical_colormap_dict
             self.nodes_colormap.value = config.categorical_colormap_dict['cet_glasbey']
 
     def change_colormap_network(self, event):
+        #print("\nIn change_colormap. Continuous state = " + str(self.is_continuous.value))
         self.update_network_plot()
 
     def get_custom_colormap_network(self, event):
+        #print("\nIn change_colormap. Continuous state = " + str(self.is_continuous.value))
         self.update_network_plot()
 
     def set_not_continuous_network(self, event):
+        #print("\nIn set_not_continuous")
         self.is_continuous_network.value = False
         self.update_network_plot()
 
     def fill_feature_groups(self, event):
         feature = self.nodes_highlight_by.value
         unique_groups = sorted(list(set([str(self.network.nodes[node][feature]) for node in self.network.nodes()])))
-
+        # print("\nUnique groups:")
+        # print(unique_groups)
         if 'nan' in unique_groups:
             unique_groups.remove('nan')
             unique_groups.append('nan')
@@ -3823,6 +3964,10 @@ class StrainVisApp:
         mean_APSS = self.df_for_network.loc[:, 'APSS'].mean().round(2)
         std_APSS = self.df_for_network.loc[:, 'APSS'].std().round(2)
 
+        print("\ncreate_network_pane:")
+        print("Mean APSS: " + str(mean_APSS))
+        print("Standard deviation APSS: " + str(std_APSS) + "\n")
+
         if mean_APSS < 0.99:
             self.APSS_connections_threshold = mean_APSS
         else:
@@ -3836,6 +3981,7 @@ class StrainVisApp:
         mask = self.df_for_network['filtered_score'] > 0
         min_val = self.df_for_network.loc[mask, 'filtered_score'].min()
         max_val = self.df_for_network.loc[mask, 'filtered_score'].max()
+        print("min_value = " + str(min_val) + ", max_value = " + str(max_val))
         self.df_for_network['norm_score'] = 0.0
         # avoid division by zero if all remaining values are equal
         if max_val > min_val:
@@ -3861,6 +4007,9 @@ class StrainVisApp:
                                                  (self.df_for_network.loc[mask, 'weight'] - min_width) * \
                                                  (new_max_width - new_min_width) / (max_width - min_width)
 
+        #print("\nDF for network with weights and widths:")
+        #print(self.df_for_network)
+
         # Update the placeholder of the filenames for download with the default threshold.
         network_file = "Network_plot_" + self.ref_genome + "_" + self.sampling_size + "_regions_" + \
                        str(self.network_iterations) + "_iterations_threshold_" + str(self.APSS_connections_threshold)
@@ -3874,6 +4023,7 @@ class StrainVisApp:
                                                edge_attr=['weight', 'width'])
         self.nodes_list = list(self.network.nodes)
         nodes_num = len(self.nodes_list)
+        #print("\nNumber of nodes in the network = " + str(nodes_num))
 
         # If the number of nodes in the network exceeds the defined maximum, do not create the plot
         # and display only a message + a possibility to download the network data in tsv format
@@ -4136,6 +4286,8 @@ class StrainVisApp:
             self.pos_dict[node] = pos_tuple
 
     def changed_threshold_select(self, mean, mean_std, mean_only, event):
+        #print("\nchanged_threshold_select:")
+        #print("Current mean: " + str(mean))
 
         # The mean option
         if self.network_threshold_select.value == self.network_threshold_select.options[0]:
@@ -4160,16 +4312,20 @@ class StrainVisApp:
         self.change_weight_attribute()
 
     def changed_threshold_input(self, event):
+        #print("\nIn changed_threshold_input")
         self.APSS_connections_threshold = self.network_threshold_input.value
         self.change_weight_attribute()
 
     def changed_iterations_num(self, event):
         self.network_iterations = self.network_iterations_slider.value_throttled
         self.update_network_plot()
+        #print("\nIn changed_iterations_num: iterations number = " + str(self.network_iterations))
 
     def change_weight_attribute(self):
 
         self.APSS_connections_threshold = round(self.APSS_connections_threshold, 2)
+        print("\nchange_weight_attribute:")
+        print("APSS_connections_threshold = " + str(self.APSS_connections_threshold))
 
         # Update the threshold in the deafult filenames for download
         network_file = "Network_plot_" + self.ref_genome + "_" + self.sampling_size + "_regions_" + \
@@ -4214,6 +4370,10 @@ class StrainVisApp:
                                                  (self.df_for_network.loc[mask, 'weight'] - min_width) * \
                                                  (new_max_width - new_min_width) / (max_width - min_width)
 
+        #print("\nDF for network with weights and widths:")
+        #print(self.df_for_network)
+
+        before = time.time()
         # Create a new network from the updated df using networkx
         self.network = nx.from_pandas_edgelist(self.df_for_network, source='Sample1', target='Sample2',
                                                edge_attr=['weight', 'width'])
@@ -4228,13 +4388,24 @@ class StrainVisApp:
                 # Add node attribute 'SampleID' for the hover tooltip
                 self.network.nodes[node]['SampleID'] = node
 
+        after = time.time()
+        duration = after - before
+        #print("Creating a new network took " + str(duration) + " seconds.\n")
+
+        before = time.time()
         self.update_network_plot()
+        after = time.time()
+        duration = after - before
+        #print("Updating the network plot took " + str(duration) + " seconds.\n")
 
     def change_highlighted_sample(self, event):
+        #print("\nIn change_highlighted_sample")
+        #print("Samples to highlight: " + self.highlight_sample_input.value)
         self.update_network_plot()
 
     # Update the network plot using the selected parameters and the new positions dict
     def update_network_plot(self):
+        #print("\nIn update_network_plot")
         self.network_plot_hv = pn.bind(ps.cretae_network_plot, network=self.network,
                                        is_metadata=self.use_metadata_network,
                                        nodes_feature=self.nodes_color_by.value,
@@ -4262,6 +4433,7 @@ class StrainVisApp:
     def change_continuous_state_network_ani(self, event):
         # Continuous feature
         if self.is_continuous_network_ani.value:
+            #print("\nIn change_continuous_state. Continuous feature")
 
             # Verify that the feature is indeed continuous
             nodes_feature = self.nodes_color_by_ani.value
@@ -4273,6 +4445,7 @@ class StrainVisApp:
 
             # Feature is not really continuous, treat as categorical
             if str_type == 1:
+                #print("The feature is not really continuous - uncheck...")
                 self.is_continuous_network_ani.value = False
 
             # Feature is indeed really continuous
@@ -4282,23 +4455,28 @@ class StrainVisApp:
 
         # Categorical feature
         else:
+            #print("\nIn change_continuous_state. Categorical feature")
             self.nodes_colormap_ani.options = config.categorical_colormap_dict
             self.nodes_colormap_ani.value = config.categorical_colormap_dict['cet_glasbey']
 
     def change_colormap_network_ani(self, event):
+        #print("\nIn change_colormap. Continuous state = " + str(self.is_continuous.value))
         self.update_network_plot_ani()
 
     def get_custom_colormap_network_ani(self, event):
+        #print("\nIn change_colormap. Continuous state = " + str(self.is_continuous.value))
         self.update_network_plot_ani()
 
     def set_not_continuous_network_ani(self, event):
+        #print("\nIn set_not_continuous")
         self.is_continuous_network_ani.value = False
         self.update_network_plot_ani()
 
     def fill_feature_groups_ani(self, event):
         feature = self.nodes_highlight_by_ani.value
         unique_groups = sorted(list(set([str(self.network_ani.nodes[node][feature]) for node in self.network_ani.nodes()])))
-
+        # print("\nUnique groups:")
+        # print(unique_groups)
         if 'nan' in unique_groups:
             unique_groups.remove('nan')
             unique_groups.append('nan')
@@ -4435,8 +4613,14 @@ class StrainVisApp:
         new_min_width = config.min_edge_width
         new_max_width = config.max_edge_width
         self.df_for_network_ani.loc[mask, 'width'] = new_min_width + \
-                                                     (self.df_for_network_ani.loc[mask, 'weight'] - min_width) * \
-                                                     (new_max_width - new_min_width) / (max_width - min_width)
+                                                 (self.df_for_network_ani.loc[mask, 'weight'] - min_width) * \
+                                                 (new_max_width - new_min_width) / (max_width - min_width)
+
+        #print("\nDF for network with weights and widths:")
+        #print(self.df_for_network_ani)
+        print("\ncreate_network_pane_ani:")
+        print("Mean ANI: " + str(mean_ANI))
+        print("Standard deviation ANI: " + str(std_ANI) + "\n")
 
         # Update the placeholder of the filenames for download with the default threshold.
         network_file = "Network_plot_ANI_" + self.ref_genome + "_" + str(self.network_iterations_ani) + \
@@ -4450,6 +4634,7 @@ class StrainVisApp:
                                                    edge_attr=['weight', 'width'])
         self.nodes_list_ani = list(self.network_ani.nodes)
         nodes_num = len(self.nodes_list_ani)
+        #print("\nNumber of nodes in the network = " + str(nodes_num))
 
         # If the number of nodes in the network exceeds the defined maximum, do not create the plot
         # and display only a message + a possibility to download the network data in tsv format
@@ -4719,6 +4904,9 @@ class StrainVisApp:
             self.pos_dict_ani[node] = pos_tuple
 
     def changed_threshold_select_ani(self, mean, mean_std, mean_only, event):
+        #print("\nchanged_threshold_select:")
+        #print("Current mean: " + str(mean))
+
         if self.network_threshold_select_ani.value == self.network_threshold_select_ani.options[0]:
             self.ani_connections_threshold = mean
             self.network_threshold_input_ani.disabled = True
@@ -4739,16 +4927,20 @@ class StrainVisApp:
         self.change_weight_attribute_ani()
 
     def changed_threshold_input_ani(self, event):
+        #print("\nIn changed_threshold_input")
         self.ani_connections_threshold = self.network_threshold_input_ani.value
         self.change_weight_attribute_ani()
 
     def changed_iterations_num_ani(self, event):
         self.network_iterations_ani = self.network_iterations_slider_ani.value_throttled
         self.update_network_plot_ani()
+        #print("\nIn changed_iterations_num_ani: iterations number = " + str(self.network_iterations_ani))
 
     def change_weight_attribute_ani(self):
 
         self.ani_connections_threshold = round(self.ani_connections_threshold, 3)
+        print("\nchange_weight_attribute_ani:")
+        print("ANI_connections_threshold = " + str(self.ani_connections_threshold))
 
         # Update the threshold in the default filenames for download
         network_file = "Network_plot_ANI_" + self.ref_genome + "_" + \
@@ -4757,6 +4949,9 @@ class StrainVisApp:
         table_file = "Network_" + self.ref_genome + "_threshold_" + str(self.ani_connections_threshold)
         self.save_network_table_path_ani.placeholder = table_file
 
+        # Recalculate the weights
+        #self.df_for_network_ani['weight'] = np.where(self.df_for_network_ani['ANI'] >= self.ani_connections_threshold,
+        #                                             np.negative(np.log(1 - self.df_for_network_ani['ANI'])), 0)
         # First stage: zero the scores below the threshold
         self.df_for_network_ani['filtered_score'] = \
             self.df_for_network_ani['ANI'].where(self.df_for_network_ani['ANI'] >= self.ani_connections_threshold, 0)
@@ -4792,6 +4987,10 @@ class StrainVisApp:
                                                      (self.df_for_network_ani.loc[mask, 'weight'] - min_width) * \
                                                      (new_max_width - new_min_width) / (max_width - min_width)
 
+        #print("\nDF for network with weights and widths:")
+        #print(self.df_for_network_ani)
+
+        before = time.time()
         # Create a new network from the updated df using networkx
         self.network_ani = nx.from_pandas_edgelist(self.df_for_network_ani, source='Sample1', target='Sample2',
                                                    edge_attr=['weight', 'width'])
@@ -4806,13 +5005,24 @@ class StrainVisApp:
                 # Add node attribute 'SampleID' for the hover tooltip
                 self.network_ani.nodes[node]['SampleID'] = node
 
+        #after = time.time()
+        #duration = after - before
+        #print("Creating a new network took " + str(duration) + " seconds.\n")
+
+        before = time.time()
         self.update_network_plot_ani()
+        after = time.time()
+        duration = after - before
+        #print("Updating the network plot took " + str(duration) + " seconds.\n")
 
     def change_highlighted_sample_ani(self, event):
+        #print("\nIn change_highlighted_sample_ani")
+        #print("Samples to highlight: " + self.highlight_sample_input_ani.value)
         self.update_network_plot_ani()
 
     # Update the network plot using the selected parameters and the new positions dict
     def update_network_plot_ani(self):
+        #print("\nIn update_network_plot")
         self.network_plot_hv_ani = pn.bind(ps.cretae_network_plot, network=self.network_ani,
                                            is_metadata=self.use_metadata_network_ani,
                                            nodes_feature=self.nodes_color_by_ani.value,
@@ -4852,6 +5062,7 @@ class StrainVisApp:
                                                                                       'padding': "0"}))
 
         num_pairs = len(APSS_ANI_selected_genome_df)
+        print("\nNumber of common sample pairs: " + str(num_pairs))
 
         # Check that there is at least 1 common pair. If not, print a message and don't display the plot-card.
         if num_pairs == 0:
@@ -5018,6 +5229,7 @@ class StrainVisApp:
         if use_metadata:
             self.df_for_combined_scatter['Color'] = self.df_for_combined_scatter.apply(
                 lambda row: self.category_by_feature_scatter(row, feature, same_color, different_color), axis=1)
+            #print(self.df_for_combined_scatter)
 
             ax1.scatter(self.df_for_combined_scatter['APSS'], self.df_for_combined_scatter['ANI'],
                         c=self.df_for_combined_scatter['Color'], linewidths=0.1, edgecolors="gray")
@@ -5076,6 +5288,7 @@ class StrainVisApp:
 
         # Unwatch all contig-specific widgets (if it's not the first time that the contig has changed)
         if self.visited_synteny_per_pos_tab:
+            print("changed_contig: remove contig-related watchers")
             if self.avg_plot_chkbox_watcher in self._watchers:
                 self.avg_plot_chkbox.param.unwatch(self.avg_plot_chkbox_watcher)
             if self.avg_plot_color_watcher in self._watchers:
@@ -5129,6 +5342,7 @@ class StrainVisApp:
         # Find contig length by the last position
         self.score_per_pos_contig['Position'] = self.score_per_pos_contig['Position'].astype(int)
         self.score_per_pos_contig = self.score_per_pos_contig.sort_values('Position')
+        print("\nLast position: " + str(self.score_per_pos_contig.iloc[-1]['Position']))
 
         self.contig_length = self.score_per_pos_contig.iloc[-1]['Position'] + config.region_length
         contig_length_title = "Contig length: " + str(self.contig_length) + " bp"
@@ -5342,6 +5556,8 @@ class StrainVisApp:
             sort_values(['Position']).groupby('Position') \
             .agg(Count=('Synteny_score', 'size'), Avg_synteny_score=('Synteny_score', 'mean')) \
             .reset_index()
+        #print("\nAverage + count df:")
+        #print(avg_score_per_pos_contig)
 
         # Fill the missing positions with score=0 (default jump=5000)
         self.avg_score_per_pos_contig = self.avg_score_per_pos_contig. \
@@ -5353,6 +5569,9 @@ class StrainVisApp:
                        })).sort_values(by='Position').reset_index(). \
             drop(['index'], axis=1)
         self.avg_score_per_pos_contig['Position'] = self.avg_score_per_pos_contig['Position'].astype(int)
+
+        #print("\nAfter filling missing positions:")
+        #print(avg_score_per_pos_contig)
 
         hypervar_threshold = self.bottom_percentile
         hypercons_threshold = self.top_percentile
@@ -5375,6 +5594,9 @@ class StrainVisApp:
         self.selected_contig_column.append(pn.Spacer(width=20))
         self.selected_contig_column.append(styling_col)
         self.selected_contig_column.append(download_synteny_per_pos_column)
+
+        mem = self.get_memory_usage()
+        print(f"\nMemory after presenting synteny per position for a selected contig: {mem} MB")
 
     def read_annotation_file(self, event):
         gff_file = io.BytesIO(self.upload_annotation_file.value)
@@ -5415,6 +5637,7 @@ class StrainVisApp:
         if 'nan' in unique_groups:
             unique_groups.remove('nan')
             unique_groups.append('nan')
+        #print(unique_groups)
 
         self.synteny_per_pos_groups_select.options = unique_groups
 
@@ -5424,10 +5647,14 @@ class StrainVisApp:
             self.update_synteny_per_pos_plot()
 
     def create_synteny_per_pos_plot(self):
+        before = time.time()
+        #print("\ncreate_synteny_per_pos_plot:\nContig name: " + self.contig_name)
 
         # Set the requested positions range
         start_pos = self.start_pos_input.value
         end_pos = self.end_pos_input.value
+        #print("Start position: " + start_pos)
+        #print("End position: " + end_pos)
 
         # The user requested to filter the data by a metadata feature - use the filtered tables
         if self.filter_plot_by_metadata:
@@ -5448,12 +5675,21 @@ class StrainVisApp:
                 self.avg_score_per_pos_contig['Position'] >= int(start_pos)]
             avg_score_per_pos_contig = avg_score_per_pos_contig[avg_score_per_pos_contig['Position'] < int(end_pos)]
 
+        #print("\nscore_per_pos_contig table:")
+        #print(score_per_pos_contig)
+        #print("\navg_score_per_pos_contig table:")
+        #print(avg_score_per_pos_contig)
+
         # Prepare data for plotting the avg scores as lines
         avg_score_per_pos_contig_end_pos = avg_score_per_pos_contig.copy()
         avg_score_per_pos_contig_end_pos['Position'] = avg_score_per_pos_contig['Position'] + config.region_length - 50
+        # print(avg_score_per_pos_contig_end_pos)
 
         avg_score_per_pos_contig_for_line_plot = pd.concat([avg_score_per_pos_contig, avg_score_per_pos_contig_end_pos],
                                                            ignore_index=True).sort_values(by='Position')
+
+        #print("\nAverage data for line plot after concatenating:")
+        #print(avg_score_per_pos_contig_for_line_plot)
 
         pos_array = np.full((2, len(score_per_pos_contig.index)), 0)
         pos_array[1, :] = config.region_length - 50
@@ -5496,6 +5732,8 @@ class StrainVisApp:
         if min_score < 0:
             height += abs(min_score) + 0.05
             bottom_val = min_score - 0.05
+        #print("\nMin score = " + str(min_score))
+        #print("Height = " + str(height))
 
         avg_score_per_pos_contig['Hypervariable'] = np.where(avg_score_per_pos_contig['Hypervariable'] == 0, 0, height)
         avg_score_per_pos_contig['Hyperconserved'] = np.where(avg_score_per_pos_contig['Hyperconserved'] == 0, 0, height)
@@ -5526,6 +5764,9 @@ class StrainVisApp:
         avg_score_per_pos_contig = avg_score_per_pos_contig.reset_index()
         avg_score_per_pos_contig.loc[len(avg_score_per_pos_contig)] = [len(avg_score_per_pos_contig), int(end_pos), 0,
                                                                        0, 0, 0]
+        #print("\nFinal AVG score per position table:")
+        #print(avg_score_per_pos_contig)
+
         # Set the X-ticks and labels of the main plot
         positions = avg_score_per_pos_contig['Position']
         self.ax_for_synteny_per_pos_plot.set_xlim(int(start_pos), int(end_pos))
@@ -5578,6 +5819,10 @@ class StrainVisApp:
             # Add global X-label for the entire figure
             fig.supxlabel("Position in reference genome/contig", y=0.04, fontsize=10)
 
+        after = time.time()
+        duration = after - before
+        print("Create/update the synteny_per_pos plot took " + str(duration) + " seconds")
+
         return fig
 
     def update_synteny_per_pos_plot(self):
@@ -5593,6 +5838,7 @@ class StrainVisApp:
             # The requested length range is too big - Print a message that the length exceeds the allowed maximum
             if length_range > config.max_range_for_annotation:
                 # Print a message that the length exceeds the allowed maximum
+                print("\nchange_range: length range is too big")
                 message = "Cannot plot annotated genes - set contig length to max. 100,000 bp"
                 self.show_annotations_col[0] = pn.pane.Markdown(message,
                                                                 styles={'font-size': "14px",
@@ -5621,6 +5867,8 @@ class StrainVisApp:
         self.start_pos_input.value = start_pos
         self.end_pos_input.placeholder = end_pos
         self.end_pos_input.value = end_pos
+        print("\nIn reset_range")
+        print("Start=" + start_pos + ", end=" + end_pos)
 
         # Check if show_annotations is checked
         if self.show_annotations_chkbox.value:
@@ -5628,6 +5876,7 @@ class StrainVisApp:
 
             # The requested length range is too big - Print a message that the length exceeds the allowed maximum
             if length_range > config.max_range_for_annotation:
+                print("\nreset_range: length range is too big")
                 message = "Cannot plot annotated genes - set contig length to max. 100,000 bp"
                 self.show_annotations_col[0] = pn.pane.Markdown(message,
                                                                 styles={'font-size': "14px",
@@ -5666,6 +5915,7 @@ class StrainVisApp:
 
     def change_avg_plot_color(self, event):
         color = self.avg_plot_color.value
+        print("\nIn change_avg_plot_color. New color: " + color)
         self.line_avg_plot[0].set_color(color)
 
         self.update_legend()
@@ -5764,6 +6014,7 @@ class StrainVisApp:
 
             # There is no annotation data for the current contig (maybe wrong file)
             if self.contig_name not in self.annotation_per_ref_genome_dict[self.ref_genome]:
+                print("\nshow_hide_annotations_plot: current contig doesn't appear in annotation file")
                 message = "The selected contig doesn't appear in the uploaded annotation file (wrong file uploaded?)"
                 self.show_annotations_col[0] = pn.pane.Markdown(message,
                                                                 styles={'font-size': "14px",
@@ -5776,6 +6027,7 @@ class StrainVisApp:
 
             # Check the current contig length range. If it's longer than 50000, uncheck the box and print a message
             elif length_range > config.max_range_for_annotation:
+                print("\nshow_hide_annotations_plot: length range is too big")
                 message = "Cannot plot annotated genes - set contig length to max. 100,000 bp"
                 self.show_annotations_col[0] = pn.pane.Markdown(message,
                                                                 styles={'font-size': "14px",
@@ -5798,6 +6050,7 @@ class StrainVisApp:
                 self.update_synteny_per_pos_plot()
 
     def filter_synteny_per_pos_plot(self, event):
+        #print("\nIn filter_synteny_per_pos_plot")
         self.filter_plot_by_metadata = 1
 
         feature = self.synteny_per_pos_feature_select.value
@@ -6005,6 +6258,9 @@ class StrainVisApp:
             self.main_multi_column.append(self.synteny_ani_multi_tabs)
 
     def create_multi_genomes_column_both_mode(self):
+        before = time.time()
+        print("\nStart create_multi_genomes_column_both_mode")
+
         self.synteny_multi_initial_plots_column.styles = config.both_mode_other_style
         self.ani_multi_plots_column.styles = config.both_mode_other_style
 
@@ -6013,10 +6269,15 @@ class StrainVisApp:
         thread_ani_multi.start()  # Start the thread
 
         self.create_multi_genomes_column_syntracker_mode()
+        #self.create_multi_genomes_column_ANI_mode()
 
         self.synteny_ani_multi_tabs.clear()
         self.synteny_ani_multi_tabs.append(('SynTracker', self.synteny_multi_initial_plots_column))
         self.synteny_ani_multi_tabs.append(('ANI', self.ani_multi_plots_column))
+
+        after = time.time()
+        duration = after - before
+        print("\ncreate_multi_genomes_column_both_mode took " + str(duration) + " seconds.\n")
 
     def update_genomes_selection(self, event):
         # Display a loading spinner as long as the plots are updated
@@ -6034,6 +6295,9 @@ class StrainVisApp:
         # No selected species -> treat as all species
         if self.selected_subset_species_num == 0:
             self.selected_genomes_subset = self.genomes_subset_select.options
+
+        print("\nupdate_genomes_selection:\nNumber of selected species: " + str(self.selected_subset_species_num))
+        #print(self.selected_genomes_subset)
 
         if self.input_mode == "SynTracker":
             self.create_multi_genomes_column_syntracker_mode()
@@ -6058,6 +6322,8 @@ class StrainVisApp:
         # Get the number of genomes from the selected subset that actually appear in the SynTracker file
         presented_genomes_list = self.score_per_region_genomes_subset_df['Ref_genome'].unique()
         self.species_num_in_subset_syntracker = len(presented_genomes_list)
+        print("\ncreate_multi_genomes_column_syntracker_mode: Number of available species: " +
+              str(self.species_num_in_subset_syntracker))
 
         # No synteny data for the selected genomes subset
         if self.species_num_in_subset_syntracker == 0:
@@ -6138,6 +6404,8 @@ class StrainVisApp:
 
     def create_multi_genomes_plots_by_APSS(self, event):
 
+        before = time.time()
+
         # Unwatch watchers (if it's not the first time that this function is called)
         if self.clicked_button_display_APSS_multi and self.is_metadata and \
                 self.feature_select_watcher in self._watchers:
@@ -6189,9 +6457,13 @@ class StrainVisApp:
             else:
                 # Calculate and return the dataframe with average scores for the selected genome and sampling size
                 print("\nThe selected size (" + self.sampling_size_multi + ") has not been calculated yet - calculate it...")
+                before = time.time()
                 all_genomes_selected_size_APSS_df = dm.calculate_APSS_all_genomes_sampling_size(
                     self.score_per_region_all_genomes_df, self.sampling_size_multi)
-
+                after = time.time()
+                duration = after - before
+                print("Calculating APSS with " + str(self.sampling_size_multi) + " regions for " +
+                      str(self.number_of_genomes) + " species took " + str(duration) + " seconds.\n")
                 # Save the dataframe in the main dictionary
                 self.APSS_all_genomes_all_sizes_dict[self.sampling_size_multi] = all_genomes_selected_size_APSS_df
                 self.calculated_APSS_all_genomes_size_dict[self.sampling_size_multi] = 1
@@ -6221,7 +6493,15 @@ class StrainVisApp:
             self.create_box_plot_multi_pane()
             self.plots_by_size_multi_column.append(self.box_plot_card)
 
+            after = time.time()
+            duration = after - before
+            print("\ncreate_multi_genomes_plots_by_APSS took " + str(duration) + " seconds.\n")
+            mem = self.get_memory_usage()
+            print(f"Memory after displaying APPS plot for multi-species: {mem} MB")
+
     def create_multi_genomes_column_ANI_mode(self):
+        before = time.time()
+        print("\n\nStart create_multi_genomes_column_ANI_mode in another thread.")
 
         # Unwatch watchers (if it's not the first time that this function is called)
         if self.visited_ANI_tab_multi and self.is_metadata and self.feature_select_ani_watcher in self._watchers:
@@ -6238,7 +6518,8 @@ class StrainVisApp:
 
         presented_genomes_list = self.ani_scores_genomes_subset_df['Ref_genome'].unique()
         self.species_num_in_subset_ani = len(presented_genomes_list)
-        print("\nNumber of available species for ANI analysis: " + str(self.species_num_in_subset_ani))
+        print("\nNumber of available species for ANI analysis: " +
+              str(self.species_num_in_subset_ani))
 
         # No data for the selected genomes subset
         if self.species_num_in_subset_ani == 0:
@@ -6257,6 +6538,10 @@ class StrainVisApp:
             # Add the plots to the layout
             self.create_box_plot_multi_pane_ani()
             self.ani_multi_plots_column.append(self.box_plot_card_ani)
+
+        after = time.time()
+        duration = after - before
+        print("\ncreate_multi_genomes_column_ANI_mode took " + str(duration) + " seconds.\n")
 
     def create_box_plot_multi_pane(self):
         styling_title = "Plot styling options:"
@@ -6348,8 +6633,13 @@ class StrainVisApp:
         self.box_plot_card.append(box_plot_row)
 
     def calculate_metadata_for_box_plot(self):
+        before = time.time()
 
         feature = self.box_plot_feature_select.value
+
+        print("\ncalculate_metadata_for_box_plot:")
+        print("Number of species to present: " + str(self.species_num_at_sampling_size))
+        print("Compared feature: " + feature)
 
         if self.species_num_at_sampling_size == self.number_of_genomes:
             box_plot_file = "Boxplot_all_species_"
@@ -6369,6 +6659,8 @@ class StrainVisApp:
 
         self.genomes_subset_selected_size_APSS_df['Category'] = self.genomes_subset_selected_size_APSS_df.apply(
             lambda row: category_by_feature(row, feature, self.metadata_dict), axis=1)
+        #print("\nDF for box_plot with category:")
+        #print(self.genomes_subset_selected_size_APSS_df)
 
         same_feature = 'Same ' + feature
         diff_feature = 'Different ' + feature
@@ -6379,6 +6671,7 @@ class StrainVisApp:
         genome_effect_size_dict = {}
         pval_corrected = []
         for genome in self.sorted_selected_genomes_subset:
+            #print("\nGenome: " + genome + ", Feature: " + feature)
             same_array = self.genomes_subset_selected_size_APSS_df[
                 (self.genomes_subset_selected_size_APSS_df['Ref_genome'] == genome) &
                 (self.genomes_subset_selected_size_APSS_df['Category'] == same_feature)]['APSS']
@@ -6388,19 +6681,31 @@ class StrainVisApp:
         
             # Sample size is enough for P-value calculation
             if len(same_array) >= 1 and len(diff_array) >= 1:
+                before = time.time()
                 u, p_val = return_p_value_mannwhitneyu(same_array, diff_array)
+                after = time.time()
+                duration = after - before
+                #print("\nP-value = " + str(p_val))
+                #print("P-value calculation took " + str(duration) + " seconds.\n")
                 if str(p_val) != "NaN":
                     valid_pval_list.append(p_val)
                     genome_pval_dict[genome] = p_val
                     effect_size = abs(1 - (2 * u) / (len(same_array) * len(diff_array)))
                     genome_effect_size_dict[genome] = effect_size
+                    #print("Effect size = " + str(effect_size))
                 # Sample size is not enough for P-value calculation
             else:
                 genome_pval_dict[genome] = np.nan
                 genome_effect_size_dict[genome] = np.nan
+                #print("\nCannot calculate P-value for feature " + feature + ": Sample size is not enough.")
+
+        #print("\nOriginal valid p-values:")
+        #print(valid_pval_list)
 
         if len(valid_pval_list) >= 2:
             reject, pval_corrected, _, q_values = multipletests(valid_pval_list, method='fdr_bh')
+            #print("Corrected p-values:")
+            #print(pval_corrected)
 
         valid_counter = 0
         if len(pval_corrected) > 0:
@@ -6422,6 +6727,12 @@ class StrainVisApp:
         self.boxplot_p_values_df['Effect_size'] = \
             self.boxplot_p_values_df['Effect_size'].map(lambda v: round(v, 2) if pd.notna(v) else v)
 
+        print("\n")
+        print(self.boxplot_p_values_df)
+
+        after = time.time()
+        duration = after - before
+        print("\ncalculate_metadata_for_box_plot took " + str(duration) + " seconds.\n")
 
     def update_feature_in_boxplot(self, event):
         self.calculate_metadata_for_box_plot()
@@ -6602,7 +6913,14 @@ class StrainVisApp:
 
     def calculate_metadata_for_box_plot_ani(self):
 
+        before = time.time()
+
+        #presented_genomes_list = self.ani_scores_genomes_subset_df['Ref_genome'].unique()
         feature = self.box_plot_feature_select_ani.value
+
+        print("\ncalculate_metadata_for_box_plot_ani:")
+        print("Number of species to present: " + str(self.species_num_in_subset_ani))
+        print("Compared feature: " + feature)
 
         if self.species_num_in_subset_ani == self.number_of_genomes:
             num = "all"
@@ -6619,6 +6937,8 @@ class StrainVisApp:
 
         self.ani_scores_genomes_subset_df['Category'] = self.ani_scores_genomes_subset_df.apply(
             lambda row: category_by_feature(row, feature, self.metadata_dict), axis=1)
+        #print("\nDF for box_plot with category:")
+        #print(self.genomes_subset_selected_size_APSS_df)
 
         same_feature = 'Same ' + feature
         diff_feature = 'Different ' + feature
@@ -6629,6 +6949,7 @@ class StrainVisApp:
         genome_effect_size_dict = {}
         pval_corrected = []
         for genome in self.sorted_selected_genomes_subset_ani:
+            #print("\nGenome: " + genome + ", Feature: " + feature)
             same_array = self.ani_scores_genomes_subset_df[
                 (self.ani_scores_genomes_subset_df['Ref_genome'] == genome) &
                 (self.ani_scores_genomes_subset_df['Category'] == same_feature)]['ANI']
@@ -6638,24 +6959,34 @@ class StrainVisApp:
 
             # Sample size is enough for P-value calculation
             if len(same_array) >= 1 and len(diff_array) >= 1:
+                before = time.time()
                 u, p_val = return_p_value_mannwhitneyu(same_array, diff_array)
                 after = time.time()
-
+                duration = after - before
+                #print("\nP-value = " + str(p_val))
+                #print("P-value calculation took " + str(duration) + " seconds.\n")
                 if str(p_val) != "NaN":
                     valid_pval_list.append(p_val)
                     genome_pval_dict[genome] = p_val
                     effect_size = abs(1 - (2 * u) / (len(same_array) * len(diff_array)))
                     genome_effect_size_dict[genome] = effect_size
+                    #print("Effect size = " + str(effect_size))
             # Sample size is not enough for P-value calculation
             else:
                 genome_pval_dict[genome] = np.nan
                 genome_effect_size_dict[genome] = np.nan
+                #print("\nCannot calculate P-value for feature " + feature + ": Sample size is not enough.")
+
+        #print("\nOriginal p-values:")
+        #print(valid_pval_list)
 
         # Need to apply multiple testing correction
         if len(valid_pval_list) >= 2:
             reject, pval_corrected, _, q_values = multipletests(valid_pval_list, method='fdr_bh')
         else:
             pval_corrected = valid_pval_list
+        #print("\nCorrected p-values:")
+        #print(pval_corrected)
 
         valid_counter = 0
         if len(pval_corrected) > 0:
@@ -6677,6 +7008,12 @@ class StrainVisApp:
             self.boxplot_p_values_df_ani['P_value'].map(lambda v: f"{v: .2e}" if pd.notna(v) else v)
         self.boxplot_p_values_df_ani['Effect_size'] = \
             self.boxplot_p_values_df_ani['Effect_size'].map(lambda v: round(v, 2) if pd.notna(v) else v)
+
+        print(self.boxplot_p_values_df_ani)
+
+        after = time.time()
+        duration = after - before
+        print("\ncalculate_metadata_for_box_plot_ani took " + str(duration) + " seconds.\n")
 
     def update_feature_in_boxplot_ani(self, event):
         self.calculate_metadata_for_box_plot_ani()

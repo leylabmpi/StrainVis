@@ -12,8 +12,8 @@ def complete_metadata(score_per_region_df, metadata_df):
 
     # Extract the metadata feature names and save them in the list
     metadata_features_list = list(metadata_df.columns)
-    print("\nMetadata features:")
-    print(metadata_features_list)
+    #print("\nMetadata features:")
+    #print(metadata_features_list)
 
     # There are less than two columns - probably a delimiter problem
     if len(metadata_features_list) < 2:
@@ -23,8 +23,6 @@ def complete_metadata(score_per_region_df, metadata_df):
 
     # Extract the name of the first column in the metadata (the sample_IDs column)
     sample_ids_column_name = metadata_features_list.pop(0)
-    #print("\nFirst column name:")
-    #print(sample_ids_column_name)
 
     # Extract a list of unique sample IDs from the metadata
     metadata_orig_sample_list = metadata_df[sample_ids_column_name].to_list()
@@ -40,15 +38,10 @@ def complete_metadata(score_per_region_df, metadata_df):
     features_num = len(metadata_features_list)
     for sample in unique_samples_list:
         if sample not in metadata_orig_sample_list:
-            #print("Sample " + sample + " is missing from metadata")
             new_row = [sample]
             for i in range(features_num):
                 new_row.append(np.nan)
-                #new_row.append("NaN")
             metadata_df.loc[len(metadata_df)] = new_row
-
-    #print("\nMetadata after filling missing samples:")
-    #print(metadata_df)
 
     # Go over the features
     for feature in metadata_features_list:
@@ -65,8 +58,6 @@ def return_genomes_subset_table(score_per_region_df, genomes_list):
     genomes_subset_df = score_per_region_df[score_per_region_df['Ref_genome'].isin(genomes_list)]
     genomes_subset_df = genomes_subset_df[['Ref_genome', 'Sample1', 'Sample2', 'Synteny_score']]
 
-    #print("\nreturn_genomes_subset_table:")
-    #print(genomes_subset_df)
     return genomes_subset_df
 
 
@@ -84,8 +75,6 @@ def filter_genomes_ani(ani_scores_all_genomes_df):
 
     # Leave only genomes, which have at lease 10 pairwise comparisons
     pairs_num_filtered_df = pairs_num_df[pairs_num_df["Number_of_pairs"] >= 10]
-    #print("\nfilter_genomes_ani:")
-    #print(pairs_num_filtered_df)
 
     filtered_genomes_list = list(pairs_num_filtered_df['Ref_genome'])
 
@@ -121,9 +110,6 @@ def create_sorted_by_pairs_genomes_list_ani(ani_scores_all_genomes_df):
     pairs_num_df = ani_scores_all_genomes_df[['Ref_genome', 'ANI']].groupby('Ref_genome').count().\
         sort_values('ANI', ascending=False).reset_index()
     pairs_num_df.columns.values[1] = "Number_of_pairs"
-
-    print("\ncreate_sorted_by_pairs_genomes_list_ani:")
-    print(pairs_num_df)
 
     genomes_list_by_pairs_num = list(pairs_num_df['Ref_genome'])
     #print("\nGenomes list sorted by pairs number:")

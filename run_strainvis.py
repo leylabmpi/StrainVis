@@ -38,8 +38,16 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--port", type=str, default="5005")
     parser.add_argument("--show", action='store_true', default=False)
+    parser.add_argument("--debug", action='store_true', default=False)
     args = parser.parse_args()
-    app = "strain_vis.py"
+
+    # Run StrainVis in debug mode (more printouts)
+    if args.debug:
+        app = "strain_vis_debug.py"
+
+    # Run StrainVis in normal mode
+    else:
+        app = "strain_vis.py"
 
     running_args = ["panel", "serve", app, "--port", args.port, "--websocket-max-message-size", "524288000",
                     "--unused-session-lifetime", "360000"]

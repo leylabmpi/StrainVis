@@ -7,7 +7,6 @@ import networkx as nx
 import hvplot.pandas  # Enable interactive
 import holoviews as hv
 import hvplot.networkx as hvnx
-#import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from matplotlib.colors import Normalize
@@ -82,8 +81,8 @@ def create_jitter_plot_bokeh(avg_df, color):
     plot.yaxis.axis_label = "Average Synteny Score"
     plot.xaxis.axis_label_text_font_size = "18pt"
 
-    print("\ncreate_jitter_plot:")
-    print(plot)
+    #print("\ncreate_jitter_plot:")
+    #print(plot)
 
     return plot
 
@@ -123,7 +122,7 @@ def create_clustermap(matrix, type, cmap, method, is_metadata, feature, is_conti
 
         # In case of numeric continuous feature:
         if is_continuous:
-            print("\ncreate_clustermap: Continuous feature")
+            #print("\ncreate_clustermap: Continuous feature")
 
             # Extract non-missing values
             non_missing_values = [metadata_dict[feature][sample] for sample in matrix.iloc[:, 0].index
@@ -132,8 +131,8 @@ def create_clustermap(matrix, type, cmap, method, is_metadata, feature, is_conti
             # Define min and max values based only on non-missing values
             min_value = min(non_missing_values)
             max_value = max(non_missing_values)
-            print("Min value: " + str(min_value))
-            print("Max value: " + str(max_value))
+            #print("Min value: " + str(min_value))
+            #print("Max value: " + str(max_value))
 
             feature_array = np.array([metadata_dict[feature][sample] for sample in matrix.iloc[:, 0].index])
             normalized_values = (feature_array - min_value) / (max_value - min_value)
@@ -190,15 +189,15 @@ def create_clustermap(matrix, type, cmap, method, is_metadata, feature, is_conti
                     custom_colors_list = custom_cmap
                     cmap_metadata_mpl = re.split(r'\s*,\s*', custom_colors_list)
                     cmap_length = len(cmap_metadata_mpl)
-                    print("\nCustom cmap:")
-                    print(cmap_metadata_mpl)
+                    #print("\nCustom cmap:")
+                    #print(cmap_metadata_mpl)
 
                     # Assign each group with a color, according to the colormap order
                     group_to_color = {group: cmap_metadata_mpl[i % cmap_length] for i, group in enumerate(unique_groups)}
 
                 # Custom colormap is not defined yet
                 else:
-                    print("\nCustom cmap is not defined yet")
+                    #print("\nCustom cmap is not defined yet")
                     # Assign each group with black, according to the colormap order
                     group_to_color = {group: 'black' for i, group in enumerate(unique_groups)}
 
@@ -489,7 +488,6 @@ def cretae_network_plot_matplotlib(network, is_metadata, nodes_feature, is_conti
                                    is_edge_colorby, edges_feature, within_edge_color, between_edge_color,
                                    iterations, pos_dict, show_labels, all_or_highlighted, is_highlight_samples,
                                    samples_to_highlight, metadata_dict):
-    before = time.time()
     iter_num = int(iterations)
     #print("\nIn cretae_network_plot_matplotlib. Iterations number = " + str(iter_num))
     #print("cmap: " + str(cmap))
@@ -659,10 +657,6 @@ def cretae_network_plot_matplotlib(network, is_metadata, nodes_feature, is_conti
         )
 
     plt.close(fig)
-
-    after = time.time()
-    duration = after - before
-    print("\ncretae_network_plot_matplotlib: saving the network took " + str(duration) + " seconds.\n")
 
     return fig
 

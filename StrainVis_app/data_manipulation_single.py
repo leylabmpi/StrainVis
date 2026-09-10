@@ -9,7 +9,6 @@ def return_selected_genome_table(score_per_region_df, selected_genome):
     selected_genome_df = score_per_region_df[score_per_region_df['Ref_genome'] == selected_genome]
     selected_genome_df = selected_genome_df[['Sample1', 'Sample2', 'Region', 'Synteny_score']]
 
-    #print(selected_genome_df)
     return selected_genome_df
 
 
@@ -17,7 +16,6 @@ def return_selected_genome_ani_table(ani_all_genomes_df, selected_genome):
     selected_genome_df = ani_all_genomes_df[ani_all_genomes_df['Ref_genome'] == selected_genome]
     selected_genome_df = selected_genome_df[['Sample1', 'Sample2', 'ANI']]
 
-    #print(selected_genome_df)
     return selected_genome_df
 
 
@@ -25,7 +23,6 @@ def return_selected_genome_avg_table(avg_big_df, selected_genome):
     selected_genome_avg_df = avg_big_df[avg_big_df['Ref_genome'] == selected_genome]
     selected_genome_avg_df = selected_genome_avg_df[['Sample1', 'Sample2', 'APSS', 'Compared_regions']]
 
-    #print(selected_genome_avg_df)
     return selected_genome_avg_df
 
 
@@ -41,12 +38,9 @@ def calculate_avg_scores_selected_genome_size(score_per_region_selected_genome_d
     else:
         filtered_df = score_per_region_selected_genome_df[['Sample1', 'Sample2', 'Synteny_score']].\
             groupby(['Sample1', 'Sample2']).filter(lambda x: x['Synteny_score'].count() >= int(size))
-        #print(filtered_df)
 
         sampled_regions_df = filtered_df[['Sample1', 'Sample2', 'Synteny_score']].\
             groupby(['Sample1', 'Sample2']).sample(n=int(size), random_state=1).reset_index()
-            #print(sampled_regions_df)
-            #print("\n")
 
         avg_scores_one_size_df = sampled_regions_df[['Sample1', 'Sample2', 'Synteny_score']]. \
             groupby(['Sample1', 'Sample2']).mean().reset_index().\
@@ -55,9 +49,6 @@ def calculate_avg_scores_selected_genome_size(score_per_region_selected_genome_d
     if not avg_scores_one_size_df.empty:
         avg_scores_one_size_df['Compared_regions'] = size
         avg_scores_one_size_df['Ref_genome'] = genome
-
-    #print("\nCalculate_avg_scores_selected_genome_size:")
-    #print(avg_scores_one_size_df)
 
     return avg_scores_one_size_df
 

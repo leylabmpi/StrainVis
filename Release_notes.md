@@ -13,3 +13,7 @@
 
 - Fixed problems with the 'Show annotations' option.
 - Updated the sample_data files (included in the release tar file).
+
+### Version 1.4.2
+
+- Added the option to execute in debug mode
