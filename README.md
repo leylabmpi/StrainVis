@@ -20,6 +20,9 @@ Each of the presented plots can be downloaded and saved as a high-resolution ima
 
 ## Installation
 
+**Requirements:** Anaconda or Miniconda installed on the target computer. 
+An OS-specific version can be downloaded from: https://www.anaconda.com/download/ .
+
 1. Download the latest release of StrainVis from: https://github.com/leylabmpi/StrainVis/releases.
 
 2. Extract the tar.gz file into the desired working-directory.
@@ -27,9 +30,8 @@ Each of the presented plots can be downloaded and saved as a high-resolution ima
 3. Create a new conda environment for StrainVis by one of the following two methods:
    - **Option 1:** From the command-line, using the ‘StrainVis.yml’ file:  
      `conda env create -f strainvis.yml`  
+     (In Windows, this can be done by launching the CMD.exe/Powershell Prompt from Anaconda Navigator).
    - **Option 2:** Double-click the setup execution file (`setup_conda_env.command` for MacOS/Linux or `setup_conda_env_windows.bat` for Windows).  
-   Please note that creating the conda environment should be done once after StrainVis installation. 
-   It can later be activated and used for StrainVis execution.
 
 ## Start the server and open StrainVis web-application
 

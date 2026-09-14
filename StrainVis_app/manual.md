@@ -53,6 +53,9 @@ bioRxiv (2026). DOI: https://doi.org/10.64898/2026.03.11.711087
 
 ## Installation
 
+**Requirements:** Anaconda or Miniconda installed on the target computer. 
+An OS-specific version can be downloaded from: https://www.anaconda.com/download/ .
+
 1. Download the latest release of StrainVis from: https://github.com/leylabmpi/StrainVis/releases.
 
 2. Extract the tar.gz file into the desired working-directory.
