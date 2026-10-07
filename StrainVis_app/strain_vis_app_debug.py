@@ -1727,12 +1727,15 @@ class StrainVisApp:
                     self.syntracker_loaded = 1
 
                 else:
-                    title = "The requested input file does not exist, please enter again a valid file path"
+                    print("\nSynTracker input file path " + self.SynTracker_text_input.value + "does not exist")
+                    title = "The requested SynTracker input file does not exist, please enter again a valid file path"
                     self.display_error_page(title)
+                    return
 
             else:
-                title = "Input file was not provided"
+                title = "SynTracker input file was not provided"
                 self.display_error_page(title)
+                return
 
         # Verify that an ANI file was loaded
         if self.input_mode == "ANI" or self.input_mode == "both":
@@ -1749,8 +1752,9 @@ class StrainVisApp:
                     self.ani_loaded = 1
 
                 else:
-                    title = "The requested input file does not exist, please enter again a valid file path"
+                    title = "The requested ANI input file does not exist, please enter again a valid file path"
                     self.display_error_page(title)
+                    return
 
             # File was given via FileInput widget
             else:
@@ -1758,8 +1762,9 @@ class StrainVisApp:
                 if self.ANI_input_file.filename is None:
                     print("ANI input file name: None")
                     title = "Cannot upload the requested file (probably server problems) - " \
-                            "please try again by entering the file's full path"
+                            "please try again by entering the full file path"
                     self.display_error_page(title)
+                    return
 
                 else:
                     self.ani_filename = self.ANI_input_file.filename
@@ -1771,6 +1776,7 @@ class StrainVisApp:
                         title = "Cannot upload the requested file (probably too big) - please try again by entering " \
                                 "the file's full path"
                         self.display_error_page(title)
+                        return
 
                     # File has content
                     else:
@@ -1792,7 +1798,7 @@ class StrainVisApp:
             if self.syntracker_loaded and self.ani_loaded:
                 self.input_file_loaded = 1
             else:
-                title = "There is a problem uploading both input files - please try again"
+                title = "There is a problem uploading the input files - please try again"
                 self.display_error_page(title)
 
         # Check if the user provided a metadata file
