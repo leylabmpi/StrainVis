@@ -34,7 +34,8 @@ An OS-specific version can be downloaded from: https://www.anaconda.com/download
 2. Extract the tar.gz file into the desired working-directory.
 
 3. Create a new conda environment for StrainVis by one of the following two methods:
-   - **Method 1:** Open the command-line, go to the directory where you installed StrainVis (`cd PATH/StrainVis_v1.4.3/`) and type the following command:  
+   - **Method 1:** Open the command-line, go to the directory where you installed StrainVis  
+   (`cd PATH/StrainVis_v1.4.3/`) and type the following command:  
      `conda env create -f strainvis.yml`  
      (In Windows, this can be done by launching the CMD.exe/Powershell Prompt from Anaconda Navigator).
    - **Method 2:** Double-click the setup executable file (`setup_conda_env.command` for MacOS/Linux or `setup_conda_env_windows.bat` for Windows).  
