@@ -31,18 +31,15 @@ def maybe_restart():
             # fallback: assume it's an active session
             active_sessions += 1
 
-    #print(f"[Monitor] Memory: {mem_mb: .1f} MB | Active sessions: {active_sessions}")
-
     if mem_mb > MAX_MB and active_sessions <= 1:
         print("\n\nRestarting panel server due to memory limit...")
-        os._exit(0)  # supervisor will restart
+        os.exit(0)  # supervisor will restart
 
 
 def register_monitor():
     """Register the memory monitor once per server."""
     global _restart_monitor_registered
     if not _restart_monitor_registered:
-        #print("\nRegistering maybe_restart periodic callback on server")
         pn.state.add_periodic_callback(maybe_restart, period=60000)  # every 60 sec
         _restart_monitor_registered = True
 
@@ -64,6 +61,8 @@ def create_app():
     return app.template
 
 
-# Create the app for one session
-create_app().servable("strain_vis")
+# Wrap this in __name__ == '__main__' so it doesn't run during import
+if __name__ == "__main__":
+    create_app().servable("strain_vis")
+
 

@@ -36,8 +36,8 @@ outline_color = 'black'
 highlighted_outline_color = 'cyan'
 max_groups_for_legend = 15
 
-debug_mode = True
-file_upload_timeout = 20
+max_file_upload_size_bytes = 100 * 1024 * 1024
+file_upload_timeout = 10
 downloads_dir = "/Downloads/"
 #manual_file = "/StrainVis_app/manual.md"
 manual_file = "/StrainVis_app/manual.html"

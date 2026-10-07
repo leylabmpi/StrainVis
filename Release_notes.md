@@ -17,3 +17,14 @@
 ### Version 1.4.2
 
 - Added the option to execute in debug mode
+
+### Version 1.4.3
+
+- Added output of 'n_same_category', 'n_different_category' to the P-values tabl for export (in the 'Distribution among species' plot).
+- Added a note in the initial loading page when a metadata file was uploaded.
+- Added a debug version
+- Launch the server dynamically using via pn.serve() instead of running the command 'panel serve...' from the command-line
+  (now there is one python process for each server start instead of two).
+- Removed the option to upload SynTracker input file using FileInput widget (causes problem when the file is too big).
+- Fixed Windows executable files.
+  

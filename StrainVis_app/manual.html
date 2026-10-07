@@ -33,15 +33,15 @@
 <body>
   <main>
   <h1 id="strainvis-a-python-based-web-application-for-interactive-visual-analysis-of-strain-tracking-methods">StrainVis: a Python-based web application for interactive visual analysis of strain-tracking methods</h1>
-<h4 id="version-1.4.2">Version 1.4.2</h4>
+<h4 id="version-1.4.3">Version 1.4.3</h4>
 <ul>
 <li><a href="#overview">Overview</a></li>
     <li><a href="#citation">Citation</a></li>
 <li><a href="#installation">Installation</a></li>
 <li><a href="#start-the-server-and-open-strainvis-web-application">Start the server and open StrainVis web-application</a></li>
   <ul>
-    <li><a href="#execute-from-the-command-line">Option 1: Execute from the command-line (terminal)</a></li>
-    <li><a href="#use-an-execution-file">Option 2: Use an execution file</a></li>
+    <li><a href="#execute-from-the-command-line">Method 1: Execute from the command-line (terminal)</a></li>
+    <li><a href="#use-an-execution-file">Method 2: Use an executable file</a></li>
     <li><a href="#open-several-browser-sessions">Open several StrainVis browser-sessions simultaneously</a></li>
     <li><a href="#open-several-web-server-instances">Open several web-server instances using different ports</a></li>
     <li><a href="#run-strainvis-on-a-remote-server">Run StrainVis on a remote server and open it in a local browser</a></li>
@@ -98,18 +98,29 @@ A metadata file (matches to the samples that were previously compared by SynTrac
           bioRxiv (2026). DOI: <a href="https://doi.org/10.64898/2026.03.11.711087" target="_blank">https://doi.org/10.64898/2026.03.11.711087</a>
       </p>
 <h2 id="installation">Installation</h2>
-<p><strong>Requirements:</strong> Anaconda or Miniconda installed on the target computer.
+<p>
+    In order to use StrainVis application to visualize and analyse data on a local web-browser,
+    the software should first be installed either on the local computer or on a remote server.
+    In both cases, once the Bokeh server has been started, StrainVis web-application is accessible from the local web-browser.
+</p>
+<p><strong>Installation requirements:</strong> Anaconda or Miniconda installed on the target computer.
 An OS-specific version can be downloaded from: <a href="https://www.anaconda.com/download/" target="_blank">https://www.anaconda.com/download/</a>.
 </p>
+<h3>Installation steps:</h3>
 <ol>
     <li>Download the latest release of StrainVis from: <a href="https://github.com/leylabmpi/StrainVis/releases" target="_blank">https://github.com/leylabmpi/StrainVis/releases</a>.</li>
     <li>Extract the tar.gz file into the desired working-directory.</li>
     <li>
         Create a new conda environment for StrainVis by one of the following two methods:
         <ul>
-            <li><strong>Option 1:</strong> From the command-line, using the ‘StrainVis.yml’ file: <code>conda env create -f StrainVis.yml</code></li>
-            <li><strong>Option 2:</strong> Double-click the setup execution file (<code>setup_conda_env.command</code> for MacOS/Linux or <code>setup_conda_env_windows.bat</code> for Windows).
-                Please note that creating the conda environment should be done once after StrainVis installation. It can later be activated and used for StrainVis execution.</li>
+            <li>
+                <strong>Method 1:</strong> Open the command-line, go to the directory where you installed StrainVis (`cd PATH/StrainVis_v1.4.3/`) and type the following command:
+                <code>conda env create -f StrainVis.yml</code>
+                (In Windows, this can be done by launching the CMD.exe/Powershell Prompt from Anaconda Navigator).
+            </li>
+            <li>
+                <strong>Method 2:</strong> Double-click the setup executable file (<code>setup_conda_env.command</code> for MacOS/Linux or <code>setup_conda_env_windows.bat</code> for Windows).
+            </li>
         </ul>
     </li>
 </ol>
@@ -125,28 +136,28 @@ An OS-specific version can be downloaded from: <a href="https://www.anaconda.com
     simply refresh your browser and re-upload your dataset to start a new session.
 </p>
 <p>There are two available methods to launch the bokeh server and start StrainVis application:</p>
-<h3 id="execute-from-the-command-line">Option 1: Execute from the command-line (terminal)</h3>
+<h3 id="execute-from-the-command-line">Method 1: Execute from the command-line</h3>
 <ol>
     <li>Activate StrainVis environment: <code>conda activate StrainVis_1_4</code></li>
-    <li>From the activated environment type: <code>python run_strainvis.py &</code><br>
+    <li>From the directory where StrainVis is installed type: <code>python run_strainvis.py --show &</code><br>
         <strong>Optional arguments:</strong><br>
-        <code>--port [PORT]:</code> Port to listen on (any port number that is not currently used, default is 5005)<br>
-        <code>--show:</code> Open the application in the browser automatically (default is False)<br>
+        <code>--port [PORT]:</code> Port to listen on (any port number that is not currently used, default is 5005).<br>
+        <code>--show:</code> Open the application in the browser automatically (can be omitted, then the app is not automatically opened in the browser).<br>
         StrainVis web-application should be accessible in the browser under the URL: http://localhost:PORT/strain_vis
     </li>
 </ol>
 <p>
-    <div style="color: #002060">Stop the server:</div> When StrainVis is executed from the command-line, the two running python processes, created by the python run_strainvis.py command should be killed.
+    <div style="color: #002060">Stop the server:</div> When StrainVis is executed from the command-line, the running python process, created by the python run_strainvis.py command should be killed.
 </p>
 
-<h3 id="use-an-execution-file">Option 2: Use an execution file</h3>
+<h3 id="use-an-execution-file">Method 2: Use an executable file</h3>
 <p>
-    Use one of the following wrapper scripts, which activate the conda environment, start the server and open StrainVis application in the browser automatically:
+    Use one of the following executable files (OS-specific), which activate the conda environment, start the server and open StrainVis application in the browser:
     <ul>
-        <li>In MacOS/Linux: double-click the <code>run_strainvis.command</code> execution file.</li>
-        <li>In Windows: double-click the <code>run_strainvis_windows.bat</code> execution file.</li>
+        <li>In MacOS/Linux: double-click the <code>run_strainvis.command</code> executable file.</li>
+        <li>In Windows: double-click the <code>run_strainvis_windows.bat</code> executable file.</li>
     </ul>
-    <div style="color: #002060">Stop the server:</div> Closing the terminal window, that was opened by the execution file will simply kill the process and terminate StrainVis application.
+    <div style="color: #002060">Stop the server:</div> Closing the terminal window, that was opened by the executable file will simply kill the process and terminate StrainVis application.
 </p>
 
 <h3 id="open-several-browser-sessions">Open several StrainVis browser-sessions simultaneously</h3>
@@ -163,7 +174,7 @@ An OS-specific version can be downloaded from: <a href="https://www.anaconda.com
     it is recommended to start several web-server instances listening to different ports.
     It simply means to start the server for each required instance (by one of the two methods detailed above) using a different port number.
     Each StrainVis instance will be accessible under: http://localhost:PORT/strain_vis .
-    <div style="color: #002060">Stop each web-server instance:</div> Each StrainVis instance can be stopped by killing its two related running python processes.
+    <div style="color: #002060">Stop each web-server instance:</div> Each StrainVis instance can be stopped by killing its related running python process.
 </p>
 
 <h3 id="run-strainvis-on-a-remote-server">Run StrainVis on a remote server and open it in a local browser</h3>

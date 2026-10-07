@@ -25,6 +25,7 @@ import StrainVis_app.plots_multi_genomes as pm
 import StrainVis_app.widgets as widgets
 import matplotlib
 import textwrap
+import tornado.ioloop
 matplotlib.use('agg')
 pn.extension(disconnect_notification='Connection lost, try reloading the page!')
 pn.extension('floatpanel')
@@ -183,7 +184,6 @@ def load_genes_from_gff(gff_text):
             seqid, source, feature_type, start, end, score, strand, phase, attrs = line.strip().split("\t")
 
             # Consider only CDC records
-            #if feature_type != "gene":
             if feature_type != "CDS":
                 continue
 
@@ -332,8 +332,7 @@ class StrainVisApp:
         self.header_buttons = None
         self.input_type_radio_group = None
         self.SynTracker_text_input = None
-        self.SynTracker_input_file = None
-        self.SynTracker_input_file_spinner = None
+        #self.SynTracker_input_file = None
         self.ANI_text_input = None
         self.ANI_input_file = None
         self.metadata_file = None
@@ -732,32 +731,24 @@ class StrainVisApp:
                                                              stylesheets=[radio_group_css])
         input_type_watcher = self.input_type_radio_group.param.watch(self.update_input_card, 'value', onlychanged=True)
         self._watchers.append(input_type_watcher)
-        self.SynTracker_text_input = pn.widgets.TextInput(name='', placeholder='Enter SynTracker file path here...')
-        self.SynTracker_input_file = pn.widgets.FileInput(accept='.csv, .tab, .txt')
-        self.SynTracker_input_file_spinner = pn.indicators.LoadingSpinner(value=True, size=30, visible=False,
-                                                                          color='info', label='Loading file...')
 
-        # FRONTEND: Turn on the spinner via JS when file selection begins
-        self.SynTracker_input_file.jscallback(
-            args={'spinner': self.SynTracker_input_file_spinner},
-            value="""
-            if (cb_obj.filename) {
-                spinner.visible = true;
-            }
-            """
-        )
+        self.SynTracker_text_input = pn.widgets.TextInput(name='', placeholder='Enter SynTracker file path here...')
+        syn_text_input_watcher = self.SynTracker_text_input.param.watch(self.change_submit_state, "value_input")
+        self._watchers.append(syn_text_input_watcher)
+
+        #self.SynTracker_input_file = pn.widgets.FileInput(accept='.csv, .tab, .txt')
 
         self.ANI_text_input = pn.widgets.TextInput(name='', placeholder='Enter ANI file path here...')
+        ani_text_input_watcher = self.ANI_text_input.param.watch(self.change_submit_state, "value_input")
+        self._watchers.append(ani_text_input_watcher)
+
         self.ANI_input_file = pn.widgets.FileInput(accept='.tsv, .tab, .txt')
+        ani_file_input_watcher = self.ANI_input_file.param.watch(self.change_submit_state, "value")
+        self._watchers.append(ani_file_input_watcher)
+
         self.metadata_file = pn.widgets.FileInput(accept='.csv, .tsv, .tab, .txt')
 
-        self.submit_button = pn.widgets.Button(name='Submit', button_type='primary',
-                                               disabled=pn.bind(self.enable_submit,
-                                                                syn_file_input=self.SynTracker_input_file,
-                                                                syn_text_input=self.SynTracker_text_input.param.value_input,
-                                                                ani_file_input=self.ANI_input_file,
-                                                                ani_text_input=self.ANI_text_input,
-                                                                watch=True))
+        self.submit_button = pn.widgets.Button(name='Submit', button_type='primary', disabled=True)
         sb = self.submit_button.on_click(self.load_input_file)
         self._button_callbacks.append((self.submit_button, sb))
 
@@ -1433,14 +1424,8 @@ class StrainVisApp:
                                                                          'margin-top': "0", 'padding-top': "0"}))
         self.main_area.append(self.input_type_radio_group)
 
-        file_input_title = "Upload SynTracker's output table 'synteny_scores_per_region.csv' for one or multiple " \
-                           "species:"
-        text_input_title = "Or, if the file size is bigger than 300 Mb, enter it's full path here:"
-        self.mandatory_input_card.append(pn.pane.Markdown(file_input_title, styles={'font-size': "16px",
-                                                                                    'margin-bottom': "0",
-                                                                                    'margin-top': "0"}))
-        SynTracker_input_file_row = pn.Row(self.SynTracker_input_file, self.SynTracker_input_file_spinner)
-        self.mandatory_input_card.append(SynTracker_input_file_row)
+        text_input_title = "Paste here the full path of SynTracker's output table 'synteny_scores_per_region.csv' " \
+                           "for one or multiple species:"
         self.mandatory_input_card.append(pn.pane.Markdown(text_input_title, styles={'font-size': "16px",
                                                                                     'margin-bottom': "0",
                                                                                     'margin-top': "0"}))
@@ -1471,6 +1456,34 @@ class StrainVisApp:
         self.main_area.append(pn.Spacer(height=30))
 
         self.main_area.append(self.submit_button)
+
+    def change_submit_state(self, event):
+        print("\nIn change_submit_state")
+
+        # SynTracker mode
+        if self.input_mode == "SynTracker":
+            print("Input mode: SynTracker")
+            if self.SynTracker_text_input.value_input != "":
+                self.submit_button.disabled = False
+            else:
+                self.submit_button.disabled = True
+
+        # ANI mode
+        elif self.input_mode == "ANI":
+            print("Input mode: ANI")
+            if self.ANI_input_file.value is not None or self.ANI_text_input.value_input != "":
+                self.submit_button.disabled = False
+            else:
+                self.submit_button.disabled = True
+
+        # Combined mode
+        else:
+            print("Input mode: combined")
+            if self.SynTracker_text_input.value_input != "" and \
+                    (self.ANI_input_file.value is not None or self.ANI_text_input.value_input != ""):
+                self.submit_button.disabled = False
+            else:
+                self.submit_button.disabled = True
 
     def _cleanup(self, session_context):
         print("\n\nCleaning session: ", session_context.id)
@@ -1606,43 +1619,28 @@ class StrainVisApp:
             self.main_container.clear()
             self.main_container.append(self.main_area)
 
-    def enable_submit(self, syn_file_input, syn_text_input, ani_file_input, ani_text_input):
-        if syn_file_input is not None or syn_text_input != "" or ani_file_input is not None or ani_text_input != "":
-            self.SynTracker_input_file_spinner.value = False
-            self.SynTracker_input_file_spinner.label = "Done!"
-            return False
-        else:
-            return True
-
     def update_input_card(self, event):
-        syn_file_input_title = "Upload SynTracker's output table 'synteny_scores_per_region.csv' for one or multiple " \
-                               "species:"
         ani_file_input_title = "Upload tab-delimited ANI file for one or multiple species:"
         ani_help_button = pn.widgets.ButtonIcon(icon="help", size="1.5em", description="ANI help",
                                                 margin=(17, 5, 0, 0))
         ahb = ani_help_button.on_click(self.show_ani_help_float_panel)
         self._button_callbacks.append((ani_help_button, ahb))
-        text_input_title = "Or, if the file size is bigger than 300 Mb, enter it's full path here:"
+        syn_text_input_title = "Paste here the full path of SynTracker's output table 'synteny_scores_per_region.csv' " \
+                               "for one or multiple species:"
+        ani_text_input_title = "Or, if the file size is bigger than 100 Mb, enter it's full path here:"
 
         self.mandatory_input_card.clear()
         self.ani_upload_row.clear()
-        self.SynTracker_input_file.value = None
-        self.SynTracker_input_file_spinner.value = True
-        self.SynTracker_input_file_spinner.label = "Loading file..."
         self.SynTracker_text_input.value = ""
         self.ANI_input_file.value = None
         self.ANI_text_input.value = ""
+        self.submit_button.disabled = True
 
         # Only SynTracker input
         if self.input_type_radio_group.value == 'SynTracker output file':
-            self.mandatory_input_card.append(pn.pane.Markdown(syn_file_input_title, styles={'font-size': "16px",
+            self.mandatory_input_card.append(pn.pane.Markdown(syn_text_input_title, styles={'font-size': "16px",
                                                                                             'margin-bottom': "0",
                                                                                             'margin-top': "0"}))
-            SynTracker_input_file_row = pn.Row(self.SynTracker_input_file, self.SynTracker_input_file_spinner)
-            self.mandatory_input_card.append(SynTracker_input_file_row)
-            self.mandatory_input_card.append(pn.pane.Markdown(text_input_title, styles={'font-size': "16px",
-                                                                                        'margin-bottom': "0",
-                                                                                        'margin-top': "0"}))
             self.mandatory_input_card.append(self.SynTracker_text_input)
 
             self.input_mode = "SynTracker"
@@ -1657,9 +1655,9 @@ class StrainVisApp:
             self.ani_upload_row.append(ani_help_button)
             self.mandatory_input_card.append(self.ani_upload_row)
             self.mandatory_input_card.append(self.ANI_input_file)
-            self.mandatory_input_card.append(pn.pane.Markdown(text_input_title, styles={'font-size': "16px",
-                                                                                        'margin-bottom': "0",
-                                                                                        'margin-top': "0"}))
+            self.mandatory_input_card.append(pn.pane.Markdown(ani_text_input_title, styles={'font-size': "16px",
+                                                                                            'margin-bottom': "0",
+                                                                                            'margin-top': "0"}))
             self.mandatory_input_card.append(self.ANI_text_input)
 
             self.input_mode = "ANI"
@@ -1668,12 +1666,7 @@ class StrainVisApp:
 
         # Combined input
         else:
-            self.mandatory_input_card.append(pn.pane.Markdown(syn_file_input_title, styles={'font-size': "16px",
-                                                                                            'margin-bottom': "0",
-                                                                                            'margin-top': "0"}))
-            SynTracker_input_file_row = pn.Row(self.SynTracker_input_file, self.SynTracker_input_file_spinner)
-            self.mandatory_input_card.append(SynTracker_input_file_row)
-            self.mandatory_input_card.append(pn.pane.Markdown(text_input_title, styles={'font-size': "16px",
+            self.mandatory_input_card.append(pn.pane.Markdown(syn_text_input_title, styles={'font-size': "16px",
                                                                                         'margin-bottom': "0",
                                                                                         'margin-top': "0"}))
             self.mandatory_input_card.append(self.SynTracker_text_input)
@@ -1687,7 +1680,7 @@ class StrainVisApp:
             self.ani_upload_row.append(ani_help_button)
             self.mandatory_input_card.append(self.ani_upload_row)
             self.mandatory_input_card.append(self.ANI_input_file)
-            self.mandatory_input_card.append(pn.pane.Markdown(text_input_title, styles={'font-size': "16px",
+            self.mandatory_input_card.append(pn.pane.Markdown(ani_text_input_title, styles={'font-size': "16px",
                                                                                         'margin-bottom': "0",
                                                                                         'margin-top': "0"}))
             self.mandatory_input_card.append(self.ANI_text_input)
@@ -1737,29 +1730,9 @@ class StrainVisApp:
                     title = "The requested input file does not exist, please enter again a valid file path"
                     self.display_error_page(title)
 
-            # File was given via FileInput widget
             else:
-                # Filename is None - usually because of server problems
-                if self.SynTracker_input_file.filename is None:
-                    print("SynTracker input file name: None")
-                    title = "Cannot upload the requested file (probably server problems) - please try again by entering " \
-                            "the file's full path"
-                    self.display_error_page(title)
-
-                else:
-                    self.syntracker_filename = self.SynTracker_input_file.filename
-                    content_length = len(self.SynTracker_input_file.value) / 1000
-                    print("Content length of SynTracker file in Kb: " + str(content_length))
-
-                    # There is filename but no content - usually happens when the file is too big
-                    if content_length == 0:
-                        title = "Cannot upload the requested file (probably too big) - please try again by entering " \
-                                "the file's full path"
-                        self.display_error_page(title)
-
-                    # File has content
-                    else:
-                        self.syntracker_loaded = 1
+                title = "Input file was not provided"
+                self.display_error_page(title)
 
         # Verify that an ANI file was loaded
         if self.input_mode == "ANI" or self.input_mode == "both":
@@ -1807,19 +1780,16 @@ class StrainVisApp:
         # Input type: SynTracker
         if self.input_mode == "SynTracker":
             if self.syntracker_loaded:
-                self.display_results_page()
                 self.input_file_loaded = 1
 
         # Input type: ANI
         elif self.input_mode == "ANI":
             if self.ani_loaded:
-                self.display_results_page()
                 self.input_file_loaded = 1
 
         # Input type: both
         else:
             if self.syntracker_loaded and self.ani_loaded:
-                self.display_results_page()
                 self.input_file_loaded = 1
             else:
                 title = "There is a problem uploading both input files - please try again"
@@ -1839,6 +1809,7 @@ class StrainVisApp:
                 self.is_metadata = 1
 
         if self.input_file_loaded:
+            self.display_results_page()
             self.start_process()
 
     def display_error_page(self, message):
@@ -1859,6 +1830,9 @@ class StrainVisApp:
         else:
             title = "Loading input files: "
             file = self.syntracker_filename + "\n" + self.ani_filename
+
+        if self.is_metadata:
+            file += "\nMetadata file: " + self.metadata_file.filename
 
         loading_spinner = pn.indicators.LoadingSpinner(value=True, size=60, visible=True, color='info')
         title_md = pn.pane.Markdown(title, styles={'font-size': "22px", 'margin-bottom': "0",
@@ -2578,8 +2552,8 @@ class StrainVisApp:
         before = time.time()
         self.contigs_list_by_name, self.contigs_list_by_length = \
             ds.return_sorted_contigs_lists(self.score_per_region_selected_genome_df)
-        after = time.time()
-        duration = after - before
+        #after = time.time()
+        #duration = after - before
         #print("return_sorted_contigs_lists took " + str(duration) + " seconds.\n")
         #print(self.score_per_region_selected_genome_df)
 
@@ -2637,6 +2611,12 @@ class StrainVisApp:
 
         self.finished_initial_synteny_per_pos_plot = 1
         print("\nFinished creating initial synteny_per_pos display")
+        after = time.time()
+        duration = after - before
+        print("\ncreate_initial_synteny_per_pos_plot_tab took " + str(duration) + " seconds.\n")
+        mem = self.get_memory_usage()
+        print(f"Memory after contigs calculations: {mem} MB")
+        print(f"Server pid: {self.server_pid}")
 
     def changed_single_tabs(self, event):
 
@@ -2677,8 +2657,12 @@ class StrainVisApp:
             self.visited_synteny_per_pos_tab = 1
 
     def clear_single_genome_plots_by_APSS_area(self, event):
+        mem = self.get_memory_usage()
+        print(f"\nMemory after playing with APSS plots (before clearing): {mem} MB")
+
         self.plots_by_size_single_column.clear()
         self.sample_sizes_slider.disabled = False
+
         mem = self.get_memory_usage()
         print(f"Memory after clearing APSS plots: {mem} MB")
 
@@ -4564,8 +4548,11 @@ class StrainVisApp:
                                  self.download_network_table_column_ani)
 
         ########################################################
-        # Create a table for the network
-        self.df_for_network_ani = ani_scores_selected_genome_df.loc[:, ['Sample1', 'Sample2', 'ANI']].copy()
+        # Create a table for the network and filter out the self-pairs
+        self.df_for_network_ani = ani_scores_selected_genome_df.loc[
+            ani_scores_selected_genome_df['Sample1'] != ani_scores_selected_genome_df['Sample2'],
+            ['Sample1', 'Sample2', 'ANI']
+        ].copy()
 
         eps = 1e-6
         self.df_for_network_ani.loc[(self.df_for_network_ani['ANI'] < 0), 'ANI'] = 0
@@ -5375,7 +5362,7 @@ class StrainVisApp:
         crb = change_range_button.on_click(self.change_range)
         self._button_callbacks.append((change_range_button, crb))
 
-        pos_range_cust_row = pn.Row(pn.pane.Markdown("Set contig length range:",
+        pos_range_cust_row = pn.Row(pn.pane.Markdown("Set contig display range:",
                                                      styles={'font-size': "14px", 'margin': "10px 5px 5px 5px"}),
                                     pn.Spacer(width=10), self.start_pos_input, pn.Spacer(width=5), self.end_pos_input,
                                     pn.Spacer(width=5), change_range_button, pn.Spacer(width=5), reset_range_button,
@@ -6269,7 +6256,6 @@ class StrainVisApp:
         thread_ani_multi.start()  # Start the thread
 
         self.create_multi_genomes_column_syntracker_mode()
-        #self.create_multi_genomes_column_ANI_mode()
 
         self.synteny_ani_multi_tabs.clear()
         self.synteny_ani_multi_tabs.append(('SynTracker', self.synteny_multi_initial_plots_column))
@@ -6673,6 +6659,8 @@ class StrainVisApp:
         valid_pval_list = []
         genome_pval_dict = {}
         genome_effect_size_dict = {}
+        genome_same_num_list = []
+        genome_diff_num_list = []
         pval_corrected = []
         for genome in self.sorted_selected_genomes_subset:
             #print("\nGenome: " + genome + ", Feature: " + feature)
@@ -6703,6 +6691,9 @@ class StrainVisApp:
                 genome_effect_size_dict[genome] = np.nan
                 #print("\nCannot calculate P-value for feature " + feature + ": Sample size is not enough.")
 
+            genome_same_num_list.append(len(same_array))
+            genome_diff_num_list.append(len(diff_array))
+
         #print("\nOriginal valid p-values:")
         #print(valid_pval_list)
 
@@ -6720,7 +6711,8 @@ class StrainVisApp:
 
         updated_pval_list = genome_pval_dict.values()
         effect_size_list = genome_effect_size_dict.values()
-        genomes_pvalues_dict = {'Ref_genome': self.sorted_selected_genomes_subset,
+        genomes_pvalues_dict = {'Species': self.sorted_selected_genomes_subset,
+                                'n_same_category': genome_same_num_list, 'n_different_category': genome_diff_num_list,
                                 'P_value': updated_pval_list, 'Effect_size': effect_size_list}
         self.boxplot_p_values_df = pd.DataFrame(genomes_pvalues_dict)
 
@@ -6742,10 +6734,10 @@ class StrainVisApp:
         self.calculate_metadata_for_box_plot()
 
         self.box_plot = pn.bind(pm.create_box_plot, avg_df=self.genomes_subset_selected_size_APSS_df,
-                                     sorted_genomes_list=self.sorted_selected_genomes_subset,
-                                     pvalues_df=self.boxplot_p_values_df, color=self.box_plot_color,
-                                     use_metadata=self.use_metadata_box_plot, feature=self.box_plot_feature_select.value,
-                                     same_color=self.box_plot_same_color, different_color=self.box_plot_different_color)
+                                sorted_genomes_list=self.sorted_selected_genomes_subset,
+                                pvalues_df=self.boxplot_p_values_df, color=self.box_plot_color,
+                                use_metadata=self.use_metadata_box_plot, feature=self.box_plot_feature_select.value,
+                                same_color=self.box_plot_same_color, different_color=self.box_plot_different_color)
         self.box_plot_pane.object = self.box_plot
 
     def download_box_plot(self, event):
@@ -6936,8 +6928,8 @@ class StrainVisApp:
         pvalues_table = "P-values_ANI_boxplot_" + num + "_species"
 
         self.save_box_plot_file_path_ani.placeholder = box_plot_file + "_feature_" + feature
-        self.save_boxplot_table_path.placeholder = boxplot_table + "_feature_" + feature
-        self.save_pvalues_table_path.placeholder = pvalues_table + "_feature_" + feature
+        self.save_boxplot_table_path_ani.placeholder = boxplot_table + "_feature_" + feature
+        self.save_pvalues_table_path_ani.placeholder = pvalues_table + "_feature_" + feature
 
         self.ani_scores_genomes_subset_df['Category'] = self.ani_scores_genomes_subset_df.apply(
             lambda row: category_by_feature(row, feature, self.metadata_dict), axis=1)
@@ -6952,6 +6944,9 @@ class StrainVisApp:
         genome_pval_dict = {}
         genome_effect_size_dict = {}
         pval_corrected = []
+        genome_same_num_list = []
+        genome_diff_num_list = []
+
         for genome in self.sorted_selected_genomes_subset_ani:
             #print("\nGenome: " + genome + ", Feature: " + feature)
             same_array = self.ani_scores_genomes_subset_df[
@@ -6981,6 +6976,9 @@ class StrainVisApp:
                 genome_effect_size_dict[genome] = np.nan
                 #print("\nCannot calculate P-value for feature " + feature + ": Sample size is not enough.")
 
+            genome_same_num_list.append(len(same_array))
+            genome_diff_num_list.append(len(diff_array))
+
         #print("\nOriginal p-values:")
         #print(valid_pval_list)
 
@@ -7001,7 +6999,8 @@ class StrainVisApp:
 
         updated_pval_list = genome_pval_dict.values()
         effect_size_list = genome_effect_size_dict.values()
-        genomes_pvalues_dict = {'Ref_genome': self.sorted_selected_genomes_subset_ani,
+        genomes_pvalues_dict = {'Species': self.sorted_selected_genomes_subset_ani,
+                                'n_same_category': genome_same_num_list, 'n_different_category': genome_diff_num_list,
                                 'P_value': updated_pval_list, 'Effect_size': effect_size_list}
         self.boxplot_p_values_df_ani = pd.DataFrame(genomes_pvalues_dict)
 
@@ -7023,12 +7022,12 @@ class StrainVisApp:
         self.calculate_metadata_for_box_plot_ani()
 
         self.box_plot_ani = pn.bind(pm.create_box_plot_ani, ani_df=self.ani_scores_genomes_subset_df,
-                                         sorted_genomes_list=self.sorted_selected_genomes_subset_ani,
-                                         pvalues_df=self.boxplot_p_values_df_ani, color=self.box_plot_color_ani,
-                                         use_metadata=self.use_metadata_box_plot_ani,
-                                         feature=self.box_plot_feature_select_ani.value,
-                                         same_color=self.box_plot_same_color_ani,
-                                         different_color=self.box_plot_different_color_ani)
+                                    sorted_genomes_list=self.sorted_selected_genomes_subset_ani,
+                                    pvalues_df=self.boxplot_p_values_df_ani, color=self.box_plot_color_ani,
+                                    use_metadata=self.use_metadata_box_plot_ani,
+                                    feature=self.box_plot_feature_select_ani.value,
+                                    same_color=self.box_plot_same_color_ani,
+                                    different_color=self.box_plot_different_color_ani)
         self.box_plot_pane_ani.object = self.box_plot_ani
 
     def download_box_plot_ani(self, event):

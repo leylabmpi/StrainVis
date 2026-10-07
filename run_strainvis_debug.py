@@ -1,39 +1,11 @@
-import subprocess
 import argparse
-import time
 import importlib
+import time
 import panel as pn
 
 RESTART_DELAY = 2  # seconds
 MAX_RETRIES = 3
-MAX_FILE_SIZE_BYTES = 524288000
-
-
-def run(panel_args):
-    retry_count = 0
-    while True:
-        print("\n\nStarting Panel server...")
-
-        process = subprocess.Popen(panel_args)
-
-        process.wait()  # wait until it exits
-
-        exit_code = process.returncode
-        print(f"\nPanel exited with code {exit_code}")
-
-        # Optional: only restart on "intentional" exit
-        if exit_code == 0:
-            print("\nRestarting Panel server...")
-            time.sleep(RESTART_DELAY)
-        else:
-            retry_count += 1
-            print(f"\nPanel crash detected (exit {exit_code}), retry {retry_count}/{MAX_RETRIES}")
-
-            if retry_count >= MAX_RETRIES:
-                print("\nToo many crashes, giving up...")
-                break
-
-            time.sleep(RESTART_DELAY)
+MAX_FILE_SIZE_BYTES = 524288000  # 500 Mb
 
 
 def start_server(app_filename, port, show):
@@ -56,7 +28,7 @@ def start_server(app_filename, port, show):
     print(f"\nStarting Panel server for '{app_filename}' on port {port}...")
 
     pn.serve(
-        {'strain_vis': app_factory},
+        {'strain_vis_debug': app_factory},
         port=int(port),
         show=show,
         websocket_max_message_size=MAX_FILE_SIZE_BYTES,
@@ -94,6 +66,6 @@ if __name__ == "__main__":
     parser.add_argument("--show", action='store_true', default=False)
     args = parser.parse_args()
 
-    app = "strain_vis.py"
+    app = "strain_vis_debug.py"
 
     run_with_retry(app, args.port, args.show)
