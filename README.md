@@ -120,7 +120,7 @@ The user should select one of the following three modes of execution, depending 
 - **Both SynTracker and ANI files**: Analyse both types of input data (each one separately and combined).  
 In this case, the names of the analysed species and the sample IDs must be identical between the two input files.
   
-Note that if the input files are bigger than 300 Mb, they cannot be selected via the FileInput widget, but their full path should
+Note that if the input files are bigger than 100 Mb, they cannot be selected via the FileInput widget, but their full path should
 be typed into the TextInput field.
 
 #### Optional input:
