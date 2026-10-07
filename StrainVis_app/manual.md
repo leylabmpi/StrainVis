@@ -160,7 +160,7 @@ A metadata file in tab-delimited format. The first column must contain the sampl
 in the uploaded input file(s). The metadata file may contain an unlimited number of columns (features).
 
 #### Sample input:
-Sample input files of all three kinds are found under the 'Input_example/' directory.
+Sample input files of all three kinds are found under the 'Sample_data/' directory.
 
 ## Visual analyses
 
