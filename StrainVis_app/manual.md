@@ -137,6 +137,8 @@ Start the server from the command-line, as explained in the above 'Method 1'.
 
 4. **Open the application in the local browser:** StrainVis should be accessible under: http://localhost:PORT/strain_vis .
 
+Please note that when entering the input files using the TextInput widget, the given file-path should be the full path of the file on the remote server.
+
 ## Input
 
 #### Mandatory input:
