@@ -1,5 +1,6 @@
 import bokeh.palettes as bp
 import colorcet as cc
+import os
 
 col_set = ['Ref_genome', 'Sample1', 'Sample2', 'Region', 'Synteny_score']
 ANI_col_names = ['Ref_genome', 'Sample1', 'Sample2', 'ANI']
@@ -38,9 +39,9 @@ max_groups_for_legend = 15
 
 max_file_upload_size_bytes = 100 * 1024 * 1024
 file_upload_timeout = 10
-downloads_dir = "/Downloads/"
-#manual_file = "/StrainVis_app/manual.md"
-manual_file = "/StrainVis_app/manual.html"
+downloads_dir = "Downloads"
+#manual_file = "/StrainVis_app/manual.html"
+manual_file = "manual.html"
 
 ## CSS Styles ##
 header_color = "#0072b5"

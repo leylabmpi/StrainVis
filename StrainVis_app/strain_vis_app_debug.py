@@ -628,7 +628,9 @@ class StrainVisApp:
         self.sampling_size = ""
         self.sampling_size_multi = ""
         self.working_directory = os.getcwd()
-        self.downloads_dir_path = self.working_directory + config.downloads_dir
+        self.app_directory = os.path.join(self.working_directory, "StrainVis_app")
+        self.downloads_dir_path = os.path.join(self.working_directory, config.downloads_dir)
+        self.manual_file_path = os.path.join(self.app_directory, config.manual_file)
         self.total_pairs_genome = 0
         self.avg_score_genome = 0
         self.std_score_genome = 0
@@ -698,10 +700,9 @@ class StrainVisApp:
 
         self.main_container = pn.Column(sizing_mode='stretch_width')
         self.main_area = pn.Column(styles=config.main_area_style)
-        
-        # Reading the manual.md into a variable and display it in a markdown pane
-        manual_file_path = self.working_directory + config.manual_file
-        with open(manual_file_path, 'r') as manual:
+
+        # Reading the manual.html into a variable and display it in a HTML pane
+        with open(self.manual_file_path, 'r') as manual:
             manual_content = manual.read()
         self.help_area = pn.Column(styles=config.main_area_style)
         self.help_area.append(pn.pane.HTML(manual_content, styles={'font-size': "16px"}))
@@ -1880,6 +1881,11 @@ class StrainVisApp:
         self.synteny_multi_initial_plots_column.clear()
         self.ani_multi_plots_column.clear()
         self.plots_by_size_multi_column.clear()
+
+        # Create the Downloads directory safely
+        os.makedirs(self.downloads_dir_path, exist_ok=True)
+        self.downloads_dir_path += os.sep
+        print("\nDownloads dir: " + self.downloads_dir_path)
 
         # Read the SynTracker input
         if self.input_mode == "SynTracker" or self.input_mode == "both":
