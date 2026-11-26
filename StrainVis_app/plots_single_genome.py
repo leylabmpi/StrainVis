@@ -411,13 +411,34 @@ def cretae_network_plot(network, is_metadata, nodes_feature, is_continuous, cmap
 
             network_plot = hvnx.draw(network, pos, node_color=colors)
 
-            # Add a legend if there are up to max. groups allowed (value is defined in the config file)
+            #############################################
+            # Add a legend for the metadata coloring
+            legend_items = []
+
+            # Add nodes coloring to the legend if there are up to max. groups allowed
+            # (value is defined in the config file)
             if groups_num <= config.max_groups_for_legend:
-                legend_items = []
                 for i, group in enumerate(unique_groups):
                     legend_items.append(hv.Scatter((0, 1 - i * 0.1), label=str(group)).opts(
                         show_legend=True, color=group_to_color[group], size=0))
-                # Combine the plot with the generated legend
+
+            # Add edge categories to the legend (represented as lines) if there is edge-coloring
+            if is_edge_colorby:
+                within_label = "Same " + edges_feature
+                between_label = "Different " + edges_feature
+                edge_categories = {within_label: within_edge_color, between_label: between_edge_color}
+
+                for edge_label, edge_color in edge_categories.items():
+                    legend_items.append(
+                        hv.Curve(([np.nan], [np.nan]), label=str(edge_label)).opts(
+                            show_legend=True,
+                            color=edge_color,
+                            line_width=2  # Optional: adjust line thickness in the legend
+                        )
+                    )
+
+            # Combine the plot with the generated legend
+            if len(legend_items) > 0:
                 legend = hv.Overlay(legend_items)
                 is_legend = True
 
@@ -623,15 +644,40 @@ def cretae_network_plot_matplotlib(network, is_metadata, nodes_feature, is_conti
                     edge_color=list(edge_colors), width=list(widths), with_labels=False,
                     linewidths=outline_width_array, edgecolors=outline_color_array)
 
-            # Add a legend if there are up to max. groups allowed (value is defined in the config file)
+            #############################################
+            # Add a legend for the metadata coloring
+            legend_handles = []
+
+            # Add nodes coloring to the legend if there are up to max. groups allowed
+            # (value is defined in the config file)
             if groups_num <= config.max_groups_for_legend:
-                legend_handles = [
+                legend_node_handles = [
                     Line2D([0], [0], marker='o', color='w', markerfacecolor=group_to_color[group], markersize=8,
                            markeredgecolor='black', markeredgewidth=0.1, label=group)
                     for group in unique_groups]
+                legend_handles.extend(legend_node_handles)
 
-                # Add the legend to the plot
-                plt.legend(handles=legend_handles, title=nodes_feature, loc="best")
+            # Add edge categories to the legend (represented as lines) if there is edge-coloring
+            if is_edge_colorby:
+                within_label = "Same " + edges_feature
+                between_label = "Different " + edges_feature
+                edge_categories = {within_label: within_edge_color, between_label: between_edge_color}
+
+                legend_edge_handles = [
+                    Line2D(
+                        [0], [0],
+                        color=edge_color,
+                        linewidth=2,  # Adjust thickness to match your network edges
+                        linestyle='-',  # Optional: use '--' for dashed, ':' for dotted
+                        label=edge_label
+                    )
+                    for edge_label, edge_color in edge_categories.items()
+                ]
+                legend_handles.extend(legend_edge_handles)
+
+            # Add the legend to the plot
+            if len(legend_handles) > 0:
+                plt.legend(handles=legend_handles, loc="best")
 
     # No metadata coloring
     else:
